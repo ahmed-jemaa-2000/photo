@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@config "../tailwind.config.js";
+@source "./**/*.{js,jsx,ts,tsx,html}";
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-50 antialiased font-sans;
+  }
+}
+
+.glass-panel {
+  @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl;
+}
+
+.btn-primary {
+  @apply bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-primary/50 transform hover:-translate-y-1;
+}

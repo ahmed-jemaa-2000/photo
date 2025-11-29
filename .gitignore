@@ -1,0 +1,31 @@
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+server/node_modules/
+client/node_modules/
+
+# Build outputs
+client/dist/
+server/uploads/
+
+# Env and local config
+.env
+server/.env
+client/.env
+*.local
+
+# Editor/system
+.DS_Store
+*.swp
+*.swo
+Thumbs.db
+
+# Misc
+coverage/
+*.zip
+*.tmp
