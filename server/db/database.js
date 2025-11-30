@@ -66,6 +66,18 @@ const setLanguage = async (telegramId, lang) => {
   return await User.findOneAndUpdate({ telegramId }, { language: lang }, { new: true });
 };
 
+const setEmail = async (telegramId, email) => {
+  return await User.findOneAndUpdate({ telegramId }, { email: email }, { new: true });
+};
+
+const banUser = async (telegramId) => {
+  return await User.findOneAndUpdate({ telegramId }, { isBanned: true }, { new: true });
+};
+
+const unbanUser = async (telegramId) => {
+  return await User.findOneAndUpdate({ telegramId }, { isBanned: false }, { new: true });
+};
+
 const getAllUsers = async () => {
   return await User.find({});
 };
@@ -84,6 +96,9 @@ module.exports = {
   getStats,
   setLanguage,
   incrementCredits,
-  getAllUsers
+  getAllUsers,
+  setEmail,
+  banUser,
+  unbanUser
 };
 

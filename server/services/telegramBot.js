@@ -45,14 +45,20 @@ if (bot) {
     const user = ctx.from;
     let dbUser = await db.createUser(user.id, user.username);
 
+    if (dbUser.isBanned) return ctx.reply(t('banned_msg', dbUser.language || 'en'));
+
+
     // If language not set (or default 'en' but we want to force choice first time? No, let's just offer choice)
     // Actually, let's show language picker if it's a new user or they explicitly ask
 
     // For now, simple start message with language toggle
     const lang = dbUser.language || 'en';
 
-    // Check if language is set. If default 'en' and created just now, maybe ask? 
-    // Let's just show the welcome message in current language with a button to switch.
+    // Check for email
+    if (!dbUser.email) {
+      userState.set(user.id, { step: 'waiting_for_email' });
+      return ctx.reply(t('ask_email', lang));
+    }
 
     await ctx.reply(
       t('welcome', lang, { id: user.id, credits: dbUser.credits }),
@@ -64,6 +70,42 @@ if (bot) {
       }
     );
   });
+
+  // Text Handler (for Email)
+  bot.on('text', async (ctx) => {
+    const userId = ctx.from.id;
+    const state = userState.get(userId);
+
+    // Ignore commands
+    if (ctx.message.text.startsWith('/')) return;
+
+    if (state && state.step === 'waiting_for_email') {
+      const email = ctx.message.text.trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const user = await db.getUser(userId);
+      const lang = user?.language || 'en';
+
+      if (!emailRegex.test(email)) {
+        return ctx.reply(t('invalid_email', lang));
+      }
+
+      await db.setEmail(userId, email);
+      userState.delete(userId);
+      await ctx.reply(t('email_saved', lang));
+
+      // Show welcome menu after saving email
+      return ctx.reply(
+        t('welcome', lang, { id: userId, credits: user.credits }),
+        {
+          parse_mode: 'Markdown',
+          ...Markup.inlineKeyboard([
+            [Markup.button.callback('🇬🇧 English', 'set_lang_en'), Markup.button.callback('🇹🇳 Tounsi', 'set_lang_tn')]
+          ])
+        }
+      );
+    }
+  });
+
 
   // Language Handlers
   bot.action('set_lang_en', async (ctx) => {
@@ -137,6 +179,22 @@ if (bot) {
     const user = await db.getUser(userId);
     ctx.reply(t('stop_success', user?.language));
   });
+
+  bot.command('support', async (ctx) => {
+    const user = await db.getUser(ctx.from.id);
+    ctx.reply(t('support_msg', user?.language), { parse_mode: 'Markdown' });
+  });
+
+  bot.command('pricing', async (ctx) => {
+    const user = await db.getUser(ctx.from.id);
+    ctx.reply(t('pricing_msg', user?.language), { parse_mode: 'Markdown' });
+  });
+
+  bot.command('terms', async (ctx) => {
+    const user = await db.getUser(ctx.from.id);
+    ctx.reply(t('terms_msg', user?.language), { parse_mode: 'Markdown' });
+  });
+
 
 
   // User Commands
@@ -226,6 +284,57 @@ if (bot) {
     ctx.reply(t('broadcast_sent', adminUser?.language, { count }));
   });
 
+  bot.command('ban', async (ctx) => {
+    const adminId = process.env.ADMIN_ID;
+    if (String(ctx.from.id) !== String(adminId)) return;
+
+    const args = ctx.message.text.split(' ');
+    if (args.length !== 2) return ctx.reply('Usage: /ban <user_id>');
+    const targetId = args[1];
+
+    await db.banUser(targetId);
+    const adminUser = await db.getUser(ctx.from.id);
+    ctx.reply(t('ban_success', adminUser?.language, { id: targetId }));
+  });
+
+  bot.command('unban', async (ctx) => {
+    const adminId = process.env.ADMIN_ID;
+    if (String(ctx.from.id) !== String(adminId)) return;
+
+    const args = ctx.message.text.split(' ');
+    if (args.length !== 2) return ctx.reply('Usage: /unban <user_id>');
+    const targetId = args[1];
+
+    await db.unbanUser(targetId);
+    const adminUser = await db.getUser(ctx.from.id);
+    ctx.reply(t('unban_success', adminUser?.language, { id: targetId }));
+  });
+
+  bot.command('userinfo', async (ctx) => {
+    const adminId = process.env.ADMIN_ID;
+    if (String(ctx.from.id) !== String(adminId)) return;
+
+    const args = ctx.message.text.split(' ');
+    if (args.length !== 2) return ctx.reply('Usage: /userinfo <user_id>');
+    const targetId = args[1];
+
+    const targetUser = await db.getUser(targetId);
+    if (!targetUser) return ctx.reply('User not found.');
+
+    const adminUser = await db.getUser(ctx.from.id);
+    ctx.reply(
+      t('user_info', adminUser?.language, {
+        id: targetUser.telegramId,
+        username: targetUser.username || 'N/A',
+        credits: targetUser.credits,
+        gens: targetUser.generationsCount,
+        banned: targetUser.isBanned ? 'Yes' : 'No'
+      }),
+      { parse_mode: 'Markdown' }
+    );
+  });
+
+
 
   // 1. Photo Handler
   bot.on('photo', async (ctx) => {
@@ -233,6 +342,9 @@ if (bot) {
     // Ensure user exists (get or create)
     const user = await db.createUser(userId, ctx.from.username);
     const lang = user?.language || 'en';
+
+    if (user.isBanned) return ctx.reply(t('banned_msg', lang));
+
 
 
     if (user.credits <= 0) {
