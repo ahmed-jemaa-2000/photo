@@ -1,6 +1,10 @@
 const axios = require('axios');
 const fs = require('fs');
+const path = require('path');
 const FormData = require('form-data');
+
+// Ensure .env is loaded even when this module is required directly
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const API_KEY = process.env.GEMINIGEN_API_KEY;
 const BASE_URL = process.env.GEMINIGEN_BASE_URL || 'https://api.geminigen.ai';
@@ -69,25 +73,28 @@ async function generateImage(imagePath, userPrompt, options = {}) {
   formData.append('model', DEFAULT_MODEL);
   formData.append('aspect_ratio', '3:4');
 
-  // Handle legacy gender or new modelPersona
   if (options.modelPersona?.gender) {
     formData.append('person_generation', options.modelPersona.gender);
   } else if (options.gender) {
     formData.append('person_generation', options.gender);
   }
 
-  // Note: GeminiGen API may not support all persona attributes directly
-  // The detailed persona attributes are primarily used in the prompt construction
-  // If the API adds support for these fields in the future, they can be added here
+  console.log('Sending request to GeminiGen API...');
 
-  console.log('Sending request to GeminiGen API…');
-
-  const { data } = await apiClient.post('/uapi/v1/generate_image', formData, {
-    headers: {
-      ...formData.getHeaders(),
-      'x-api-key': API_KEY,
-    },
-  });
+  let data;
+  try {
+    const response = await apiClient.post('/uapi/v1/generate_image', formData, {
+      headers: {
+        ...formData.getHeaders(),
+        'x-api-key': API_KEY,
+      },
+    });
+    data = response.data;
+  } catch (err) {
+    const apiError = err?.response?.data;
+    const message = apiError?.detail?.error_message || apiError?.error_message || err.message || 'GeminiGen request failed';
+    throw new Error(message);
+  }
 
   if (!data?.uuid) {
     throw new Error('GeminiGen did not return a job id');

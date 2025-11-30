@@ -5,7 +5,13 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+const db = require('./db/database');
 const geminiService = require('./services/geminiService');
+const telegramBot = require('./services/telegramBot');
+
+// Connect to MongoDB
+db.connectDB();
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,8 +25,8 @@ app.use('/uploads', express.static('uploads'));
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadDir = 'uploads/';
-    if (!fs.existsSync(uploadDir)){
-        fs.mkdirSync(uploadDir);
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir);
     }
     cb(null, uploadDir);
   },
@@ -78,4 +84,6 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  telegramBot.launch();
 });
+
