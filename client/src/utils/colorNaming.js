@@ -50,15 +50,29 @@ export function getColorName(hex) {
   const { h, s, l } = hsl;
 
   // Handle achromatic colors (grays, black, white)
-  if (s < 10) {
-    if (l > 95) return 'White';
-    if (l > 85) return 'Off-White';
+  // Handle achromatic colors (grays, black, white)
+  // Aggressive White detection for cool lighting (shadows on white fabric often look blue/cyan)
+  // If it's bright enough, call it white regardless of saturation (within reason)
+  if (l > 90) return 'White';
+
+  // If it's reasonably bright and low saturation, it's off-white/white
+  if (l > 80 && s < 30) return 'Off-White';
+
+  // Special handling for "Blue/Cyan" shadows on white
+  // If hue is Cyan/Blue (150-250) and lightness is decent (>60) and saturation isn't too high (<40)
+  // It's likely a white garment in shadow
+  if ((h > 150 && h < 260) && l > 60 && s < 40) {
+    return 'White';
+  }
+
+  if (s < 15) {
     if (l > 70) return 'Light Gray';
     if (l > 50) return 'Gray';
     if (l > 30) return 'Dark Gray';
     if (l > 15) return 'Charcoal';
     return 'Black';
   }
+
 
   // Determine lightness modifier
   let lightnessPrefix = '';

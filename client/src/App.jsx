@@ -108,7 +108,9 @@ function buildPersonaDescription(persona) {
     'caucasian': 'Caucasian ethnicity',
     'hispanic': 'Hispanic/Latino ethnicity',
     'middle-eastern': 'Middle Eastern ethnicity',
+    'tunisian': 'Tunisian ethnicity, North African features',
     'mixed': 'mixed ethnicity',
+
   };
   if (persona.ethnicity && persona.ethnicity !== 'any' && ethnicityMap[persona.ethnicity]) {
     parts.push(`with ${ethnicityMap[persona.ethnicity]}`);
@@ -258,8 +260,16 @@ function App() {
         ? `Color lock: preserve exact garment color ${colorHex}, no hue shift, no saturation change.`
         : '';
 
+    // Strong color enforcement using detected name
+    const dominantColorName = colorPalette.length > 0 ? colorPalette[0].name : '';
+    const strongColorClause = dominantColorName
+      ? `CRITICAL: The garment is ${dominantColorName}. Maintain this color exactly.`
+      : '';
+
     const finalPrompt = [
+      strongColorClause,
       effectivePrompt,
+
       pose,
       backdropClause,
       paletteClause,
@@ -345,29 +355,29 @@ function App() {
 
         <main className="grid md:grid-cols-5 gap-8 flex-1">
           <div className="md:col-span-3 space-y-6">
-              <ImageUpload
-                onFileSelect={handleFileSelect}
-                isGenerating={isGenerating}
-                selectedFile={selectedFile}
-                onClear={clearSelection}
-                onColorDetected={handleColorDetected}
-              />
+            <ImageUpload
+              onFileSelect={handleFileSelect}
+              isGenerating={isGenerating}
+              selectedFile={selectedFile}
+              onClear={clearSelection}
+              onColorDetected={handleColorDetected}
+            />
 
-              {colorPalette.length > 0 && (
-                <ColorPaletteDisplay palette={colorPalette} />
-              )}
+            {colorPalette.length > 0 && (
+              <ColorPaletteDisplay palette={colorPalette} />
+            )}
 
-              {backdropSuggestions.length > 0 && (
-                <div className="glass-panel p-5">
-                  <BackdropSuggestions
-                    suggestions={backdropSuggestions}
-                    selectedBackdrop={selectedBackdrop}
-                    onSelect={setSelectedBackdrop}
-                    autoBackdrop={autoBackdrop}
-                    onToggleAuto={setAutoBackdrop}
-                  />
-                </div>
-              )}
+            {backdropSuggestions.length > 0 && (
+              <div className="glass-panel p-5">
+                <BackdropSuggestions
+                  suggestions={backdropSuggestions}
+                  selectedBackdrop={selectedBackdrop}
+                  onSelect={setSelectedBackdrop}
+                  autoBackdrop={autoBackdrop}
+                  onToggleAuto={setAutoBackdrop}
+                />
+              </div>
+            )}
 
             <div className="glass-panel p-6 space-y-4">
               <div className="flex items-center gap-3">
@@ -394,11 +404,10 @@ function App() {
                     key={item.label}
                     type="button"
                     onClick={() => setPrompt(item.prompt)}
-                    className={`px-3 py-2 rounded-full text-sm border transition ${
-                      prompt === item.prompt
-                        ? 'bg-primary/20 border-primary/50 text-white'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
-                    }`}
+                    className={`px-3 py-2 rounded-full text-sm border transition ${prompt === item.prompt
+                      ? 'bg-primary/20 border-primary/50 text-white'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
+                      }`}
                     title={item.prompt}
                   >
                     {item.label}
@@ -418,11 +427,10 @@ function App() {
                         key={item.label}
                         type="button"
                         onClick={() => setPose(item.prompt)}
-                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition ${
-                          selected
-                            ? 'bg-primary/15 border-primary/50 text-white shadow-primary/30 shadow'
-                            : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
-                        }`}
+                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition ${selected
+                          ? 'bg-primary/15 border-primary/50 text-white shadow-primary/30 shadow'
+                          : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
+                          }`}
                         title={item.prompt}
                       >
                         <img src={thumb} alt={item.label} className="w-12 h-12 opacity-90" />
@@ -441,11 +449,10 @@ function App() {
                       key={item.label}
                       type="button"
                       onClick={() => setBackdrop(item.prompt)}
-                      className={`px-3 py-2 rounded-full text-sm border transition ${
-                        backdrop === item.prompt
-                          ? 'bg-primary/20 border-primary/50 text-white'
-                          : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
-                      }`}
+                      className={`px-3 py-2 rounded-full text-sm border transition ${backdrop === item.prompt
+                        ? 'bg-primary/20 border-primary/50 text-white'
+                        : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
+                        }`}
                       title={item.prompt}
                     >
                       {item.label}
@@ -521,14 +528,12 @@ function App() {
                 {processSteps.map((step) => (
                   <div
                     key={step.label}
-                    className={`flex items-start gap-3 p-3 rounded-xl border ${
-                      step.done ? 'border-primary/50 bg-primary/10' : 'border-white/10 bg-white/5'
-                    }`}
+                    className={`flex items-start gap-3 p-3 rounded-xl border ${step.done ? 'border-primary/50 bg-primary/10' : 'border-white/10 bg-white/5'
+                      }`}
                   >
                     <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                        step.done ? 'bg-primary/20 text-primary border border-primary/50' : 'bg-white/5 text-slate-400 border border-white/15'
-                      }`}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center ${step.done ? 'bg-primary/20 text-primary border border-primary/50' : 'bg-white/5 text-slate-400 border border-white/15'
+                        }`}
                     >
                       {step.done ? <CheckCircle2 className="w-5 h-5" /> : <Clock3 className="w-5 h-5" />}
                     </div>

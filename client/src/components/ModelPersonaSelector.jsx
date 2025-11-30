@@ -32,7 +32,9 @@ function ModelPersonaSelector({ modelPersona, onChange }) {
     { value: 'caucasian', label: 'Caucasian' },
     { value: 'hispanic', label: 'Hispanic/Latino' },
     { value: 'middle-eastern', label: 'Middle Eastern' },
+    { value: 'tunisian', label: 'Tunisian' },
     { value: 'mixed', label: 'Mixed' },
+
   ];
 
   const skinToneOptions = [
@@ -104,11 +106,10 @@ function ModelPersonaSelector({ modelPersona, onChange }) {
                   key={option.value}
                   type="button"
                   onClick={() => updatePersona('gender', option.value)}
-                  className={`px-4 py-2 rounded-full text-sm border transition ${
-                    modelPersona.gender === option.value
+                  className={`px-4 py-2 rounded-full text-sm border transition ${modelPersona.gender === option.value
                       ? 'bg-primary/20 border-primary/50 text-white'
                       : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
-                  }`}
+                    }`}
                 >
                   {option.label}
                 </button>
@@ -125,11 +126,10 @@ function ModelPersonaSelector({ modelPersona, onChange }) {
                   key={option.value}
                   type="button"
                   onClick={() => updatePersona('ageRange', option.value)}
-                  className={`px-3 py-3 rounded-xl text-sm border transition ${
-                    modelPersona.ageRange === option.value
+                  className={`px-3 py-3 rounded-xl text-sm border transition ${modelPersona.ageRange === option.value
                       ? 'bg-primary/15 border-primary/50 text-white shadow-primary/30 shadow'
                       : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
-                  }`}
+                    }`}
                 >
                   <div className="font-bold">{option.label}</div>
                   <div className="text-xs text-slate-400">{option.description}</div>
@@ -163,11 +163,10 @@ function ModelPersonaSelector({ modelPersona, onChange }) {
                   key={option.value}
                   type="button"
                   onClick={() => updatePersona('skinTone', option.value)}
-                  className={`flex flex-col items-center gap-2 p-2 rounded-xl border transition ${
-                    modelPersona.skinTone === option.value
+                  className={`flex flex-col items-center gap-2 p-2 rounded-xl border transition ${modelPersona.skinTone === option.value
                       ? 'bg-primary/15 border-primary/50 shadow-primary/30 shadow'
                       : 'bg-white/5 border-white/10 hover:border-primary/40'
-                  }`}
+                    }`}
                   title={option.label}
                 >
                   <div
@@ -189,11 +188,10 @@ function ModelPersonaSelector({ modelPersona, onChange }) {
                   key={option.value}
                   type="button"
                   onClick={() => updatePersona('hairStyle', option.value)}
-                  className={`px-3 py-2 rounded-xl text-sm border transition ${
-                    modelPersona.hairStyle === option.value
+                  className={`px-3 py-2 rounded-xl text-sm border transition ${modelPersona.hairStyle === option.value
                       ? 'bg-primary/15 border-primary/50 text-white'
                       : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
-                  }`}
+                    }`}
                 >
                   {option.label}
                 </button>
@@ -210,11 +208,10 @@ function ModelPersonaSelector({ modelPersona, onChange }) {
                   key={option.value}
                   type="button"
                   onClick={() => updatePersona('hairColor', option.value)}
-                  className={`flex flex-col items-center gap-2 p-2 rounded-xl border transition ${
-                    modelPersona.hairColor === option.value
+                  className={`flex flex-col items-center gap-2 p-2 rounded-xl border transition ${modelPersona.hairColor === option.value
                       ? 'bg-primary/15 border-primary/50 shadow-primary/30 shadow'
                       : 'bg-white/5 border-white/10 hover:border-primary/40'
-                  }`}
+                    }`}
                   title={option.label}
                 >
                   <div
@@ -236,11 +233,10 @@ function ModelPersonaSelector({ modelPersona, onChange }) {
                   key={option.value}
                   type="button"
                   onClick={() => updatePersona('bodyType', option.value)}
-                  className={`px-3 py-2 rounded-xl text-sm border transition ${
-                    modelPersona.bodyType === option.value
+                  className={`px-3 py-2 rounded-xl text-sm border transition ${modelPersona.bodyType === option.value
                       ? 'bg-primary/15 border-primary/50 text-white'
                       : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
-                  }`}
+                    }`}
                 >
                   {option.label}
                 </button>
