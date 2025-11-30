@@ -12,29 +12,40 @@ const connectDB = async () => {
 };
 
 // Helper functions (now Async)
+const toNumberId = (telegramId) => {
+  if (typeof telegramId === 'number') return telegramId;
+  const parsed = parseInt(String(telegramId), 10);
+  return isNaN(parsed) ? telegramId : parsed;
+};
+
 const getUser = async (telegramId) => {
-  return await User.findOne({ telegramId });
+  return await User.findOne({ telegramId: toNumberId(telegramId) });
 };
 
 const createUser = async (telegramId, username) => {
-  let user = await User.findOne({ telegramId });
+  const id = toNumberId(telegramId);
+  let user = await User.findOne({ telegramId: id });
   if (!user) {
-    user = await User.create({ telegramId, username, credits: 0, generationsCount: 0 });
+    user = await User.create({ telegramId: id, username, credits: 0, generationsCount: 0 });
   }
   return user;
 };
 
 const updateCredits = async (telegramId, amount) => {
-  return await User.findOneAndUpdate({ telegramId }, { credits: amount }, { new: true });
+  return await User.findOneAndUpdate(
+    { telegramId: toNumberId(telegramId) },
+    { credits: amount },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
 };
 
 const incrementCredits = async (telegramId, amount) => {
-  return await User.findOneAndUpdate({ telegramId }, { $inc: { credits: amount } }, { new: true });
+  return await User.findOneAndUpdate({ telegramId: toNumberId(telegramId) }, { $inc: { credits: amount } }, { new: true });
 };
 
 
 const deductCredit = async (telegramId) => {
-  const user = await User.findOne({ telegramId });
+  const user = await User.findOne({ telegramId: toNumberId(telegramId) });
   if (user && user.credits > 0) {
     user.credits -= 1;
     user.generationsCount += 1;
@@ -45,11 +56,11 @@ const deductCredit = async (telegramId) => {
 };
 
 const refundCredit = async (telegramId) => {
-  return await User.findOneAndUpdate({ telegramId }, { $inc: { credits: 1 } }, { new: true });
+  return await User.findOneAndUpdate({ telegramId: toNumberId(telegramId) }, { $inc: { credits: 1 } }, { new: true });
 };
 
 const getCredits = async (telegramId) => {
-  const user = await User.findOne({ telegramId });
+  const user = await User.findOne({ telegramId: toNumberId(telegramId) });
   return user ? user.credits : 0;
 };
 
@@ -63,19 +74,19 @@ const getStats = async () => {
 };
 
 const setLanguage = async (telegramId, lang) => {
-  return await User.findOneAndUpdate({ telegramId }, { language: lang }, { new: true });
+  return await User.findOneAndUpdate({ telegramId: toNumberId(telegramId) }, { language: lang }, { new: true });
 };
 
 const setEmail = async (telegramId, email) => {
-  return await User.findOneAndUpdate({ telegramId }, { email: email }, { new: true });
+  return await User.findOneAndUpdate({ telegramId: toNumberId(telegramId) }, { email: email }, { new: true });
 };
 
 const banUser = async (telegramId) => {
-  return await User.findOneAndUpdate({ telegramId }, { isBanned: true }, { new: true });
+  return await User.findOneAndUpdate({ telegramId: toNumberId(telegramId) }, { isBanned: true }, { new: true });
 };
 
 const unbanUser = async (telegramId) => {
-  return await User.findOneAndUpdate({ telegramId }, { isBanned: false }, { new: true });
+  return await User.findOneAndUpdate({ telegramId: toNumberId(telegramId) }, { isBanned: false }, { new: true });
 };
 
 const getAllUsers = async () => {
@@ -101,4 +112,3 @@ module.exports = {
   banUser,
   unbanUser
 };
-

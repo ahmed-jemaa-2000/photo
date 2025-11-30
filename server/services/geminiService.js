@@ -11,6 +11,11 @@ const BASE_URL = process.env.GEMINIGEN_BASE_URL || 'https://api.geminigen.ai';
 const DEFAULT_MODEL = process.env.GEMINIGEN_MODEL || 'imagen-pro';
 const POLL_INTERVAL_MS = 3000;
 const POLL_LIMIT = 20;
+const VIDEO_MODEL = process.env.GEMINIGEN_VIDEO_MODEL || 'veo-3.1-fast';
+const VIDEO_RESOLUTION = process.env.GEMINIGEN_VIDEO_RESOLUTION || '1080p';
+const VIDEO_ASPECT_RATIO = process.env.GEMINIGEN_VIDEO_ASPECT_RATIO || '16:9';
+const VIDEO_POLL_INTERVAL_MS = 5000;
+const VIDEO_POLL_LIMIT = 60;
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -53,6 +58,54 @@ async function pollForResult(uuid) {
   }
 
   throw new Error('Timed out waiting for GeminiGen to finish the render');
+}
+
+async function pollForVideoResult(uuid) {
+  for (let attempt = 0; attempt < VIDEO_POLL_LIMIT; attempt++) {
+    const { data } = await apiClient.get(`/uapi/v1/history/${uuid}`, {
+      headers: { 'x-api-key': API_KEY },
+    });
+
+    const videos = data?.generated_video ||
+      data?.generated_videos ||
+      data?.generated_file ||
+      data?.generated_files ||
+      [];
+
+    const status = data?.status ?? 0;
+
+    if (Array.isArray(videos) && videos.length && status >= 2) {
+      const primary = videos[0];
+      const videoUrl = primary.video_url || primary.file_download_url || primary.url || data?.video_url;
+      const downloadUrl = primary.file_download_url || primary.video_url || primary.url || data?.video_url;
+
+      if (!videoUrl && !downloadUrl) {
+        throw new Error('GeminiGen finished but did not return a video URL');
+      }
+
+      return {
+        videoUrl: videoUrl || downloadUrl,
+        downloadUrl: downloadUrl || videoUrl,
+        historyUrl: `${BASE_URL}/uapi/v1/history/${uuid}`,
+        meta: {
+          status,
+          statusDesc: data?.status_desc || '',
+          queuePosition: data?.queue_position,
+          thumbnail: data?.thumbnail_url,
+          model: primary.model || data?.model_name,
+          generatedAt: data?.updated_at || data?.created_at,
+        },
+      };
+    }
+
+    if (status === 3 || status < 0 || data?.error_message) {
+      throw new Error(data?.error_message || 'GeminiGen reported a failure while rendering video');
+    }
+
+    await wait(VIDEO_POLL_INTERVAL_MS);
+  }
+
+  throw new Error('Timed out waiting for GeminiGen to finish the video');
 }
 
 async function generateImage(imagePath, userPrompt, options = {}) {
@@ -103,6 +156,48 @@ async function generateImage(imagePath, userPrompt, options = {}) {
   return pollForResult(data.uuid);
 }
 
+async function generateVideoFromImage(referenceUrl, prompt) {
+  if (!API_KEY) {
+    throw new Error('GEMINIGEN_API_KEY is not set');
+  }
+
+  if (!referenceUrl) {
+    throw new Error('Reference image URL is required to animate the result');
+  }
+
+  const formData = new FormData();
+
+  formData.append('prompt', prompt.trim());
+  formData.append('model', VIDEO_MODEL);
+  formData.append('resolution', VIDEO_RESOLUTION);
+  formData.append('aspect_ratio', VIDEO_ASPECT_RATIO);
+  formData.append('file_urls', referenceUrl);
+
+  console.log('Sending request to GeminiGen Veo API...');
+
+  let data;
+  try {
+    const response = await apiClient.post('/uapi/v1/video-gen/veo', formData, {
+      headers: {
+        ...formData.getHeaders(),
+        'x-api-key': API_KEY,
+      },
+    });
+    data = response.data;
+  } catch (err) {
+    const apiError = err?.response?.data;
+    const message = apiError?.detail?.error_message || apiError?.error_message || err.message || 'GeminiGen video request failed';
+    throw new Error(message);
+  }
+
+  if (!data?.uuid) {
+    throw new Error('GeminiGen did not return a job id for the video');
+  }
+
+  return pollForVideoResult(data.uuid);
+}
+
 module.exports = {
   generateImage,
+  generateVideoFromImage,
 };

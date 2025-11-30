@@ -21,6 +21,14 @@ const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null;
 
 // User state to track flow
 const userState = new Map();
+const recentResults = new Map(); // store last generated image context per user
+const activeVideoJobs = new Set(); // prevent duplicate video jobs per user
+
+const isAdmin = (fromId) => {
+  const envAdmins = process.env.ADMIN_IDS || process.env.ADMIN_ID || '';
+  const ids = envAdmins.split(',').map((id) => id.trim()).filter(Boolean);
+  return ids.some((id) => String(id) === String(fromId));
+};
 
 // Helper to chunk array for grid layout
 const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
@@ -38,6 +46,48 @@ const t = (key, lang = 'en', params = {}) => {
     text = text.replace(`{${param}}`, params[param]);
   });
   return text;
+};
+
+const describeEthnicity = (ethnicityKey) => {
+  const map = {
+    'tunisian': 'Tunisian / North African features',
+    'caucasian': 'Caucasian features',
+  };
+  return map[ethnicityKey] || ethnicityKey || '';
+};
+
+const buildVideoPrompt = (context) => {
+  const isShoes = context.category === 'shoes';
+  const personaParts = [];
+
+  if (context.gender) {
+    personaParts.push(`${context.gender} model`);
+  }
+  if (context.ethnicity) {
+    personaParts.push(describeEthnicity(context.ethnicity));
+  }
+
+  const motion = isShoes
+    ? 'Showcase the shoes with a smooth 360 orbit around the feet. Start with a hero shot then rotate to front, side, and back angles. Include quick close-ups of the sole, heel, and side profile.'
+    : 'The model performs a slow 360-degree turn-in-place showing front, side, and back of the outfit. Camera gently circles to keep the model centered with clean studio framing.';
+
+  const colorLock = context.colorName
+    ? `Lock garment color to ${context.colorName}; no hue shifts or saturation drift.`
+    : 'Keep garment colors perfectly accurate; no hue shifts.';
+
+  const cues = [
+    'Create a photorealistic 8-second 16:9 fashion video at 1080p using Veo 3.1 Fast.',
+    motion,
+    'Camera movement is cinematic and stable, no flicker or glitches. Natural skin motion, fabric physics, soft studio lighting.',
+    colorLock,
+    personaParts.length ? `Use a ${personaParts.join(' with ')}.` : '',
+    context.styleLabel ? `Style reference: ${context.styleLabel}.` : '',
+    context.posePrompt ? `Pose direction: ${context.posePrompt}` : '',
+    context.backdropPrompt ? `Backdrop: ${context.backdropPrompt}` : '',
+    'High detail, commercial quality, realistic shading and texture.'
+  ];
+
+  return cues.filter(Boolean).join(' ');
 };
 
 if (bot) {
@@ -72,12 +122,12 @@ if (bot) {
   });
 
   // Text Handler (for Email)
-  bot.on('text', async (ctx) => {
+  bot.on('text', async (ctx, next) => {
     const userId = ctx.from.id;
     const state = userState.get(userId);
 
     // Ignore commands
-    if (ctx.message.text.startsWith('/')) return;
+    if (ctx.message.text.startsWith('/')) return next();
 
     if (state && state.step === 'waiting_for_email') {
       const email = ctx.message.text.trim();
@@ -104,6 +154,9 @@ if (bot) {
         }
       );
     }
+
+    // Not an email flow: continue to other middleware/commands
+    return next();
   });
 
 
@@ -125,8 +178,10 @@ if (bot) {
   });
 
   bot.command('setcredits', async (ctx) => {
-    const adminId = process.env.ADMIN_ID;
-    if (String(ctx.from.id) !== String(adminId)) {
+    const adminOk = isAdmin(ctx.from.id);
+    console.log('[setcredits] from', ctx.from.id, 'isAdmin:', adminOk, 'text:', ctx.message?.text);
+
+    if (!adminOk) {
       const user = await db.getUser(ctx.from.id);
       return ctx.reply(t('admin_only', user?.language));
     }
@@ -142,15 +197,18 @@ if (bot) {
     if (isNaN(amount)) return ctx.reply('Invalid amount.');
 
     try {
-      await db.updateCredits(targetId, amount);
+      const updated = await db.updateCredits(targetId, amount);
       const adminLang = (await db.getUser(ctx.from.id))?.language || 'en';
       ctx.reply(t('credits_updated', adminLang, { id: targetId, amount }));
 
-      const targetUser = await db.getUser(targetId);
+      const targetUser = updated || await db.getUser(targetId);
       if (targetUser) {
         bot.telegram.sendMessage(targetId, t('credits_received', targetUser.language, { amount }));
+      } else {
+        ctx.reply('User not found. Ask them to /start first.');
       }
     } catch (err) {
+      console.error('setcredits error', err);
       ctx.reply('Failed to update credits. Check the ID.');
     }
   });
@@ -162,8 +220,7 @@ if (bot) {
   });
 
   bot.command('stats', async (ctx) => {
-    const adminId = process.env.ADMIN_ID;
-    if (String(ctx.from.id) !== String(adminId)) return;
+    if (!isAdmin(ctx.from.id)) return;
 
     const stats = await db.getStats();
     const user = await db.getUser(ctx.from.id);
@@ -176,6 +233,8 @@ if (bot) {
   bot.command('stop', async (ctx) => {
     const userId = ctx.from.id;
     userState.delete(userId);
+    recentResults.delete(userId);
+    activeVideoJobs.delete(userId);
     const user = await db.getUser(userId);
     ctx.reply(t('stop_success', user?.language));
   });
@@ -223,8 +282,7 @@ if (bot) {
 
   // Admin Commands
   bot.command('gift', async (ctx) => {
-    const adminId = process.env.ADMIN_ID;
-    if (String(ctx.from.id) !== String(adminId)) return;
+    if (!isAdmin(ctx.from.id)) return;
 
     const args = ctx.message.text.split(' ');
     if (args.length !== 3) return ctx.reply('Usage: /gift <user_id> <amount>');
@@ -248,8 +306,7 @@ if (bot) {
   });
 
   bot.command('giftall', async (ctx) => {
-    const adminId = process.env.ADMIN_ID;
-    if (String(ctx.from.id) !== String(adminId)) return;
+    if (!isAdmin(ctx.from.id)) return;
 
     const args = ctx.message.text.split(' ');
     if (args.length !== 2) return ctx.reply('Usage: /giftall <amount>');
@@ -268,8 +325,7 @@ if (bot) {
   });
 
   bot.command('broadcast', async (ctx) => {
-    const adminId = process.env.ADMIN_ID;
-    if (String(ctx.from.id) !== String(adminId)) return;
+    if (!isAdmin(ctx.from.id)) return;
 
     const message = ctx.message.text.split(' ').slice(1).join(' ');
     if (!message) return ctx.reply('Usage: /broadcast <message>');
@@ -285,8 +341,7 @@ if (bot) {
   });
 
   bot.command('ban', async (ctx) => {
-    const adminId = process.env.ADMIN_ID;
-    if (String(ctx.from.id) !== String(adminId)) return;
+    if (!isAdmin(ctx.from.id)) return;
 
     const args = ctx.message.text.split(' ');
     if (args.length !== 2) return ctx.reply('Usage: /ban <user_id>');
@@ -298,8 +353,7 @@ if (bot) {
   });
 
   bot.command('unban', async (ctx) => {
-    const adminId = process.env.ADMIN_ID;
-    if (String(ctx.from.id) !== String(adminId)) return;
+    if (!isAdmin(ctx.from.id)) return;
 
     const args = ctx.message.text.split(' ');
     if (args.length !== 2) return ctx.reply('Usage: /unban <user_id>');
@@ -311,8 +365,7 @@ if (bot) {
   });
 
   bot.command('userinfo', async (ctx) => {
-    const adminId = process.env.ADMIN_ID;
-    if (String(ctx.from.id) !== String(adminId)) return;
+    if (!isAdmin(ctx.from.id)) return;
 
     const args = ctx.message.text.split(' ');
     if (args.length !== 2) return ctx.reply('Usage: /userinfo <user_id>');
@@ -562,10 +615,31 @@ if (bot) {
 
       if (genResult.imageUrl) {
         const credits = await db.getCredits(userId);
+        const referenceUrl = genResult.downloadUrl || genResult.imageUrl;
+
+        recentResults.set(userId, {
+          referenceUrl,
+          imageUrl: genResult.imageUrl,
+          gender: state.gender,
+          ethnicity: state.ethnicity,
+          category: state.category,
+          styleLabel: state.styleLabel,
+          posePrompt: state.posePrompt,
+          backdropPrompt: state.backdropPrompt,
+          colorName,
+        });
+
         await ctx.replyWithPhoto(genResult.imageUrl, {
           caption: t('result_caption', lang, { style: state.styleLabel, gender: state.gender, ethnicity: state.ethnicity, credits }),
           parse_mode: 'Markdown'
         });
+
+        await ctx.reply(
+          t('video_offer', lang),
+          Markup.inlineKeyboard([
+            [Markup.button.callback(t('buttons.animate', lang), 'animate_video')]
+          ])
+        );
 
       } else {
         throw new Error('No image URL returned');
@@ -577,6 +651,62 @@ if (bot) {
       console.error('Bot generation error:', error);
       ctx.reply(t('regen_failed', lang));
       await db.refundCredit(userId);
+    }
+  });
+
+  bot.action('animate_video', async (ctx) => {
+    const userId = ctx.from.id;
+    const user = await db.getUser(userId);
+    const lang = user?.language || 'en';
+
+    await ctx.answerCbQuery();
+
+    if (user?.isBanned) {
+      return ctx.reply(t('banned_msg', lang));
+    }
+
+    const lastResult = recentResults.get(userId);
+
+    if (!lastResult || !lastResult.referenceUrl) {
+      return ctx.reply(t('video_no_recent', lang));
+    }
+
+    if (activeVideoJobs.has(userId)) {
+      return ctx.reply(t('video_in_progress', lang));
+    }
+
+    const creditResult = await db.deductCredit(userId);
+    if (!creditResult.success) {
+      return ctx.reply(t('insufficient_credits', lang));
+    }
+
+    activeVideoJobs.add(userId);
+
+    try {
+      await ctx.reply(t('video_generating', lang));
+      await ctx.sendChatAction('record_video');
+
+      const prompt = buildVideoPrompt(lastResult);
+      const videoResult = await geminiService.generateVideoFromImage(lastResult.referenceUrl, prompt);
+
+      if (!videoResult?.videoUrl) {
+        throw new Error('No video URL returned');
+      }
+
+      await ctx.sendChatAction('upload_video');
+      await ctx.replyWithVideo({ url: videoResult.videoUrl }, {
+        caption: t('video_ready', lang),
+      });
+    } catch (err) {
+      console.error('Video generation error:', err);
+      await db.refundCredit(userId);
+      if (err?.message?.toLowerCase().includes('premium plan')) {
+        ctx.reply(t('video_premium_required', lang));
+      } else {
+        ctx.reply(t('video_failed', lang));
+      }
+    } finally {
+      activeVideoJobs.delete(userId);
     }
   });
 
