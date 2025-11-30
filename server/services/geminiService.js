@@ -68,9 +68,17 @@ async function generateImage(imagePath, userPrompt, options = {}) {
   formData.append('prompt', fullPrompt.trim());
   formData.append('model', DEFAULT_MODEL);
   formData.append('aspect_ratio', '3:4');
-  if (options.gender) {
+
+  // Handle legacy gender or new modelPersona
+  if (options.modelPersona?.gender) {
+    formData.append('person_generation', options.modelPersona.gender);
+  } else if (options.gender) {
     formData.append('person_generation', options.gender);
   }
+
+  // Note: GeminiGen API may not support all persona attributes directly
+  // The detailed persona attributes are primarily used in the prompt construction
+  // If the API adds support for these fields in the future, they can be added here
 
   console.log('Sending request to GeminiGen API…');
 

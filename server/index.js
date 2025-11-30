@@ -39,13 +39,25 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
-    const { prompt, gender } = req.body;
+    const { prompt, gender, modelPersona } = req.body;
 
     console.log('Received image:', imagePath);
     console.log('Prompt:', prompt);
+    console.log('Model Persona:', modelPersona);
+
+    // Parse modelPersona if it's a JSON string
+    let parsedPersona = null;
+    if (modelPersona) {
+      try {
+        parsedPersona = typeof modelPersona === 'string' ? JSON.parse(modelPersona) : modelPersona;
+      } catch (e) {
+        console.warn('Failed to parse modelPersona:', e);
+      }
+    }
 
     const result = await geminiService.generateImage(imagePath, prompt, {
-      gender: gender || undefined,
+      gender: gender || parsedPersona?.gender || undefined,
+      modelPersona: parsedPersona,
     });
 
     res.json({

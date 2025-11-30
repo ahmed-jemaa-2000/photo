@@ -1,10 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Upload, Image as ImageIcon, Loader2, Trash2, CheckCircle2 } from 'lucide-react';
+import { extractColorPalette } from '../utils/colorExtraction';
+import { addColorNames } from '../utils/colorNaming';
 
 const ImageUpload = ({ onFileSelect, isGenerating, selectedFile, onClear, onColorDetected }) => {
   const [dragActive, setDragActive] = useState(false);
   const [preview, setPreview] = useState(null);
   const [detectedColor, setDetectedColor] = useState(null);
+  const [isExtracting, setIsExtracting] = useState(false);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -41,51 +44,34 @@ const ImageUpload = ({ onFileSelect, isGenerating, selectedFile, onClear, onColo
     }
   };
 
-  const handleFile = (file) => {
+  const handleFile = async (file) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreview(reader.result);
-      extractAverageColor(reader.result);
     };
     reader.readAsDataURL(file);
     onFileSelect?.(file);
-  };
 
-  const extractAverageColor = (dataUrl) => {
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = 50;
-        canvas.height = 50;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, 50, 50);
-        const { data } = ctx.getImageData(0, 0, 50, 50);
-        let r = 0;
-        let g = 0;
-        let b = 0;
-        const total = data.length / 4;
-        for (let i = 0; i < data.length; i += 4) {
-          r += data[i];
-          g += data[i + 1];
-          b += data[i + 2];
-        }
-        r = Math.round(r / total);
-        g = Math.round(g / total);
-        b = Math.round(b / total);
-        const hex = `#${[r, g, b]
-          .map((v) => v.toString(16).padStart(2, '0'))
-          .join('')
-          .toUpperCase()}`;
-        setDetectedColor(hex);
-        onColorDetected?.(hex);
-      } catch (err) {
-        console.error('Color extraction failed', err);
-        setDetectedColor(null);
-        onColorDetected?.(null);
+    // Extract color palette
+    setIsExtracting(true);
+    try {
+      const palette = await extractColorPalette(file, 5);
+      const paletteWithNames = addColorNames(palette);
+
+      // Set the dominant color for backward compatibility
+      if (paletteWithNames.length > 0) {
+        setDetectedColor(paletteWithNames[0].hex);
       }
-    };
-    img.src = dataUrl;
+
+      // Pass the full palette to parent
+      onColorDetected?.(paletteWithNames);
+    } catch (err) {
+      console.error('Color extraction failed', err);
+      setDetectedColor(null);
+      onColorDetected?.(null);
+    } finally {
+      setIsExtracting(false);
+    }
   };
 
   return (
@@ -163,11 +149,10 @@ const ImageUpload = ({ onFileSelect, isGenerating, selectedFile, onClear, onColo
         <div className="p-3 rounded-xl border border-white/10 bg-white/5">Good lighting makes textures pop.</div>
       </div>
 
-      {detectedColor && (
+      {isExtracting && (
         <div className="flex items-center gap-3 text-sm text-slate-300">
-          <span>Detected dominant color:</span>
-          <div className="w-8 h-8 rounded-full border border-white/20" style={{ background: detectedColor }} />
-          <span className="text-slate-500">{detectedColor}</span>
+          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+          <span>Analyzing colors...</span>
         </div>
       )}
     </div>

@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ImageUpload from './components/ImageUpload';
 import GenerationResult from './components/GenerationResult';
+import ColorPaletteDisplay from './components/ColorPaletteDisplay';
+import BackdropSuggestions from './components/BackdropSuggestions';
+import ModelPersonaSelector from './components/ModelPersonaSelector';
+import PersonaPresets from './components/PersonaPresets';
+import { generateBackdropSuggestions, getAutoBackdrop } from './utils/colorHarmony';
 import { Sparkles, Wand2, Clock3, CheckCircle2, Loader2, Palette } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -69,6 +74,81 @@ const VARIATION_CUES = [
   'Add dynamic energy: a light turn of the torso, one foot forward, confident expression.',
 ];
 
+/**
+ * Build a descriptive model persona string from modelPersona object
+ */
+function buildPersonaDescription(persona) {
+  const parts = [];
+
+  // Gender
+  const genderMap = {
+    'female': 'female',
+    'male': 'male',
+    'non-binary': 'non-binary',
+  };
+  const genderText = genderMap[persona.gender] || 'female';
+  parts.push(`Use a ${genderText} model`);
+
+  // Age range
+  const ageMap = {
+    'young-adult': 'in their 20s',
+    'adult': 'in their 30s',
+    'mature': 'in their 40s-50s',
+    'senior': 'in their 60s or older',
+  };
+  if (persona.ageRange && ageMap[persona.ageRange]) {
+    parts.push(ageMap[persona.ageRange]);
+  }
+
+  // Ethnicity (only if not "any")
+  const ethnicityMap = {
+    'asian': 'East Asian ethnicity',
+    'south-asian': 'South Asian ethnicity',
+    'black': 'Black ethnicity',
+    'caucasian': 'Caucasian ethnicity',
+    'hispanic': 'Hispanic/Latino ethnicity',
+    'middle-eastern': 'Middle Eastern ethnicity',
+    'mixed': 'mixed ethnicity',
+  };
+  if (persona.ethnicity && persona.ethnicity !== 'any' && ethnicityMap[persona.ethnicity]) {
+    parts.push(`with ${ethnicityMap[persona.ethnicity]}`);
+  }
+
+  // Skin tone
+  const skinToneMap = {
+    'fair': 'fair skin tone',
+    'light': 'light skin tone',
+    'medium': 'medium skin tone',
+    'tan': 'tan skin tone',
+    'deep': 'deep skin tone',
+    'rich': 'rich skin tone',
+  };
+  if (persona.skinTone && skinToneMap[persona.skinTone]) {
+    parts.push(skinToneMap[persona.skinTone]);
+  }
+
+  // Hair style and color
+  if (persona.hairStyle && persona.hairColor) {
+    parts.push(`${persona.hairStyle} ${persona.hairColor} hair`);
+  } else if (persona.hairStyle) {
+    parts.push(`${persona.hairStyle} hair`);
+  }
+
+  // Body type
+  const bodyTypeMap = {
+    'slim': 'slim build',
+    'athletic': 'athletic build',
+    'average': 'average build',
+    'curvy': 'curvy build',
+    'plus-size': 'plus-size build',
+  };
+  if (persona.bodyType && bodyTypeMap[persona.bodyType]) {
+    parts.push(`and a ${bodyTypeMap[persona.bodyType]}`);
+  }
+
+  return parts.join(', ') + '.';
+}
+
 function App() {
   const [prompt, setPrompt] = useState(PRESET_PROMPTS[0].prompt);
   const [gender, setGender] = useState('female');
@@ -83,6 +163,42 @@ function App() {
   const [colorHex, setColorHex] = useState(null);
   const [useColorLock, setUseColorLock] = useState(true);
 
+  // New state for color palette and backdrop matching
+  const [colorPalette, setColorPalette] = useState([]);
+  const [backdropSuggestions, setBackdropSuggestions] = useState([]);
+  const [selectedBackdrop, setSelectedBackdrop] = useState(null);
+  const [autoBackdrop, setAutoBackdrop] = useState(true);
+
+  // New state for model persona
+  const [modelPersona, setModelPersona] = useState({
+    gender: 'female',
+    ageRange: 'adult',
+    ethnicity: 'any',
+    skinTone: 'medium',
+    hairStyle: 'long',
+    hairColor: 'brown',
+    bodyType: 'average',
+  });
+
+  // Generate backdrop suggestions when palette changes
+  useEffect(() => {
+    if (colorPalette.length > 0) {
+      const suggestions = generateBackdropSuggestions(colorPalette);
+      setBackdropSuggestions(suggestions);
+
+      // Auto-select best backdrop if enabled
+      if (autoBackdrop) {
+        const auto = getAutoBackdrop(colorPalette);
+        setSelectedBackdrop(auto);
+      }
+    }
+  }, [colorPalette, autoBackdrop]);
+
+  // Keep gender in sync with modelPersona
+  useEffect(() => {
+    setGender(modelPersona.gender);
+  }, [modelPersona.gender]);
+
   const handleFileSelect = (file) => {
     setSelectedFile(file);
     setGeneratedResult(null);
@@ -90,9 +206,26 @@ function App() {
     setStatusMessage('Image ready - add your style prompt and hit generate.');
   };
 
+  const handleColorDetected = (palette) => {
+    if (Array.isArray(palette)) {
+      setColorPalette(palette);
+      // Set the dominant color for backward compatibility
+      if (palette.length > 0) {
+        setColorHex(palette[0].hex);
+      }
+    } else {
+      // Legacy single color
+      setColorHex(palette);
+      setColorPalette([]);
+    }
+  };
+
   const clearSelection = () => {
     setSelectedFile(null);
     setGeneratedResult(null);
+    setColorPalette([]);
+    setBackdropSuggestions([]);
+    setSelectedBackdrop(null);
     setStatusMessage('Waiting for upload');
   };
 
@@ -104,24 +237,43 @@ function App() {
 
     const effectivePrompt = (prompt || '').trim() || PRESET_PROMPTS[0].prompt;
     const variationCue = VARIATION_CUES[Math.floor(Math.random() * VARIATION_CUES.length)];
-    const fidelityGuard = `Use a ${gender === 'female' ? 'female' : 'male'} human model. Match the uploaded garment exactly (shape, silhouette, fit, color, pattern/print, logos). Do not recolor or restyle the garment. Do not add or remove accessories, props, jewelry, text, or extra garments. Keep background consistent with the style. Photorealistic, high resolution, skin-safe lighting.`;
+
+    // Build model persona description
+    const personaDescription = buildPersonaDescription(modelPersona);
+    const fidelityGuard = `${personaDescription} Match the uploaded garment exactly (shape, silhouette, fit, color, pattern/print, logos). Do not recolor or restyle the garment. Do not add or remove accessories, props, jewelry, text, or extra garments. Keep background consistent with the style. Photorealistic, high resolution, skin-safe lighting.`;
+
+    // Build backdrop clause from selected backdrop
+    const backdropClause = selectedBackdrop
+      ? `Backdrop: Seamless backdrop in ${selectedBackdrop.name} (${selectedBackdrop.hex}), smooth gradient lighting with soft edges.`
+      : backdrop;
+
+    // Build color palette context
+    const paletteClause =
+      colorPalette.length > 0
+        ? `Garment color palette: ${colorPalette.map(c => `${c.simpleName || c.name} (${c.hex})`).slice(0, 3).join(', ')}.`
+        : '';
+
     const colorClause =
       useColorLock && colorHex
-        ? `Color lock: use exact garment color ${colorHex}, no hue shift, no saturation change.`
+        ? `Color lock: preserve exact garment color ${colorHex}, no hue shift, no saturation change.`
         : '';
+
     const finalPrompt = [
       effectivePrompt,
       pose,
-      backdrop,
+      backdropClause,
+      paletteClause,
       variationCue,
       fidelityGuard,
       colorClause,
       negative ? `Negative: ${negative}` : '',
     ].join(' ');
+
     const formData = new FormData();
     formData.append('image', selectedFile);
     formData.append('prompt', finalPrompt);
     formData.append('gender', gender);
+    formData.append('modelPersona', JSON.stringify(modelPersona));
 
     setIsGenerating(true);
     setError(null);
@@ -198,8 +350,24 @@ function App() {
                 isGenerating={isGenerating}
                 selectedFile={selectedFile}
                 onClear={clearSelection}
-                onColorDetected={(hex) => setColorHex(hex)}
+                onColorDetected={handleColorDetected}
               />
+
+              {colorPalette.length > 0 && (
+                <ColorPaletteDisplay palette={colorPalette} />
+              )}
+
+              {backdropSuggestions.length > 0 && (
+                <div className="glass-panel p-5">
+                  <BackdropSuggestions
+                    suggestions={backdropSuggestions}
+                    selectedBackdrop={selectedBackdrop}
+                    onSelect={setSelectedBackdrop}
+                    autoBackdrop={autoBackdrop}
+                    onToggleAuto={setAutoBackdrop}
+                  />
+                </div>
+              )}
 
             <div className="glass-panel p-6 space-y-4">
               <div className="flex items-center gap-3">
@@ -238,26 +406,6 @@ function App() {
                 ))}
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <div className="text-sm text-slate-300 font-semibold">Model persona (strict):</div>
-                {[
-                  { value: 'female', label: 'Woman' },
-                  { value: 'male', label: 'Man' },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setGender(option.value)}
-                    className={`px-3 py-2 rounded-full text-sm border transition ${
-                      gender === option.value
-                        ? 'bg-primary/20 border-primary/50 text-white'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
 
               <div className="pt-4 space-y-3">
                 <div className="text-sm text-slate-300 font-semibold">Pose</div>
@@ -357,10 +505,17 @@ function App() {
               )}
             </div>
 
+            <PersonaPresets onSelectPreset={setModelPersona} />
+
+            <ModelPersonaSelector
+              modelPersona={modelPersona}
+              onChange={setModelPersona}
+            />
+
             <div className="glass-panel p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="w-5 h-5 text-primary" />
-                <p className="text-sm text-slate-300">Process (garment locked, gender locked)</p>
+                <p className="text-sm text-slate-300">Process (garment locked, model locked)</p>
               </div>
               <div className="grid sm:grid-cols-3 gap-3">
                 {processSteps.map((step) => (
