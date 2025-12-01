@@ -170,7 +170,20 @@ async function extractColorPalette(imagePath, numColors = 5) {
         const dominantColors = kMeansClustering(pixels, paletteSize);
         dominantColors.sort((a, b) => b.percentage - a.percentage);
 
-        return dominantColors;
+        // Prefer the brightest plausible cluster when the main cluster is too dark (common for white garments under shadow)
+        const withLightness = dominantColors.map(c => ({ ...c, lightness: rgbToHsl(c.r, c.g, c.b).l }));
+        const top = withLightness[0];
+        const brightest = withLightness.reduce((best, c) => (c.lightness > best.lightness ? c : best), withLightness[0]);
+
+        let primary = top;
+        const lightnessGain = brightest.lightness - top.lightness;
+        const sufficientShare = brightest.percentage >= Math.max(8, top.percentage * 0.35);
+        if (lightnessGain >= 15 && sufficientShare) {
+            primary = brightest;
+        }
+
+        const reordered = [primary, ...withLightness.filter(c => c !== primary)];
+        return reordered.map(({ lightness, ...rest }) => rest);
     } catch (error) {
         console.error("Color extraction error:", error);
         return [{ hex: '#808080', percentage: 100 }]; // Fallback Grey

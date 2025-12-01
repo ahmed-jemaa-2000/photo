@@ -4,12 +4,13 @@ const path = require('path');
 const axios = require('axios');
 const db = require('../db/database');
 const geminiService = require('./geminiService');
-const { PRESET_PROMPTS, POSE_PROMPTS, SHOE_POSE_PROMPTS, BACKDROP_PROMPTS } = require('../config/botConfig');
+const { PRESET_PROMPTS, POSE_PROMPTS, SHOE_POSE_PROMPTS, MODELS, BACKGROUNDS } = require('../config/botConfig');
 
 const locales = require('../config/locales');
 const { extractColorPalette } = require('../utils/serverColorExtraction');
 const { getColorName } = require('../utils/colorNaming');
 
+const HERO_BANNER_PATH = path.join(__dirname, '..', 'assets', 'banner', 'banner.png');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -101,24 +102,60 @@ if (bot) {
     // If language not set (or default 'en' but we want to force choice first time? No, let's just offer choice)
     // Actually, let's show language picker if it's a new user or they explicitly ask
 
-    // For now, simple start message with language toggle
+    // Pro Onboarding Flow
     const lang = dbUser.language || 'en';
 
+    // Send Hero Image + Menu
+    const heroImage = fs.existsSync(HERO_BANNER_PATH)
+      ? { source: HERO_BANNER_PATH }
+      : 'https://placehold.co/1200x600.png?text=Clothes2Model+AI+Tunisia';
+
+    await ctx.replyWithPhoto(heroImage, {
+      caption: t('welcome_hero_caption', lang),
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback(t('buttons.start_creating', lang), 'start_creating')],
+        [Markup.button.callback(t('buttons.how_it_works', lang), 'tutorial'), Markup.button.callback(t('buttons.pricing', lang), 'pricing_cb')]
+      ])
+    });
+  });
+
+  // Action: Start Creating
+  bot.action('start_creating', async (ctx) => {
+    const userId = ctx.from.id;
+    const user = await db.getUser(userId);
+    const lang = user?.language || 'en';
+
     // Check for email
-    if (!dbUser.email) {
-      userState.set(user.id, { step: 'waiting_for_email' });
-      return ctx.reply(t('ask_email', lang));
+    if (!user.email) {
+      userState.set(userId, { step: 'waiting_for_email' });
+      return ctx.reply(t('ask_email_pro', lang));
     }
 
+    // If email exists, show Language Selector (or go to "Send Photo" instruction)
+    // Plan said: "Show Language Selector"
     await ctx.reply(
-      t('welcome', lang, { id: user.id, credits: dbUser.credits }),
-      {
-        parse_mode: 'Markdown',
-        ...Markup.inlineKeyboard([
-          [Markup.button.callback('🇬🇧 English', 'set_lang_en'), Markup.button.callback('🇹🇳 Tounsi', 'set_lang_tn')]
-        ])
-      }
+      'Choose your language / Khtar el lougha:',
+      Markup.inlineKeyboard([
+        [Markup.button.callback('🇬🇧 English', 'set_lang_en'), Markup.button.callback('🇹🇳 Tounsi', 'set_lang_tn')]
+      ])
     );
+  });
+
+  // Action: Tutorial
+  bot.action('tutorial', async (ctx) => {
+    const userId = ctx.from.id;
+    const user = await db.getUser(userId);
+    const lang = user?.language || 'en';
+    await ctx.reply(t('tutorial_msg', lang), { parse_mode: 'Markdown' });
+  });
+
+  // Action: Pricing
+  bot.action('pricing_cb', async (ctx) => {
+    const userId = ctx.from.id;
+    const user = await db.getUser(userId);
+    const lang = user?.language || 'en';
+    await ctx.reply(t('pricing_msg', lang), { parse_mode: 'Markdown' });
   });
 
   // Text Handler (for Email)
@@ -435,15 +472,14 @@ if (bot) {
     userState.set(userId, state);
 
     ctx.editMessageText(
-      t('photo_received', lang).replace('product category', 'model gender').replace('chnowa el produit', 'el genre mta3 el mannequin'), // Reuse/Adapt message or just ask for gender
+      t('photo_received', lang).replace('product category', 'model gender').replace('chnowa el produit', 'el genre mta3 el mannequin'),
       Markup.inlineKeyboard([
         [Markup.button.callback(t('buttons.female', lang), 'gender_female'), Markup.button.callback(t('buttons.male', lang), 'gender_male')]
       ])
     );
   });
 
-
-  // 2. Gender Handler
+  // 1.6 Gender Handler
   bot.action(/gender_(.+)/, async (ctx) => {
     const gender = ctx.match[1];
     const userId = ctx.from.id;
@@ -454,121 +490,260 @@ if (bot) {
     if (!state) return ctx.reply(t('session_expired', lang));
 
     state.gender = gender;
-    state.step = 'ethnicity';
+    state.modelIndex = 0; // Initialize model carousel
     userState.set(userId, state);
 
-    ctx.editMessageText(
-      t('choose_ethnicity', lang),
-      Markup.inlineKeyboard([
-        [Markup.button.callback(t('buttons.tunisian', lang), 'eth_tunisian'), Markup.button.callback(t('buttons.european', lang), 'eth_caucasian')]
+    await sendModelSelection(ctx, userId, 0);
+  });
+
+  // Helper: Send Model Carousel
+  const sendModelSelection = async (ctx, userId, index) => {
+    const user = await db.getUser(userId);
+    const lang = user?.language || 'en';
+    const state = userState.get(userId);
+
+    // Filter models by gender if needed, or just show all? 
+    // Let's filter by gender if user selected one? 
+    // Wait, we removed gender selection step. Let's filter by implied gender or show all?
+    // The user said "choose model photo from the list".
+    // Let's show ALL models but maybe sort them? 
+    // Actually, let's just show all MODELS from config.
+
+    const models = MODELS.filter(m => m.gender === state.gender);
+    const total = models.length;
+    // Wrap index
+    const i = (index + total) % total;
+    state.modelIndex = i;
+    userState.set(userId, state);
+
+    const model = models[i];
+    const name = model.name[lang] || model.name.en;
+    const style = model.style[lang] || model.style.en;
+
+    const caption = `👤 **${name}**\n🎭 ${style}\n\n${model.description}`;
+
+    const buttons = [
+      [
+        Markup.button.callback('⬅️', 'model_prev'),
+        Markup.button.callback(`✅ Select ${name}`, `model_select_${model.id}`),
+        Markup.button.callback('➡️', 'model_next')
+      ]
+    ];
+
+    // If editing existing message (from Prev/Next) vs sending new (from Category)
+    // We can try editMessageMedia if it was a photo, but previous was text (Category).
+    // So we must delete previous or send new. 
+    // Simplest: Delete previous text if possible, send new photo.
+    // Or just send photo.
+
+    try {
+      if (ctx.callbackQuery) {
+        // If we are navigating (prev/next), we are editing the media
+        // But if we came from Category (text), we can't edit text into photo easily without error if types differ too much in some clients, 
+        // but editMessageMedia works for converting animation/photo. 
+        // However, Category was text. 
+        // So:
+        // If coming from Category (text), delete text and send photo.
+        // If coming from Model Prev/Next (photo), edit media.
+
+        const media = (model.path && fs.existsSync(model.path))
+          ? { source: model.path }
+          : model.previewUrl;
+
+        if (ctx.callbackQuery.data.startsWith('cat_')) {
+          await ctx.deleteMessage().catch(() => { });
+          await ctx.replyWithPhoto(media, {
+            caption,
+            parse_mode: 'Markdown',
+            ...Markup.inlineKeyboard(buttons)
+          });
+        } else {
+          await ctx.editMessageMedia({
+            type: 'photo',
+            media: media,
+            caption,
+            parse_mode: 'Markdown'
+          }, Markup.inlineKeyboard(buttons));
+        }
+      }
+    } catch (err) {
+      // Fallback if edit fails
+      console.error('Carousel error', err);
+      await ctx.replyWithPhoto(model.previewUrl, {
+        caption,
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard(buttons)
+      });
+    }
+  };
+
+  // Model Navigation Handlers
+  bot.action('model_prev', (ctx) => {
+    const userId = ctx.from.id;
+    const state = userState.get(userId);
+    if (!state) return ctx.answerCbQuery('Session expired');
+    sendModelSelection(ctx, userId, state.modelIndex - 1);
+  });
+
+  bot.action('model_next', (ctx) => {
+    const userId = ctx.from.id;
+    const state = userState.get(userId);
+    if (!state) return ctx.answerCbQuery('Session expired');
+    sendModelSelection(ctx, userId, state.modelIndex + 1);
+  });
+
+  // Model Selection Handler
+  bot.action(/model_select_(.+)/, async (ctx) => {
+    const modelId = ctx.match[1];
+    const userId = ctx.from.id;
+    const state = userState.get(userId);
+    if (!state) return ctx.reply('Session expired');
+
+    const selectedModel = MODELS.find(m => m.id === modelId);
+    state.selectedModel = selectedModel;
+    state.bgIndex = 0; // Init bg carousel
+    userState.set(userId, state);
+
+    await sendBackgroundSelection(ctx, userId, 0);
+  });
+
+
+  // Helper: Send Background Carousel
+  const sendBackgroundSelection = async (ctx, userId, index) => {
+    const user = await db.getUser(userId);
+    const lang = user?.language || 'en';
+    const state = userState.get(userId);
+
+    const backgrounds = BACKGROUNDS;
+    const total = backgrounds.length;
+    const i = (index + total) % total;
+    state.bgIndex = i;
+    userState.set(userId, state);
+
+    const bg = backgrounds[i];
+    const name = bg.name[lang] || bg.name.en;
+
+    const caption = `🏙️ **${name}**`;
+    const media = (bg.path && fs.existsSync(bg.path)) ? { source: bg.path } : bg.previewUrl;
+
+    const buttons = [
+      [
+        Markup.button.callback('⬅️', 'bg_prev'),
+        Markup.button.callback(`✅ Select ${name}`, `bg_select_${bg.id}`),
+        Markup.button.callback('➡️', 'bg_next')
+      ]
+    ];
+
+    try {
+      // We are coming from Model Selection (Photo) or BG Prev/Next (Photo).
+      // So we can always use editMessageMedia.
+      await ctx.editMessageMedia({
+        type: 'photo',
+        media: media,
+        caption,
+        parse_mode: 'Markdown'
+      }, Markup.inlineKeyboard(buttons));
+    } catch (err) {
+      console.error('BG Carousel error', err);
+      await ctx.replyWithPhoto(media, {
+        caption,
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard(buttons)
+      });
+    }
+  };
+
+  // Background Navigation
+  bot.action('bg_prev', (ctx) => {
+    const userId = ctx.from.id;
+    const state = userState.get(userId);
+    if (!state) return ctx.answerCbQuery('Session expired');
+    sendBackgroundSelection(ctx, userId, state.bgIndex - 1);
+  });
+
+  bot.action('bg_next', (ctx) => {
+    const userId = ctx.from.id;
+    const state = userState.get(userId);
+    if (!state) return ctx.answerCbQuery('Session expired');
+    sendBackgroundSelection(ctx, userId, state.bgIndex + 1);
+  });
+
+  // Background Selection & Review
+  bot.action(/bg_select_(.+)/, async (ctx) => {
+    const bgId = ctx.match[1];
+    const userId = ctx.from.id;
+    const state = userState.get(userId);
+    if (!state) return ctx.reply('Session expired');
+
+    const selectedBg = BACKGROUNDS.find(b => b.id === bgId);
+    state.selectedBackground = selectedBg;
+    userState.set(userId, state);
+
+    // Send Review
+    const user = await db.getUser(userId);
+    const lang = user?.language || 'en';
+
+    const modelName = state.selectedModel.name[lang] || state.selectedModel.name.en;
+    const bgName = state.selectedBackground.name[lang] || state.selectedBackground.name.en;
+
+    const reviewText = `📝 **Review Your Order**\n\n` +
+      `👤 **Model:** ${modelName}\n` +
+      `🏙️ **Background:** ${bgName}\n` +
+      `👕 **Category:** ${state.category}\n\n` +
+      `Ready to generate?`;
+
+    // Delete the background carousel message to clean up, or just reply?
+    // Let's reply with text.
+    await ctx.deleteMessage().catch(() => { });
+    await ctx.reply(reviewText, {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback('✨ Generate Photo', 'generate_photo')],
+        [Markup.button.callback('🔄 Start Over', 'start_over')]
       ])
-    );
-  });
-
-  // 3. Ethnicity Handler
-  bot.action(/eth_(.+)/, async (ctx) => {
-    const ethnicity = ctx.match[1];
-    const userId = ctx.from.id;
-    const user = await db.getUser(userId);
-    const lang = user?.language || 'en';
-
-    const state = userState.get(userId);
-    if (!state) return ctx.reply(t('session_expired', lang));
-
-    state.ethnicity = ethnicity;
-    state.step = 'style';
-    userState.set(userId, state);
-
-    const buttons = PRESET_PROMPTS.map((p, i) => {
-      const label = p.label[lang] || p.label.en;
-      return Markup.button.callback(label, `style_${i}`);
     });
-    const rows = chunk(buttons, 2);
-
-    ctx.editMessageText(
-      t('choose_style', lang),
-      Markup.inlineKeyboard(rows)
-    );
-
   });
 
-  // 4. Style Handler
-  bot.action(/style_(.+)/, async (ctx) => {
-    const styleIndex = parseInt(ctx.match[1]);
+  bot.action('start_over', async (ctx) => {
+    ctx.deleteMessage().catch(() => { });
+    ctx.reply('Send a new photo to start over.');
+    userState.delete(ctx.from.id);
+  });
+
+  // Generate Handler
+  bot.action('generate_photo', async (ctx) => {
     const userId = ctx.from.id;
+    const state = userState.get(userId);
     const user = await db.getUser(userId);
     const lang = user?.language || 'en';
 
-    const state = userState.get(userId);
     if (!state) return ctx.reply(t('session_expired', lang));
-
-    state.stylePrompt = PRESET_PROMPTS[styleIndex].prompt;
-    state.styleLabel = PRESET_PROMPTS[styleIndex].label[lang] || PRESET_PROMPTS[styleIndex].label.en;
-    state.step = 'pose';
-    userState.set(userId, state);
-
-    const poses = state.category === 'shoes' ? SHOE_POSE_PROMPTS : POSE_PROMPTS;
-    const buttons = poses.map((p, i) => {
-      const label = p.label[lang] || p.label.en;
-      return Markup.button.callback(label, `pose_${i}`);
-    });
-
-    const rows = chunk(buttons, 2);
-
-    ctx.editMessageText(
-      t('choose_pose', lang),
-      Markup.inlineKeyboard(rows)
-    );
-
-  });
-
-  // 5. Pose Handler
-  bot.action(/pose_(.+)/, async (ctx) => {
-    const poseIndex = parseInt(ctx.match[1]);
-    const userId = ctx.from.id;
-    const user = await db.getUser(userId);
-    const lang = user?.language || 'en';
-
-    const state = userState.get(userId);
-    if (!state) return ctx.reply(t('session_expired', lang));
-
-    if (!state) return ctx.reply(t('session_expired', lang));
-
-    const poses = state.category === 'shoes' ? SHOE_POSE_PROMPTS : POSE_PROMPTS;
-    state.posePrompt = poses[poseIndex].prompt;
-    state.step = 'backdrop';
-    userState.set(userId, state);
-
-
-    const buttons = BACKDROP_PROMPTS.map((p, i) => {
-      const label = p.label[lang] || p.label.en;
-      return Markup.button.callback(label, `bg_${i}`);
-    });
-    const rows = chunk(buttons, 2);
-
-    ctx.editMessageText(
-      t('choose_backdrop', lang),
-      Markup.inlineKeyboard(rows)
-    );
-
-  });
-
-  // 6. Backdrop Handler & Generation
-  bot.action(/bg_(.+)/, async (ctx) => {
-    const bgIndex = parseInt(ctx.match[1]);
-    const userId = ctx.from.id;
-    const user = await db.getUser(userId);
-    const lang = user?.language || 'en';
-
-    const state = userState.get(userId);
-    if (!state) return ctx.reply(t('session_expired', lang));
-
-    state.backdropPrompt = BACKDROP_PROMPTS[bgIndex].prompt;
 
     const result = await db.deductCredit(userId);
     if (!result.success) return ctx.reply(t('insufficient_credits', lang));
 
-    ctx.editMessageText(t('generating', lang));
+    // Animated Progress Bar
+    let progressMsg = t('generating', lang);
+    const progressSteps = [
+      "🎨 **BrandModel** is analyzing your cloth...",
+      "👗 Fitting the model...",
+      "💡 Adjusting studio lighting...",
+      "✨ Rendering final details..."
+    ];
+    let stepIndex = 0;
+
+    // Send initial message
+    await ctx.editMessageText(progressSteps[0], { parse_mode: 'Markdown' });
+
+    const progressInterval = setInterval(async () => {
+      stepIndex = (stepIndex + 1) % progressSteps.length;
+      try {
+        await ctx.editMessageText(progressSteps[stepIndex], { parse_mode: 'Markdown' });
+      } catch (e) {
+        // Ignore edit errors (e.g. if message didn't change or was deleted)
+      }
+    }, 3000);
+
     await ctx.sendChatAction('typing');
 
     try {
@@ -586,32 +761,32 @@ if (bot) {
       const colorName = getColorName(dominantColor);
       console.log(`Detected Color: ${colorName} (${dominantColor})`);
 
-      const ethnicityMap = { 'tunisian': 'Tunisian ethnicity, North African features', 'caucasian': 'Caucasian ethnicity' };
-      const ethDesc = ethnicityMap[state.ethnicity] ? `with ${ethnicityMap[state.ethnicity]}` : '';
-      const genderDesc = state.gender || 'female';
-
       let categoryPrompt = '';
       if (state.category === 'shoes') {
         categoryPrompt = 'Focus on the footwear. The uploaded image is a shoe. Ensure the model is wearing these exact shoes. Low angle or appropriate camera angle to showcase the shoes.';
       }
 
       const fullPrompt = [
-        `CRITICAL: The garment/product is ${colorName}. Match this color exactly.`,
+        `CRITICAL: The garment/product is ${colorName} (${dominantColor}). Match this exact hex color. No hue/saturation/brightness shift.`,
+        `CRITICAL: You MUST preserve the exact design, logos, text, patterns, and zippers from the reference image. Do not hallucinate new details. Do not remove or move existing logos. This is a Product Replica task.`,
+        `CRITICAL: Garment type, fit, and fabric must stay identical to the input image.`,
         categoryPrompt,
-        state.stylePrompt,
-        state.posePrompt,
-        state.backdropPrompt,
-        `Use a ${genderDesc} model ${ethDesc}.`,
+        state.selectedModel.description,
+        state.selectedBackground.prompt,
         `Photorealistic, high resolution, skin-safe lighting.`,
-        `Color lock: preserve exact garment color, no hue shift.`,
+        `Color lock: use the garment image as ground truth for color and graphics. No artistic reinterpretation.`,
         `Modesty Lock: Model must wear neutral trousers or skirt. No partial nudity.`
       ].join(' ');
 
-
-
-      const options = { modelPersona: { gender: state.gender, ethnicity: state.ethnicity } };
+      const options = {
+        modelPersona: { gender: state.selectedModel.gender, ethnicity: state.selectedModel.ethnicity },
+        modelReferencePath: state.selectedModel.path // Pass the local model image path
+      };
 
       const genResult = await geminiService.generateImage(tempPath, fullPrompt, options);
+
+      // Stop animation
+      clearInterval(progressInterval);
 
       if (genResult.imageUrl) {
         const credits = await db.getCredits(userId);
@@ -620,17 +795,18 @@ if (bot) {
         recentResults.set(userId, {
           referenceUrl,
           imageUrl: genResult.imageUrl,
-          gender: state.gender,
-          ethnicity: state.ethnicity,
+          gender: state.selectedModel.gender,
+          ethnicity: state.selectedModel.ethnicity,
           category: state.category,
-          styleLabel: state.styleLabel,
-          posePrompt: state.posePrompt,
-          backdropPrompt: state.backdropPrompt,
+          styleLabel: 'Custom',
+          posePrompt: 'Natural',
+          backdropPrompt: state.selectedBackground.prompt,
           colorName,
         });
 
+        await ctx.deleteMessage().catch(() => { }); // Delete progress message
         await ctx.replyWithPhoto(genResult.imageUrl, {
-          caption: t('result_caption', lang, { style: state.styleLabel, gender: state.gender, ethnicity: state.ethnicity, credits }),
+          caption: t('result_caption', lang, { style: 'Custom', gender: state.selectedModel.gender, ethnicity: 'Tunisian', credits }),
           parse_mode: 'Markdown'
         });
 
@@ -648,6 +824,7 @@ if (bot) {
       userState.delete(userId);
 
     } catch (error) {
+      clearInterval(progressInterval); // Stop animation on error
       console.error('Bot generation error:', error);
       ctx.reply(t('regen_failed', lang));
       await db.refundCredit(userId);

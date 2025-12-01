@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Clothes2Model is an AI-powered fashion visualization tool that transforms garment photos into professional model shots. Users upload clothing images and customize style prompts (lighting, poses, backdrops) to generate photorealistic model renders via the GeminiGen API.
+Clothes2Model is an AI-powered fashion visualization tool that transforms garment photos into professional model shots. Users upload clothing images and customize style prompts (lighting, poses, backdrops) to generate photorealistic model renders via the giminigen API.
 
 ## Architecture
 
@@ -33,7 +33,7 @@ This is a monorepo with client-server architecture:
 **Key Architecture Notes**:
 - Single POST endpoint `/api/generate` accepts multipart form data (image file + prompt + gender)
 - Temporary files stored in `uploads/` directory, deleted after processing
-- geminiService handles GeminiGen API integration:
+- geminiService handles giminigen API integration:
   - Submits image generation job
   - Polls `/uapi/v1/history/{uuid}` endpoint every 3 seconds (max 20 attempts)
   - Returns image URLs and metadata when status >= 2
@@ -41,9 +41,9 @@ This is a monorepo with client-server architecture:
 **Environment Variables** (server/.env):
 ```
 PORT=3000
-GEMINIGEN_API_KEY=<your-key>
-GEMINIGEN_BASE_URL=https://api.geminigen.ai (optional)
-GEMINIGEN_MODEL=imagen-pro (optional)
+giminigen_API_KEY=<your-key>
+giminigen_BASE_URL=https://api.giminigen.ai (optional)
+giminigen_MODEL=imagen-pro (optional)
 ```
 
 ## Development Commands
@@ -91,7 +91,7 @@ Server routes are defined inline in [server/index.js](server/index.js). For new 
 2. If calling external APIs, consider creating a new service file in `server/services/`
 3. Follow the pattern: async/await, try/catch, cleanup in finally block
 
-### GeminiGen API Integration
+### giminigen API Integration
 The [geminiService.js](server/services/geminiService.js) implements:
 - `generateImage(imagePath, userPrompt, options)` - main entry point
 - `pollForResult(uuid)` - internal polling mechanism
@@ -116,7 +116,7 @@ The [geminiService.js](server/services/geminiService.js) implements:
 
 ## Important Notes
 
-- The .env file contains the GeminiGen API key and should never be committed (currently tracked - consider adding to .gitignore)
+- The .env file contains the giminigen API key and should never be committed (currently tracked - consider adding to .gitignore)
 - The `uploads/` directory is created dynamically if it doesn't exist
 - Client expects server CORS to be enabled (already configured in server/index.js)
 - No authentication or rate limiting is implemented

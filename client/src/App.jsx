@@ -325,7 +325,7 @@ function App() {
 
   const processSteps = [
     { label: 'Upload', description: 'Clothing photo ready', done: !!selectedFile },
-    { label: 'Render', description: 'GeminiGen processing', done: isGenerating || !!generatedResult },
+    { label: 'Render', description: 'giminigen processing', done: isGenerating || !!generatedResult },
     { label: 'Ready', description: 'Download & share', done: !!generatedResult },
   ];
 
@@ -342,7 +342,7 @@ function App() {
           <div className="inline-flex items-center justify-center px-4 py-3 bg-white/5 rounded-2xl mb-5 shadow-2xl border border-white/10">
             <Sparkles className="w-8 h-8 text-primary mr-3" />
             <div className="text-left">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">GeminiGen powered</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">giminigen powered</p>
               <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
                 Clothes<span className="text-primary">2</span>Model
               </h1>
@@ -561,7 +561,7 @@ function App() {
         </main>
 
         <footer className="mt-10 text-center text-slate-500 text-sm">
-          <p>(c) 2024 Clothes2Model AI - powered by GeminiGen</p>
+          <p>(c) 2024 Clothes2Model AI - powered by giminigen</p>
         </footer>
       </div>
     </div>

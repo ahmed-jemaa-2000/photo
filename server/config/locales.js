@@ -35,13 +35,13 @@ const locales = {
     gift_success: "Gifted {amount} credits to user {id}.",
     gift_received: "You received {amount} bonus credits!",
     broadcast_sent: "Announcement sent to {count} users.",
-    video_offer: "Animate this look? Uses 1 credit to create an 8s 1080p Veo video.",
+    video_offer: "Animate this look? Uses 1 credit to create an 8s 1080p BrandModel video.",
     video_no_recent: "No recent image found to animate. Please send a new photo first.",
     video_in_progress: "Already generating your video. Hang tight...",
-    video_generating: "Animating your look with Veo 3.1 Fast (8s, 1080p)...",
+    video_generating: "Animating your look with BrandModel Motion (8s, 1080p)...",
     video_ready: "Your animated look is ready!",
     video_failed: "Video generation failed. Credit refunded.",
-    video_premium_required: "Video generation needs a Premium GeminiGen plan. Credit refunded. Please upgrade the API plan or ask admin.",
+    video_premium_required: "Video generation needs a Premium BrandModel plan. Credit refunded. Please upgrade the API plan or ask admin.",
     buttons: {
       female: "Female",
       male: "Male",
@@ -50,11 +50,17 @@ const locales = {
       regenerate: "Regenerate",
       clothes: "Clothes",
       shoes: "Shoes",
-      animate: "Animate 8s Video"
-    }
+      animate: "Animate 8s Video",
+      start_creating: "🚀 Start Creating",
+      how_it_works: "ℹ️ How it Works",
+      pricing: "💎 Pricing"
+    },
+    welcome_hero_caption: "👋 **Welcome to BrandModel AI!**\n\nThe #1 AI Fashion Photographer in Tunisia 🇹🇳.\nTransform your clothes into professional model photos in seconds.\n\nChoose an option to start:",
+    tutorial_msg: "ℹ️ **How it Works:**\n\n1. 📸 **Send Photo**: Upload a clear photo of your product.\n2. 👩 **Pick Model**: Choose a professional model.\n3. 🏙️ **Pick Place**: Select a stunning background.\n4. ✨ **Get Result**: Receive your BrandModel photo in seconds!\n\nIt's that easy!",
+    ask_email_pro: "Welcome! To create your account and get **5 Free Credits**, please enter your email address:"
   },
   tn: {
-    welcome: "3aslema fi Clothes2Model AI!\n\nID mte3ek: `{id}`\nSolde: {credits}\n\nNote: 3andek {credits} credits tawa. Kallem l'admin bech ya3tik l'access.",
+    welcome: "3aslema fi BrandModel AI!\n\nID mte3ek: `{id}`\nSolde: {credits}\n\nNote: 3andek {credits} credits tawa. Kallem l'admin bech ya3tik l'access.",
     credits_remaining: "Mazeloulek {credits} credits.",
     photo_received: "Weslet el taswira!\nAwalan, khtar chnowa el produit:",
     choose_category: "Chnowa el produit?",
@@ -89,13 +95,13 @@ const locales = {
     gift_success: "3tit {amount} credits lel user {id}.",
     gift_received: "Jek cadeau {amount} credits! Sa77a!",
     broadcast_sent: "El message wsol l {count} users.",
-    video_offer: "T7eb na3mloulha video? Tetsa7 1 credit (8s 1080p) b Veo.",
+    video_offer: "T7eb na3mloulha video? Tetsa7 1 credit (8s 1080p) b BrandModel.",
     video_no_recent: "Ma fama taswira akhira bech na3mloulha video. Ab3ath wa7da jdida.",
     video_in_progress: "Na3mloulek video tawa. Sber chwaya...",
-    video_generating: "Na7awwel el look mte3ek le video (Veo 3.1 Fast 8s, 1080p)...",
+    video_generating: "Na7awwel el look mte3ek le video (BrandModel Motion 8s, 1080p)...",
     video_ready: "El video jahza!",
     video_failed: "Video ma kha3letch. Raja3nalek el credit.",
-    video_premium_required: "Video ye7taj plan Premium f GeminiGen. Raja3nalek el credit. Lzm upgrade wala kalem l'admin.",
+    video_premium_required: "Video ye7taj plan Premium f BrandModel. Raja3nalek el credit. Lzm upgrade wala kalem l'admin.",
     buttons: {
       female: "Mra",
       male: "Rajel",
@@ -104,8 +110,14 @@ const locales = {
       regenerate: "3awed",
       clothes: "7wayej",
       shoes: "Sabbat",
-      animate: "Aml Video 8s"
-    }
+      animate: "Aml Video 8s",
+      start_creating: "🚀 Ebda Sana3",
+      how_it_works: "ℹ️ Kifech?",
+      pricing: "💎 Asweem"
+    },
+    welcome_hero_caption: "👋 **Marhbe bik fi [Bot Name]!**\n\nAhsen AI Fashion Photographer fi Tounes 🇹🇳.\nRod 7wayjek tsawer mannequins pro fi thwani.\n\nKhtar option bech tebda:",
+    tutorial_msg: "ℹ️ **Kifech Testa3mel:**\n\n1. 📸 **Ab3ath Taswira**: Souwar 7wayjek w ab3athhom.\n2. 👩 **Khtar Mannequin**: Khtar el model elli ye3jbek.\n3. 🏙️ **Khtar Blasa**: Khtar el background.\n4. ✨ **Natija**: Chouf el resultat fi thwani!\n\nSahl barcha!",
+    ask_email_pro: "Marhbe! Bech ta3mel compte w takhou **5 Credits Gratuit**, brabbi 7ott l'email mte3ek:"
   }
 };
 
