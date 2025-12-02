@@ -1,56 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ImageUpload from './components/ImageUpload';
 import GenerationResult from './components/GenerationResult';
-import ColorPaletteDisplay from './components/ColorPaletteDisplay';
-import BackdropSuggestions from './components/BackdropSuggestions';
 import ModelPersonaSelector from './components/ModelPersonaSelector';
-import PersonaPresets from './components/PersonaPresets';
-import { generateBackdropSuggestions, getAutoBackdrop } from './utils/colorHarmony';
-import { Sparkles, Wand2, Clock3, CheckCircle2, Loader2, Palette } from 'lucide-react';
+import ModelSelection from './components/ModelSelection';
+import BackgroundSelection from './components/BackgroundSelection';
+import AnimatedProgress from './components/AnimatedProgress';
+import { Sparkles, Wand2, Clock3, CheckCircle2, Loader2, ChevronRight, ChevronLeft, User, Shirt, Camera } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-const PRESET_PROMPTS = [
-  {
-    label: 'Studio clean',
-    prompt:
-      'High-resolution studio photo on a neutral light-gray backdrop, soft three-point lighting, accurate fabric color, subtle shadow under feet, model facing camera in a relaxed stance, shot on 85mm prime.',
-  },
-  {
-    label: 'Outdoor lifestyle',
-    prompt:
-      'Natural daylight street-style look with soft overcast light, shallow depth of field, muted urban background blur, candid pose with a casual smile, crisp fabric texture and true color.',
-  },
-  {
-    label: 'Runway drama',
-    prompt:
-      'Runway-inspired portrait with dramatic rim lighting, bold contrast, confident pose, cinematic shadows, minimal background detail, editorial fashion tone.',
-  },
-  {
-    label: 'E-com white',
-    prompt:
-      'E-commerce catalog shot on pure white seamless backdrop, even soft lighting, no harsh shadows, model facing forward and slightly angled, fabric texture sharp and color-accurate.',
-  },
-  {
-    label: 'Luxury campaign',
-    prompt:
-      'Premium fashion campaign look, soft glow lighting, minimal set, confident pose, gentle vignetting, polished skin tone, fabric drape and sheen emphasized.',
-  },
-  {
-    label: 'Sunset street',
-    prompt:
-      'Golden-hour street vibe with warm sidelighting, blurred urban background, relaxed stance, subtle motion, soft highlights on fabric textures.',
-  },
-  {
-    label: 'Sport active',
-    prompt:
-      'Athletic action pose on a clean sport backdrop, dynamic stance, crisp lighting that freezes motion, sweat-free skin, accurate garment color and stretch, no extra gear, professional fitness catalog feel.',
-  },
-  {
-    label: 'Bridal elegance',
-    prompt:
-      'Bridal portrait on a soft neutral backdrop, gentle window light, graceful posture, smooth skin tone, accurate lace/satin detail and dress silhouette, minimal jewelry, clean floor-length framing, calm and elegant mood.',
-  },
-];
 
 const POSE_PROMPTS = [
   { label: 'Standing', key: 'standing', prompt: 'Full-length standing pose, relaxed weight shift, arms natural, outfit fully visible.' },
@@ -59,11 +16,11 @@ const POSE_PROMPTS = [
   { label: 'Dynamic', key: 'dynamic', prompt: 'Dynamic half-turn with confident stance, torso rotation, outfit front still clear.' },
 ];
 
-const BACKDROP_PROMPTS = [
-  { label: 'Clean studio', prompt: 'Neutral studio backdrop, soft gradient, minimal props.' },
-  { label: 'White seamless', prompt: 'Pure white seamless background, no shadows or props.' },
-  { label: 'Urban blur', prompt: 'Softly blurred urban background, muted tones, no readable signs or text.' },
-  { label: 'Pastel wash', prompt: 'Pastel gradient backdrop with soft edges, calm and minimal.' },
+const SHOE_POSE_PROMPTS = [
+  { label: 'Low Angle Walking', key: 'shoe_walking', prompt: 'Low angle 30-45 degrees from ground, model walking naturally, shoe sole and upper both visible, professional product photography.' },
+  { label: 'Floating/Jump', key: 'shoe_jump', prompt: 'Shoes in mid-air jump pose, dynamic energy, sole visible, clean background, freeze-frame motion.' },
+  { label: 'Seated (Feet Focus)', key: 'shoe_seated', prompt: 'Seated position with feet extended forward, shoes as focal point, relaxed pose, direct camera angle on footwear.' },
+  { label: 'Top Down', key: 'shoe_topdown', prompt: 'Top-down overhead view, feet together or slightly apart, shoes facing camera, flat lay perspective.' },
 ];
 
 const VARIATION_CUES = [
@@ -152,26 +109,23 @@ function buildPersonaDescription(persona) {
 }
 
 function App() {
-  const [prompt, setPrompt] = useState(PRESET_PROMPTS[0].prompt);
-  const [gender, setGender] = useState('female');
+  // Wizard State
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 5;
+
+  // App State
   const [selectedFile, setSelectedFile] = useState(null);
   const [generatedResult, setGeneratedResult] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState('Waiting for upload');
   const [error, setError] = useState(null);
-  const [pose, setPose] = useState(POSE_PROMPTS[0].prompt);
-  const [backdrop, setBackdrop] = useState(BACKDROP_PROMPTS[0].prompt);
-  const [negative, setNegative] = useState('no extra accessories, no text, no logos change, no second person');
-  const [colorHex, setColorHex] = useState(null);
-  const [useColorLock, setUseColorLock] = useState(true);
 
-  // New state for color palette and backdrop matching
-  const [colorPalette, setColorPalette] = useState([]);
-  const [backdropSuggestions, setBackdropSuggestions] = useState([]);
-  const [selectedBackdrop, setSelectedBackdrop] = useState(null);
-  const [autoBackdrop, setAutoBackdrop] = useState(true);
+  // Configuration State
+  const [category, setCategory] = useState('clothes');
+  const [gender, setGender] = useState(null); // Explicit gender selection
 
-  // New state for model persona
+  // Model State
+  const [selectedModel, setSelectedModel] = useState(null);
   const [modelPersona, setModelPersona] = useState({
     gender: 'female',
     ageRange: 'adult',
@@ -182,53 +136,43 @@ function App() {
     bodyType: 'average',
   });
 
-  // Generate backdrop suggestions when palette changes
-  useEffect(() => {
-    if (colorPalette.length > 0) {
-      const suggestions = generateBackdropSuggestions(colorPalette);
-      setBackdropSuggestions(suggestions);
+  // Scene State
+  const [pose, setPose] = useState(POSE_PROMPTS[0].prompt);
+  const [selectedBackground, setSelectedBackground] = useState(null);
+  const [colorPalette, setColorPalette] = useState([]);
+  const [colorHex, setColorHex] = useState(null);
+  const [manualColor, setManualColor] = useState(null); // New: Manual color override
+  const [useColorLock, setUseColorLock] = useState(true);
+  const [negative, setNegative] = useState('no extra accessories, no text, no logos change, no second person');
 
-      // Auto-select best backdrop if enabled
-      if (autoBackdrop) {
-        const auto = getAutoBackdrop(colorPalette);
-        setSelectedBackdrop(auto);
-      }
+  // Sync gender selection with persona
+  useEffect(() => {
+    if (gender) {
+      setModelPersona(prev => ({ ...prev, gender }));
     }
-  }, [colorPalette, autoBackdrop]);
-
-  // Keep gender in sync with modelPersona
-  useEffect(() => {
-    setGender(modelPersona.gender);
-  }, [modelPersona.gender]);
+  }, [gender]);
 
   const handleFileSelect = (file) => {
     setSelectedFile(file);
     setGeneratedResult(null);
     setError(null);
-    setStatusMessage('Image ready - add your style prompt and hit generate.');
+    setManualColor(null); // Reset manual color on new file
+    // Auto advance to next step after short delay if file is valid
+    if (file) {
+      setTimeout(() => setCurrentStep(2), 500);
+    }
   };
 
   const handleColorDetected = (palette) => {
     if (Array.isArray(palette)) {
       setColorPalette(palette);
-      // Set the dominant color for backward compatibility
       if (palette.length > 0) {
         setColorHex(palette[0].hex);
       }
     } else {
-      // Legacy single color
       setColorHex(palette);
       setColorPalette([]);
     }
-  };
-
-  const clearSelection = () => {
-    setSelectedFile(null);
-    setGeneratedResult(null);
-    setColorPalette([]);
-    setBackdropSuggestions([]);
-    setSelectedBackdrop(null);
-    setStatusMessage('Waiting for upload');
   };
 
   const handleGenerate = async () => {
@@ -237,17 +181,17 @@ function App() {
       return;
     }
 
-    const effectivePrompt = (prompt || '').trim() || PRESET_PROMPTS[0].prompt;
     const variationCue = VARIATION_CUES[Math.floor(Math.random() * VARIATION_CUES.length)];
-
-    // Build model persona description
     const personaDescription = buildPersonaDescription(modelPersona);
-    const fidelityGuard = `${personaDescription} Match the uploaded garment exactly (shape, silhouette, fit, color, pattern/print, logos). Do not recolor or restyle the garment. Do not add or remove accessories, props, jewelry, text, or extra garments. Keep background consistent with the style. Photorealistic, high resolution, skin-safe lighting.`;
 
-    // Build backdrop clause from selected backdrop
-    const backdropClause = selectedBackdrop
-      ? `Backdrop: Seamless backdrop in ${selectedBackdrop.name} (${selectedBackdrop.hex}), smooth gradient lighting with soft edges.`
-      : backdrop;
+    // Improved Fidelity Guard: Only mention background consistency if NO background is selected
+    const backgroundGuard = selectedBackground ? '' : 'Keep background consistent with the style.';
+    const fidelityGuard = `${personaDescription} Match the uploaded garment exactly (shape, silhouette, fit, color, pattern/print, logos). Do not recolor or restyle the garment. Do not add or remove accessories, props, jewelry, text, or extra garments. ${backgroundGuard} Photorealistic, high resolution, skin-safe lighting.`;
+
+    // Build backdrop clause
+    const backdropClause = selectedBackground
+      ? `Backdrop: ${selectedBackground.prompt}`
+      : 'Neutral studio backdrop, soft gradient, minimal props.';
 
     // Build color palette context
     const paletteClause =
@@ -255,21 +199,23 @@ function App() {
         ? `Garment color palette: ${colorPalette.map(c => `${c.simpleName || c.name} (${c.hex})`).slice(0, 3).join(', ')}.`
         : '';
 
+    // Use manual color if set, otherwise detected color
+    const activeColor = manualColor || colorHex;
+
     const colorClause =
-      useColorLock && colorHex
-        ? `Color lock: preserve exact garment color ${colorHex}, no hue shift, no saturation change.`
+      useColorLock && activeColor
+        ? `Color lock: preserve exact garment color ${activeColor}, no hue shift, no saturation change.`
         : '';
 
-    // Strong color enforcement using detected name
-    const dominantColorName = colorPalette.length > 0 ? colorPalette[0].name : '';
-    const strongColorClause = dominantColorName
-      ? `CRITICAL: The garment is ${dominantColorName}. Maintain this color exactly.`
+    // Strong color enforcement
+    const dominantColorName = manualColor ? 'the selected color' : (colorPalette.length > 0 ? colorPalette[0].name : '');
+    const strongColorClause = (useColorLock && activeColor)
+      ? `CRITICAL: The garment is ${activeColor}. Maintain this color exactly.`
       : '';
 
     const finalPrompt = [
       strongColorClause,
-      effectivePrompt,
-
+      'High-quality professional fashion photography.',
       pose,
       backdropClause,
       paletteClause,
@@ -282,8 +228,17 @@ function App() {
     const formData = new FormData();
     formData.append('image', selectedFile);
     formData.append('prompt', finalPrompt);
-    formData.append('gender', gender);
+    formData.append('gender', gender || modelPersona.gender);
     formData.append('modelPersona', JSON.stringify(modelPersona));
+
+    if (selectedModel) {
+      formData.append('modelId', selectedModel.id);
+    }
+    formData.append('category', category);
+
+    if (selectedBackground) {
+      formData.append('backgroundPrompt', selectedBackground.prompt);
+    }
 
     setIsGenerating(true);
     setError(null);
@@ -309,9 +264,8 @@ function App() {
         meta: data.meta,
         gender,
         pose,
-        backdrop,
         negative,
-        colorHex: useColorLock ? colorHex : null,
+        colorHex: useColorLock ? activeColor : null,
       });
       setStatusMessage('Render finished - here is your model look.');
     } catch (err) {
@@ -323,103 +277,155 @@ function App() {
     }
   };
 
-  const processSteps = [
-    { label: 'Upload', description: 'Clothing photo ready', done: !!selectedFile },
-    { label: 'Render', description: 'giminigen processing', done: isGenerating || !!generatedResult },
-    { label: 'Ready', description: 'Download & share', done: !!generatedResult },
-  ];
+  const nextStep = () => {
+    if (currentStep < totalSteps) setCurrentStep(currentStep + 1);
+  };
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-primary/25 relative overflow-hidden">
-      <div className="fixed inset-0 -z-10 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[55%] h-[55%] bg-primary/20 rounded-full blur-[140px]" />
-        <div className="absolute bottom-[-15%] right-[-5%] w-[45%] h-[45%] bg-secondary/20 rounded-full blur-[120px]" />
-        <div className="absolute top-1/3 left-1/2 w-[30%] h-[30%] bg-white/5 rounded-full blur-[90px]" />
-      </div>
+  const prevStep = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  };
 
-      <div className="container mx-auto px-4 py-12 flex flex-col min-h-screen">
-        <header className="text-center mb-12">
-          <div className="inline-flex items-center justify-center px-4 py-3 bg-white/5 rounded-2xl mb-5 shadow-2xl border border-white/10">
-            <Sparkles className="w-8 h-8 text-primary mr-3" />
-            <div className="text-left">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">giminigen powered</p>
-              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
-                Clothes<span className="text-primary">2</span>Model
-              </h1>
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1: // Upload
+        return (
+          <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-2">Start with your photo</h2>
+              <p className="text-slate-400">Upload a clear image of the garment you want to showcase.</p>
             </div>
-          </div>
-          <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Upload a garment photo, guide the style, and get a photoreal model render with studio lighting.
-          </p>
-        </header>
-
-        <main className="grid md:grid-cols-5 gap-8 flex-1">
-          <div className="md:col-span-3 space-y-6">
             <ImageUpload
               onFileSelect={handleFileSelect}
               isGenerating={isGenerating}
               selectedFile={selectedFile}
-              onClear={clearSelection}
+              onClear={() => setSelectedFile(null)}
               onColorDetected={handleColorDetected}
             />
+          </div>
+        );
+      case 2: // Essentials (Gender & Category)
+        return (
+          <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-2">Who is this for?</h2>
+              <p className="text-slate-400">Select the target audience and product type.</p>
+            </div>
 
-            {colorPalette.length > 0 && (
-              <ColorPaletteDisplay palette={colorPalette} />
-            )}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Gender Selection */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-center text-slate-300">Target Model</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => setGender('female')}
+                    className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${gender === 'female'
+                        ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20 scale-105'
+                        : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10'
+                      }`}
+                  >
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${gender === 'female' ? 'bg-primary text-white' : 'bg-white/10 text-slate-400'}`}>
+                      <User className="w-8 h-8" />
+                    </div>
+                    <span className="text-lg font-medium">Woman</span>
+                  </button>
+                  <button
+                    onClick={() => setGender('male')}
+                    className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${gender === 'male'
+                        ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20 scale-105'
+                        : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10'
+                      }`}
+                  >
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${gender === 'male' ? 'bg-primary text-white' : 'bg-white/10 text-slate-400'}`}>
+                      <User className="w-8 h-8" />
+                    </div>
+                    <span className="text-lg font-medium">Man</span>
+                  </button>
+                </div>
+              </div>
 
-            {backdropSuggestions.length > 0 && (
-              <div className="glass-panel p-5">
-                <BackdropSuggestions
-                  suggestions={backdropSuggestions}
-                  selectedBackdrop={selectedBackdrop}
-                  onSelect={setSelectedBackdrop}
-                  autoBackdrop={autoBackdrop}
-                  onToggleAuto={setAutoBackdrop}
+              {/* Category Selection */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-center text-slate-300">Product Type</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => setCategory('clothes')}
+                    className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${category === 'clothes'
+                        ? 'bg-secondary/20 border-secondary shadow-lg shadow-secondary/20 scale-105'
+                        : 'bg-white/5 border-white/10 hover:border-secondary/50 hover:bg-white/10'
+                      }`}
+                  >
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${category === 'clothes' ? 'bg-secondary text-white' : 'bg-white/10 text-slate-400'}`}>
+                      <Shirt className="w-8 h-8" />
+                    </div>
+                    <span className="text-lg font-medium">Clothes</span>
+                  </button>
+                  <button
+                    onClick={() => setCategory('shoes')}
+                    className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${category === 'shoes'
+                        ? 'bg-secondary/20 border-secondary shadow-lg shadow-secondary/20 scale-105'
+                        : 'bg-white/5 border-white/10 hover:border-secondary/50 hover:bg-white/10'
+                      }`}
+                  >
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${category === 'shoes' ? 'bg-secondary text-white' : 'bg-white/10 text-slate-400'}`}>
+                      <div className="rotate-[-45deg]"><Shirt className="w-8 h-8" /></div> {/* Placeholder for Shoe icon */}
+                    </div>
+                    <span className="text-lg font-medium">Shoes</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 3: // Model
+        return (
+          <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-4">
+              <h2 className="text-3xl font-bold mb-2">Choose your Model</h2>
+              <p className="text-slate-400">Select a professional model or customize the look.</p>
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <ModelSelection
+                  selectedModel={selectedModel}
+                  onModelSelect={setSelectedModel}
+                  gender={gender}
                 />
               </div>
-            )}
-
-            <div className="glass-panel p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary border border-primary/30">
-                  <Palette className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Style prompt</p>
-                  <p className="text-lg font-semibold">Tell the model how to pose & light</p>
+              <div className="space-y-6">
+                <div className="glass-panel p-6 border-l-4 border-primary">
+                  <h3 className="text-lg font-bold mb-2">Custom Persona</h3>
+                  <p className="text-sm text-slate-400 mb-4">Or define specific traits for a unique AI model.</p>
+                  <ModelPersonaSelector
+                    modelPersona={modelPersona}
+                    onChange={setModelPersona}
+                  />
                 </div>
               </div>
+            </div>
+          </div>
+        );
+      case 4: // Scene
+        return (
+          <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-4">
+              <h2 className="text-3xl font-bold mb-2">Set the Scene</h2>
+              <p className="text-slate-400">Choose a background and pose to match your brand.</p>
+            </div>
 
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition"
-                rows={3}
-                placeholder="Describe mood, lighting, camera angle. Gender lock and garment fidelity are enforced automatically."
+            <div className="space-y-8">
+              <BackgroundSelection
+                selectedBackground={selectedBackground}
+                onBackgroundSelect={setSelectedBackground}
               />
 
-              <div className="flex flex-wrap gap-2">
-                {PRESET_PROMPTS.map((item) => (
-                  <button
-                    key={item.label}
-                    type="button"
-                    onClick={() => setPrompt(item.prompt)}
-                    className={`px-3 py-2 rounded-full text-sm border transition ${prompt === item.prompt
-                      ? 'bg-primary/20 border-primary/50 text-white'
-                      : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
-                      }`}
-                    title={item.prompt}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-
-
-              <div className="pt-4 space-y-3">
-                <div className="text-sm text-slate-300 font-semibold">Pose</div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {POSE_PROMPTS.map((item) => {
+              <div className="glass-panel p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Camera className="w-5 h-5 text-primary" />
+                  Select Pose
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {(category === 'shoes' ? SHOE_POSE_PROMPTS : POSE_PROMPTS).map((item) => {
                     const selected = pose === item.prompt;
                     const thumb = new URL(`./assets/pose-${item.key}.svg`, import.meta.url).href;
                     return (
@@ -427,141 +433,220 @@ function App() {
                         key={item.label}
                         type="button"
                         onClick={() => setPose(item.prompt)}
-                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition ${selected
-                          ? 'bg-primary/15 border-primary/50 text-white shadow-primary/30 shadow'
-                          : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
+                        className={`flex flex-col items-center gap-3 p-4 rounded-xl border transition-all ${selected
+                          ? 'bg-primary/15 border-primary/50 text-white shadow-primary/30 shadow-lg scale-105'
+                          : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40 hover:bg-white/10'
                           }`}
-                        title={item.prompt}
                       >
-                        <img src={thumb} alt={item.label} className="w-12 h-12 opacity-90" />
-                        <span className="text-xs font-semibold">{item.label}</span>
+                        <img
+                          src={thumb}
+                          alt={item.label}
+                          className="w-16 h-16 opacity-90"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                        <span className="text-sm font-semibold">{item.label}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
+            </div>
+          </div>
+        );
+      case 5: // Generate
+        return (
+          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-2">Ready to Render</h2>
+              <p className="text-slate-400">Review your choices and generate the final image.</p>
+            </div>
 
-              <div className="pt-4 space-y-3">
-                <div className="text-sm text-slate-300 font-semibold">Background</div>
-                <div className="flex flex-wrap gap-2">
-                  {BACKDROP_PROMPTS.map((item) => (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => setBackdrop(item.prompt)}
-                      className={`px-3 py-2 rounded-full text-sm border transition ${backdrop === item.prompt
-                        ? 'bg-primary/20 border-primary/50 text-white'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40'
-                        }`}
-                      title={item.prompt}
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="glass-panel p-6 space-y-6">
+                <h3 className="text-xl font-semibold border-b border-white/10 pb-4">Summary</h3>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">Target</span>
+                    <span className="font-medium capitalize">{gender || 'Not specified'} / {category}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">Model</span>
+                    <span className="font-medium">
+                      {selectedModel
+                        ? (typeof selectedModel.name === 'object' ? selectedModel.name.en : selectedModel.name)
+                        : 'Custom Persona'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">Background</span>
+                    <span className="font-medium">
+                      {selectedBackground
+                        ? (typeof selectedBackground.name === 'object' ? selectedBackground.name.en : selectedBackground.name)
+                        : 'Studio Neutral'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">Color Lock</span>
+                    <span className={`font-medium ${useColorLock ? 'text-green-400' : 'text-slate-500'}`}>{useColorLock ? 'Active' : 'Disabled'}</span>
+                  </div>
+                </div>
+
+                {/* Color Override Section */}
+                <div className="pt-4 border-t border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm text-slate-300">Garment Color</p>
+                    {manualColor && (
+                      <button
+                        onClick={() => setManualColor(null)}
+                        className="text-xs text-primary hover:text-primary/80"
+                      >
+                        Reset to detected
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl">
+                    <div className="w-10 h-10 rounded-full border border-white/20 shadow-inner" style={{ background: manualColor || colorHex || '#ccc' }} />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-white">
+                        {manualColor ? 'Manual Override' : 'Detected Color'}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {manualColor || colorHex || 'None'}
+                      </p>
+                    </div>
+
+                    {/* Color Override Dropdown */}
+                    <select
+                      className="bg-black/40 border border-white/10 rounded-lg text-xs py-1 px-2 text-slate-300 focus:outline-none focus:border-primary"
+                      onChange={(e) => setManualColor(e.target.value)}
+                      value={manualColor || ''}
                     >
-                      {item.label}
-                    </button>
-                  ))}
+                      <option value="">Wrong color?</option>
+                      <option value="White">Force White</option>
+                      <option value="Black">Force Black</option>
+                      <option value="Red">Force Red</option>
+                      <option value="Blue">Force Blue</option>
+                      <option value="Green">Force Green</option>
+                      <option value="Yellow">Force Yellow</option>
+                      <option value="Purple">Force Purple</option>
+                      <option value="Pink">Force Pink</option>
+                      <option value="Orange">Force Orange</option>
+                      <option value="Brown">Force Brown</option>
+                      <option value="Gray">Force Gray</option>
+                      <option value="Beige">Force Beige</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-4 space-y-2">
-                <div className="text-sm text-slate-300 font-semibold">Negative prompt (what to avoid)</div>
-                <textarea
-                  value={negative}
-                  onChange={(e) => setNegative(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition text-sm"
-                  rows={2}
-                  placeholder="Things to avoid (props, extra people, text, logos changes...)"
-                />
-              </div>
-
-              {colorHex && (
-                <div className="pt-2 flex flex-wrap items-center gap-3">
-                  <div className="text-sm text-slate-300 font-semibold">Color lock</div>
-                  <div className="w-9 h-9 rounded-full border border-white/20 shadow-inner" style={{ background: colorHex }} />
-                  <label className="flex items-center gap-2 text-sm text-slate-300">
-                    <input
-                      type="checkbox"
-                      checked={useColorLock}
-                      onChange={(e) => setUseColorLock(e.target.checked)}
-                      className="accent-primary"
-                    />
-                    Enforce exact hue in render
-                  </label>
-                  <span className="text-xs text-slate-500">{colorHex}</span>
-                </div>
-              )}
-
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex flex-col justify-center space-y-6">
                 <button
                   type="button"
                   onClick={handleGenerate}
-                  disabled={!selectedFile || isGenerating}
-                  className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isGenerating}
+                  className="w-full py-6 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-xl shadow-2xl shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
-                  {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
-                  {isGenerating ? 'Generating...' : 'Generate look'}
+                  {isGenerating ? <Loader2 className="w-8 h-8 animate-spin" /> : <Wand2 className="w-8 h-8" />}
+                  {isGenerating ? 'Rendering...' : 'Generate Now'}
                 </button>
-                <div className="flex items-center gap-2 text-sm text-slate-300">
-                  <Clock3 className="w-4 h-4" />
-                  <span>{statusMessage}</span>
-                </div>
-              </div>
 
-              {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-200 rounded-xl text-sm">
-                  {error}
-                </div>
-              )}
-            </div>
-
-            <PersonaPresets onSelectPreset={setModelPersona} />
-
-            <ModelPersonaSelector
-              modelPersona={modelPersona}
-              onChange={setModelPersona}
-            />
-
-            <div className="glass-panel p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <p className="text-sm text-slate-300">Process (garment locked, model locked)</p>
-              </div>
-              <div className="grid sm:grid-cols-3 gap-3">
-                {processSteps.map((step) => (
-                  <div
-                    key={step.label}
-                    className={`flex items-start gap-3 p-3 rounded-xl border ${step.done ? 'border-primary/50 bg-primary/10' : 'border-white/10 bg-white/5'
-                      }`}
-                  >
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center ${step.done ? 'bg-primary/20 text-primary border border-primary/50' : 'bg-white/5 text-slate-400 border border-white/15'
-                        }`}
-                    >
-                      {step.done ? <CheckCircle2 className="w-5 h-5" /> : <Clock3 className="w-5 h-5" />}
-                    </div>
-                    <div>
-                      <p className="font-semibold">{step.label}</p>
-                      <p className="text-xs text-slate-400">{step.description}</p>
-                    </div>
+                {error && (
+                  <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-200 rounded-xl text-sm text-center">
+                    {error}
                   </div>
-                ))}
+                )}
+
+                <p className="text-center text-sm text-slate-500">
+                  {statusMessage}
+                </p>
               </div>
             </div>
+
+            {/* Result Display */}
+            <div className="mt-8">
+              <AnimatedProgress isGenerating={isGenerating && !generatedResult} />
+              <GenerationResult result={generatedResult} />
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-primary/25 relative overflow-hidden font-sans">
+      {/* Background Ambience */}
+      <div className="fixed inset-0 -z-10 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[55%] h-[55%] bg-primary/10 rounded-full blur-[140px]" />
+        <div className="absolute bottom-[-15%] right-[-5%] w-[45%] h-[45%] bg-secondary/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="container mx-auto px-4 py-8 min-h-screen flex flex-col">
+        {/* Header */}
+        <header className="flex items-center justify-between mb-12">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Clothes<span className="text-primary">2</span>Model <span className="text-xs px-2 py-1 bg-white/10 rounded-full text-slate-400 font-normal ml-2">PRO</span>
+            </h1>
           </div>
 
-          <div className="md:col-span-2 space-y-4">
-            {isGenerating && !generatedResult && (
-              <div className="glass-panel p-8 h-[500px] flex flex-col items-center justify-center text-center">
-                <Sparkles className="w-12 h-12 text-primary/60 mb-4 animate-pulse" />
-                <p className="text-slate-300 mb-2">AI is crafting your model shot...</p>
-                <p className="text-slate-500 text-sm">This usually takes a few seconds.</p>
+          {/* Stepper */}
+          <div className="hidden md:flex items-center gap-2">
+            {[1, 2, 3, 4, 5].map((step) => (
+              <div key={step} className="flex items-center">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step === currentStep
+                      ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110'
+                      : step < currentStep
+                        ? 'bg-primary/20 text-primary'
+                        : 'bg-white/5 text-slate-600'
+                    }`}
+                >
+                  {step < currentStep ? <CheckCircle2 className="w-5 h-5" /> : step}
+                </div>
+                {step < 5 && (
+                  <div className={`w-8 h-1 mx-2 rounded-full ${step < currentStep ? 'bg-primary/30' : 'bg-white/5'}`} />
+                )}
               </div>
-            )}
-
-            <GenerationResult result={generatedResult} />
+            ))}
           </div>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="flex-1 relative">
+          {renderStepContent()}
         </main>
 
-        <footer className="mt-10 text-center text-slate-500 text-sm">
-          <p>(c) 2024 Clothes2Model AI - powered by giminigen</p>
+        {/* Navigation Footer */}
+        <footer className="mt-12 pt-6 border-t border-white/5 flex items-center justify-between">
+          <button
+            onClick={prevStep}
+            disabled={currentStep === 1}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${currentStep === 1
+                ? 'opacity-0 pointer-events-none'
+                : 'hover:bg-white/5 text-slate-400 hover:text-white'
+              }`}
+          >
+            <ChevronLeft className="w-5 h-5" />
+            Back
+          </button>
+
+          {currentStep < totalSteps && (
+            <button
+              onClick={nextStep}
+              disabled={currentStep === 1 && !selectedFile} // Block next on step 1 if no file
+              className="flex items-center gap-2 px-8 py-3 rounded-xl bg-white text-slate-950 font-bold hover:bg-slate-200 transition-all shadow-lg shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next Step
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
         </footer>
       </div>
     </div>
