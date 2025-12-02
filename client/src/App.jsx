@@ -5,7 +5,8 @@ import ModelPersonaSelector from './components/ModelPersonaSelector';
 import ModelSelection from './components/ModelSelection';
 import BackgroundSelection from './components/BackgroundSelection';
 import AnimatedProgress from './components/AnimatedProgress';
-import { Sparkles, Wand2, Clock3, CheckCircle2, Loader2, ChevronRight, ChevronLeft, User, Shirt, Camera } from 'lucide-react';
+import ReviewPage from './components/ReviewPage';
+import { Sparkles, CheckCircle2, ChevronRight, ChevronLeft, User, Shirt, Footprints } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -14,13 +15,6 @@ const POSE_PROMPTS = [
   { label: 'Walking', key: 'walking', prompt: 'Mid-step walking pose, gentle arm swing, natural motion blur avoided, outfit centered.' },
   { label: 'Seated/leaning', key: 'seated', prompt: 'Seated or lightly leaning pose with straight posture, garment drape visible.' },
   { label: 'Dynamic', key: 'dynamic', prompt: 'Dynamic half-turn with confident stance, torso rotation, outfit front still clear.' },
-];
-
-const SHOE_POSE_PROMPTS = [
-  { label: 'Low Angle Walking', key: 'shoe_walking', prompt: 'Low angle 30-45 degrees from ground, model walking naturally, shoe sole and upper both visible, professional product photography.' },
-  { label: 'Floating/Jump', key: 'shoe_jump', prompt: 'Shoes in mid-air jump pose, dynamic energy, sole visible, clean background, freeze-frame motion.' },
-  { label: 'Seated (Feet Focus)', key: 'shoe_seated', prompt: 'Seated position with feet extended forward, shoes as focal point, relaxed pose, direct camera angle on footwear.' },
-  { label: 'Top Down', key: 'shoe_topdown', prompt: 'Top-down overhead view, feet together or slightly apart, shoes facing camera, flat lay perspective.' },
 ];
 
 const VARIATION_CUES = [
@@ -121,7 +115,7 @@ function App() {
   const [error, setError] = useState(null);
 
   // Configuration State
-  const [category, setCategory] = useState('clothes');
+  const [category, setCategory] = useState(null); // Force selection
   const [gender, setGender] = useState(null); // Explicit gender selection
 
   // Model State
@@ -177,18 +171,18 @@ function App() {
 
         // Find white candidate with explicit RGB brightness check
         const whiteCandidate = topFive.find(c => {
-          const avgRGB = c.hex ? (parseInt(c.hex.slice(1,3), 16) + parseInt(c.hex.slice(3,5), 16) + parseInt(c.hex.slice(5,7), 16)) / 3 : 0;
+          const avgRGB = c.hex ? (parseInt(c.hex.slice(1, 3), 16) + parseInt(c.hex.slice(3, 5), 16) + parseInt(c.hex.slice(5, 7), 16)) / 3 : 0;
           return c.name === 'White' ||
-                 c.name === 'Off-White' ||
-                 c.name === 'Very Light Gray' ||
-                 (c.name === 'Light Gray' && avgRGB > 200) ||  // Bright light gray is actually white
-                 avgRGB > 220;  // Any very bright color
+            c.name === 'Off-White' ||
+            c.name === 'Very Light Gray' ||
+            (c.name === 'Light Gray' && avgRGB > 200) ||  // Bright light gray is actually white
+            avgRGB > 220;  // Any very bright color
         });
 
         // Check if primary is gray/desaturated
         const primaryIsGray = bestColor.name.includes('Gray') ||
-                             bestColor.name === 'Charcoal' ||
-                             (bestColor.s && bestColor.s < 10 && bestColor.l && bestColor.l < 70);  // Low sat, not bright
+          bestColor.name === 'Charcoal' ||
+          (bestColor.s && bestColor.s < 10 && bestColor.l && bestColor.l < 70);  // Low sat, not bright
 
         if (primaryIsGray && whiteCandidate && whiteCandidate.percentage >= 15) {
           console.log('✅ Smart Override: Detected gray (#' + bestColor.hex + '), replacing with white candidate:', whiteCandidate);
@@ -274,15 +268,20 @@ function App() {
     setStatusMessage('Uploading & starting the render...');
 
     try {
-      const response = await fetch(`${API_BASE}/api/generate`, {
+      // Create a promise for the API call
+      const apiCall = fetch(`${API_BASE}/api/generate`, {
         method: 'POST',
         body: formData,
-      });
+      }).then(res => res.json());
 
-      const data = await response.json();
+      // Create a promise for the minimum wait time (2 minutes)
+      const minWait = new Promise(resolve => setTimeout(resolve, 120000));
 
-      if (!response.ok) {
-        throw new Error(data?.error || 'Generation failed');
+      // Wait for both
+      const [data] = await Promise.all([apiCall, minWait]);
+
+      if (data.error) {
+        throw new Error(data.error);
       }
 
       setGeneratedResult({
@@ -333,71 +332,111 @@ function App() {
         );
       case 2: // Essentials (Gender & Category)
         return (
-          <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold mb-2">Who is this for?</h2>
-              <p className="text-slate-400">Select the target audience and product type.</p>
+              <h2 className="text-3xl font-bold mb-2">Refine your Vision</h2>
+              <p className="text-slate-400">First, select the product type, then choose your target model.</p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Gender Selection */}
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold text-center text-slate-300">Target Model</h3>
-                <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-12">
+              {/* 1. Category Selection */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-semibold text-center text-slate-200 flex items-center justify-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">1</span>
+                  Select Product Type
+                </h3>
+                <div className="grid grid-cols-2 gap-6 max-w-2xl mx-auto">
                   <button
-                    onClick={() => setGender('female')}
-                    className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${gender === 'female'
-                      ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20 scale-105'
-                      : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10'
+                    onClick={() => setCategory('clothes')}
+                    className={`group relative p-8 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center gap-6 overflow-hidden ${category === 'clothes'
+                      ? 'bg-secondary/20 border-secondary shadow-2xl shadow-secondary/20 scale-105'
+                      : 'bg-white/5 border-white/10 hover:border-secondary/50 hover:bg-white/10 hover:scale-[1.02]'
                       }`}
                   >
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${gender === 'female' ? 'bg-primary text-white' : 'bg-white/10 text-slate-400'}`}>
-                      <User className="w-8 h-8" />
+                    <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-transform duration-500 group-hover:scale-110 ${category === 'clothes' ? 'bg-secondary text-white' : 'bg-white/10 text-slate-400'}`}>
+                      <Shirt className="w-12 h-12" />
                     </div>
-                    <span className="text-lg font-medium">Woman</span>
+                    <div className="text-center">
+                      <span className="text-xl font-bold block mb-1">Clothes</span>
+                      <span className="text-xs text-slate-400">T-shirts, Dresses, Jackets</span>
+                    </div>
+                    {category === 'clothes' && (
+                      <div className="absolute top-4 right-4 bg-secondary text-white p-1 rounded-full shadow-lg animate-in zoom-in duration-300">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                    )}
                   </button>
+
                   <button
-                    onClick={() => setGender('male')}
-                    className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${gender === 'male'
-                      ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20 scale-105'
-                      : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10'
+                    onClick={() => setCategory('shoes')}
+                    className={`group relative p-8 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center gap-6 overflow-hidden ${category === 'shoes'
+                      ? 'bg-secondary/20 border-secondary shadow-2xl shadow-secondary/20 scale-105'
+                      : 'bg-white/5 border-white/10 hover:border-secondary/50 hover:bg-white/10 hover:scale-[1.02]'
                       }`}
                   >
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${gender === 'male' ? 'bg-primary text-white' : 'bg-white/10 text-slate-400'}`}>
-                      <User className="w-8 h-8" />
+                    <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-transform duration-500 group-hover:scale-110 ${category === 'shoes' ? 'bg-secondary text-white' : 'bg-white/10 text-slate-400'}`}>
+                      <Footprints className="w-12 h-12" />
                     </div>
-                    <span className="text-lg font-medium">Man</span>
+                    <div className="text-center">
+                      <span className="text-xl font-bold block mb-1">Shoes</span>
+                      <span className="text-xs text-slate-400">Sneakers, Boots, Heels</span>
+                    </div>
+                    {category === 'shoes' && (
+                      <div className="absolute top-4 right-4 bg-secondary text-white p-1 rounded-full shadow-lg animate-in zoom-in duration-300">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                    )}
                   </button>
                 </div>
               </div>
 
-              {/* Category Selection */}
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold text-center text-slate-300">Product Type</h3>
-                <div className="grid grid-cols-2 gap-4">
+              {/* 2. Gender Selection (Revealed after Category) */}
+              <div className={`space-y-6 transition-all duration-700 ${category ? 'opacity-100 translate-y-0' : 'opacity-30 translate-y-4 pointer-events-none blur-sm'}`}>
+                <h3 className="text-xl font-semibold text-center text-slate-200 flex items-center justify-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">2</span>
+                  Select Target Model
+                </h3>
+                <div className="grid grid-cols-2 gap-6 max-w-2xl mx-auto">
                   <button
-                    onClick={() => setCategory('clothes')}
-                    className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${category === 'clothes'
-                      ? 'bg-secondary/20 border-secondary shadow-lg shadow-secondary/20 scale-105'
-                      : 'bg-white/5 border-white/10 hover:border-secondary/50 hover:bg-white/10'
+                    onClick={() => setGender('female')}
+                    className={`group relative p-8 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center gap-6 overflow-hidden ${gender === 'female'
+                      ? 'bg-primary/20 border-primary shadow-2xl shadow-primary/20 scale-105'
+                      : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10 hover:scale-[1.02]'
                       }`}
                   >
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${category === 'clothes' ? 'bg-secondary text-white' : 'bg-white/10 text-slate-400'}`}>
-                      <Shirt className="w-8 h-8" />
+                    <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-transform duration-500 group-hover:scale-110 ${gender === 'female' ? 'bg-primary text-white' : 'bg-white/10 text-slate-400'}`}>
+                      <User className="w-12 h-12" />
                     </div>
-                    <span className="text-lg font-medium">Clothes</span>
+                    <div className="text-center">
+                      <span className="text-xl font-bold block mb-1">Woman</span>
+                      <span className="text-xs text-slate-400">Female Models</span>
+                    </div>
+                    {gender === 'female' && (
+                      <div className="absolute top-4 right-4 bg-primary text-white p-1 rounded-full shadow-lg animate-in zoom-in duration-300">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                    )}
                   </button>
+
                   <button
-                    onClick={() => setCategory('shoes')}
-                    className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${category === 'shoes'
-                      ? 'bg-secondary/20 border-secondary shadow-lg shadow-secondary/20 scale-105'
-                      : 'bg-white/5 border-white/10 hover:border-secondary/50 hover:bg-white/10'
+                    onClick={() => setGender('male')}
+                    className={`group relative p-8 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center gap-6 overflow-hidden ${gender === 'male'
+                      ? 'bg-primary/20 border-primary shadow-2xl shadow-primary/20 scale-105'
+                      : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10 hover:scale-[1.02]'
                       }`}
                   >
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${category === 'shoes' ? 'bg-secondary text-white' : 'bg-white/10 text-slate-400'}`}>
-                      <div className="rotate-[-45deg]"><Shirt className="w-8 h-8" /></div> {/* Placeholder for Shoe icon */}
+                    <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-transform duration-500 group-hover:scale-110 ${gender === 'male' ? 'bg-primary text-white' : 'bg-white/10 text-slate-400'}`}>
+                      <User className="w-12 h-12" />
                     </div>
-                    <span className="text-lg font-medium">Shoes</span>
+                    <div className="text-center">
+                      <span className="text-xl font-bold block mb-1">Man</span>
+                      <span className="text-xs text-slate-400">Male Models</span>
+                    </div>
+                    {gender === 'male' && (
+                      <div className="absolute top-4 right-4 bg-primary text-white p-1 rounded-full shadow-lg animate-in zoom-in duration-300">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                    )}
                   </button>
                 </div>
               </div>
@@ -406,115 +445,44 @@ function App() {
         );
       case 3: // Model
         return (
-          <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center mb-4">
-              <h2 className="text-3xl font-bold mb-2">Choose your Model</h2>
-              <p className="text-slate-400">Select a professional model or customize the look.</p>
+              <h2 className="text-3xl font-bold mb-2">Choose a Model</h2>
+              <p className="text-slate-400">Select a professional model for your product.</p>
             </div>
 
-            <div className="max-w-3xl mx-auto">
-              <ModelSelection
-                selectedModel={selectedModel}
-                onModelSelect={setSelectedModel}
-                gender={gender}
-              />
-            </div>
+            <ModelSelection
+              selectedModel={selectedModel}
+              onModelSelect={setSelectedModel}
+              gender={gender}
+            />
           </div>
         );
       case 4: // Scene
         return (
-          <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center mb-4">
               <h2 className="text-3xl font-bold mb-2">Set the Scene</h2>
-              <p className="text-slate-400">Choose a background and pose to match your brand.</p>
+              <p className="text-slate-400">Choose a background to match your brand.</p>
             </div>
 
-            <div className="space-y-8">
-              <BackgroundSelection
-                selectedBackground={selectedBackground}
-                onBackgroundSelect={setSelectedBackground}
-              />
-
-
-            </div>
+            <BackgroundSelection
+              selectedBackground={selectedBackground}
+              onBackgroundSelect={setSelectedBackground}
+            />
           </div>
         );
-      case 5: // Generate
+      case 5: // Generate / Review
         return (
-          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="glass-panel p-6 space-y-6">
-                <h3 className="text-xl font-semibold border-b border-white/10 pb-4">Summary</h3>
-
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Target</span>
-                    <span className="font-medium capitalize">{gender || 'Not specified'} / {category}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Model</span>
-                    <span className="font-medium">
-                      {selectedModel
-                        ? (typeof selectedModel.name === 'object' ? selectedModel.name.en : selectedModel.name)
-                        : 'Custom Persona'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Background</span>
-                    <span className="font-medium">
-                      {selectedBackground
-                        ? (typeof selectedBackground.name === 'object' ? selectedBackground.name.en : selectedBackground.name)
-                        : 'Studio Neutral'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Color Lock</span>
-                    <span className={`font-medium ${useColorLock ? 'text-green-400' : 'text-slate-500'}`}>{useColorLock ? 'Active' : 'Disabled'}</span>
-                  </div>
-                </div>
-
-                {colorHex && (
-                  <div className="pt-4 border-t border-white/10">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full border border-white/20" style={{ background: colorHex }} />
-                      <div className="text-sm">
-                        <p className="text-slate-300">Detected Color</p>
-                        <p className="text-xs text-slate-500">{colorHex}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col justify-center space-y-6">
-                <button
-                  type="button"
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
-                  className="w-full py-6 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-xl shadow-2xl shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                >
-                  {isGenerating ? <Loader2 className="w-8 h-8 animate-spin" /> : <Wand2 className="w-8 h-8" />}
-                  {isGenerating ? 'Rendering...' : 'Generate Now'}
-                </button>
-
-                {error && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-200 rounded-xl text-sm text-center">
-                    {error}
-                  </div>
-                )}
-
-                <p className="text-center text-sm text-slate-500">
-                  {statusMessage}
-                </p>
-              </div>
-            </div>
-
-            {/* Result Display */}
-            <div className="mt-8">
-              <AnimatedProgress isGenerating={isGenerating && !generatedResult} />
-              <GenerationResult result={generatedResult} />
-            </div>
-          </div>
+          <ReviewPage
+            selectedFile={selectedFile}
+            selectedModel={selectedModel}
+            selectedBackground={selectedBackground}
+            category={category}
+            gender={gender}
+            onGenerate={handleGenerate}
+            isGenerating={isGenerating}
+          />
         );
       default:
         return null;
@@ -528,6 +496,9 @@ function App() {
         <div className="absolute top-[-20%] left-[-10%] w-[55%] h-[55%] bg-primary/10 rounded-full blur-[140px]" />
         <div className="absolute bottom-[-15%] right-[-5%] w-[45%] h-[45%] bg-secondary/10 rounded-full blur-[120px]" />
       </div>
+
+      {/* Full Screen Progress Overlay */}
+      <AnimatedProgress isGenerating={isGenerating} />
 
       <div className="container mx-auto px-4 py-8 min-h-screen flex flex-col">
         {/* Header */}
@@ -565,34 +536,51 @@ function App() {
 
         {/* Main Content Area */}
         <main className="flex-1 relative">
-          {renderStepContent()}
+          {generatedResult ? (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">Generation Result</h2>
+                <button
+                  onClick={() => setGeneratedResult(null)}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  Create Another
+                </button>
+              </div>
+              <GenerationResult result={generatedResult} />
+            </div>
+          ) : (
+            renderStepContent()
+          )}
         </main>
 
         {/* Navigation Footer */}
-        <footer className="mt-12 pt-6 border-t border-white/5 flex items-center justify-between">
-          <button
-            onClick={prevStep}
-            disabled={currentStep === 1}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${currentStep === 1
-              ? 'opacity-0 pointer-events-none'
-              : 'hover:bg-white/5 text-slate-400 hover:text-white'
-              }`}
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Back
-          </button>
-
-          {currentStep < totalSteps && (
+        {!generatedResult && (
+          <footer className="mt-12 pt-6 border-t border-white/5 flex items-center justify-between">
             <button
-              onClick={nextStep}
-              disabled={currentStep === 1 && !selectedFile} // Block next on step 1 if no file
-              className="flex items-center gap-2 px-8 py-3 rounded-xl bg-white text-slate-950 font-bold hover:bg-slate-200 transition-all shadow-lg shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={prevStep}
+              disabled={currentStep === 1}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${currentStep === 1
+                ? 'opacity-0 pointer-events-none'
+                : 'hover:bg-white/5 text-slate-400 hover:text-white'
+                }`}
             >
-              Next Step
-              <ChevronRight className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5" />
+              Back
             </button>
-          )}
-        </footer>
+
+            {currentStep < totalSteps && (
+              <button
+                onClick={nextStep}
+                disabled={(currentStep === 1 && !selectedFile) || (currentStep === 2 && (!category || !gender))}
+                className="flex items-center gap-2 px-8 py-3 rounded-xl bg-white text-slate-950 font-bold hover:bg-slate-200 transition-all shadow-lg shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next Step
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
+          </footer>
+        )}
       </div>
     </div>
   );

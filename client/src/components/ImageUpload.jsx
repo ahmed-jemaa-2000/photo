@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Upload, Image as ImageIcon, Loader2, Trash2, CheckCircle2 } from 'lucide-react';
+import { Upload, Image as ImageIcon, Loader2, Trash2, CheckCircle2, ScanLine } from 'lucide-react';
 import { extractColorPalette } from '../utils/colorExtraction';
 import { addColorNames } from '../utils/colorNaming';
 
@@ -75,84 +75,105 @@ const ImageUpload = ({ onFileSelect, isGenerating, selectedFile, onClear, onColo
   };
 
   return (
-    <div className="glass-panel p-6 space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wide text-slate-400">Input</p>
-          <p className="text-lg font-semibold">Upload a garment photo</p>
+          <h3 className="text-xl font-bold text-white">Upload Garment</h3>
+          <p className="text-sm text-slate-400">Supported formats: JPG, PNG, WEBP</p>
         </div>
         {selectedFile && (
           <button
             type="button"
             onClick={() => onClear?.()}
-            className="text-xs flex items-center gap-1 px-3 py-2 rounded-full bg-white/5 border border-white/10 hover:border-primary/50 transition"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-200 border border-white/10 hover:border-red-500/50 transition-all text-sm font-medium"
           >
             <Trash2 className="w-4 h-4" />
-            Reset
+            Remove
           </button>
         )}
       </div>
 
       <div
-        className={`relative p-6 rounded-2xl border border-dashed transition-all duration-300 group ${
-          dragActive ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-white/20 bg-white/5'
-        }`}
+        className={`relative group overflow-hidden rounded-3xl border-2 border-dashed transition-all duration-300 ${dragActive
+            ? 'border-primary bg-primary/10 scale-[1.01] shadow-xl shadow-primary/20'
+            : selectedFile
+              ? 'border-primary/50 bg-slate-900/50'
+              : 'border-white/10 bg-white/5 hover:border-primary/50 hover:bg-white/10'
+          }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
+        style={{ minHeight: '400px' }}
       >
         <input
           type="file"
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
           onChange={handleChange}
           accept="image/*"
           disabled={isGenerating}
         />
 
-        <div className="flex flex-col items-center justify-center space-y-4">
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
           {preview ? (
-            <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-xl">
-              <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-              {isGenerating && (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center backdrop-blur-sm">
-                  <Loader2 className="w-12 h-12 text-primary animate-spin mb-2" />
-                  <p className="text-white font-medium animate-pulse">Generating...</p>
+            <div className="relative w-full h-full flex items-center justify-center">
+              <img
+                src={preview}
+                alt="Preview"
+                className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+              />
+
+              {/* Scanning Effect Overlay */}
+              {isExtracting && (
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center rounded-xl">
+                  <ScanLine className="w-12 h-12 text-primary animate-pulse mb-4" />
+                  <p className="text-white font-medium">Analyzing colors...</p>
                 </div>
               )}
-              <div className="absolute top-3 left-3 bg-black/50 text-xs px-3 py-1 rounded-full flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-primary" />
-                {selectedFile?.name}
+
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-md text-white text-sm px-4 py-2 rounded-full flex items-center gap-2 shadow-lg z-10">
+                <CheckCircle2 className="w-4 h-4 text-green-400" />
+                <span className="truncate max-w-[200px]">{selectedFile.name}</span>
               </div>
             </div>
           ) : (
-            <>
-              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-2 group-hover:bg-white/10 transition-colors">
-                <Upload className="w-10 h-10 text-primary/80" />
+            <div className="text-center space-y-6 max-w-sm relative z-10 pointer-events-none">
+              <div className="w-24 h-24 mx-auto bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-500">
+                <Upload className="w-10 h-10 text-primary group-hover:text-white transition-colors" />
               </div>
-              <div className="text-center">
-                <h3 className="text-xl font-bold text-white mb-1">Drag & drop or click</h3>
-                <p className="text-slate-400 text-sm">Use a clear front-facing photo of the clothing item.</p>
+
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-white">Drop your image here</h3>
+                <p className="text-slate-400">
+                  or <span className="text-primary font-medium underline decoration-primary/50 underline-offset-4">browse files</span> from your computer
+                </p>
               </div>
-              <div className="text-xs text-slate-500 mt-4 bg-white/5 px-3 py-1 rounded-full flex items-center gap-2">
-                <ImageIcon className="w-4 h-4" />
-                JPG, PNG, or WEBP - 3:4 works best
+
+              <div className="flex items-center justify-center gap-4 text-xs text-slate-500 pt-4 border-t border-white/5">
+                <span className="flex items-center gap-1">
+                  <ImageIcon className="w-3 h-3" /> High Quality
+                </span>
+                <span className="w-1 h-1 rounded-full bg-slate-700" />
+                <span>Max 10MB</span>
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-3 text-sm text-slate-400">
-        <div className="p-3 rounded-xl border border-white/10 bg-white/5">Keep the clothing centered.</div>
-        <div className="p-3 rounded-xl border border-white/10 bg-white/5">Avoid cluttered backgrounds.</div>
-        <div className="p-3 rounded-xl border border-white/10 bg-white/5">Good lighting makes textures pop.</div>
-      </div>
-
-      {isExtracting && (
-        <div className="flex items-center gap-3 text-sm text-slate-300">
-          <Loader2 className="w-4 h-4 animate-spin text-primary" />
-          <span>Analyzing colors...</span>
+      {/* Tips Grid */}
+      {!selectedFile && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { title: "Good Lighting", desc: "Ensure even lighting without harsh shadows" },
+            { title: "Clear Background", desc: "Simple or plain background works best" },
+            { title: "High Resolution", desc: "Use sharp, high-quality images" }
+          ].map((tip, idx) => (
+            <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+              <h4 className="font-semibold text-slate-200 mb-1">{tip.title}</h4>
+              <p className="text-xs text-slate-400">{tip.desc}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>
