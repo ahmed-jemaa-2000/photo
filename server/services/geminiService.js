@@ -10,8 +10,8 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const API_KEY = process.env.giminigen_API_KEY || process.env.GEMINIGEN_API_KEY;
 const BASE_URL = process.env.giminigen_BASE_URL || process.env.GEMINIGEN_BASE_URL || 'https://api.geminigen.ai';
 const DEFAULT_MODEL = process.env.giminigen_MODEL || 'imagen-pro';
-const POLL_INTERVAL_MS = 3000;
-const POLL_LIMIT = 20;
+const POLL_INTERVAL_MS = 5000;
+const POLL_LIMIT = 60;
 const VIDEO_MODEL = process.env.giminigen_VIDEO_MODEL || 'veo-3.1-fast';
 const VIDEO_RESOLUTION = process.env.giminigen_VIDEO_RESOLUTION || '1080p';
 const VIDEO_ASPECT_RATIO = process.env.giminigen_VIDEO_ASPECT_RATIO || '16:9';
@@ -20,7 +20,7 @@ const VIDEO_POLL_LIMIT = 60;
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 60000,
+  timeout: 120000,
 });
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
