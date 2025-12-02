@@ -64,9 +64,17 @@ const GenerationResult = ({ result }) => {
             Open hosted link
           </a>
         </div>
-        <p className="text-slate-200">
-          Prompt: <span className="text-slate-400">{result.prompt}</span>
-        </p>
+        <div className="flex items-center gap-2 text-slate-300">
+          <Link2 className="w-4 h-4 text-primary" />
+          <a
+            href={downloadHref}
+            className="underline text-primary hover:text-primary/80"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open hosted link
+          </a>
+        </div>
         {result.pose && (
           <p className="text-slate-200">
             Pose: <span className="text-slate-400">{result.pose}</span>

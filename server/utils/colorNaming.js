@@ -61,6 +61,16 @@ function getColorName(hex) {
         return 'White';
     }
 
+    // Expanded White/Off-White detection for very low saturation (shadowed white)
+    if (s < 10) {
+        if (l > 85) return 'White';
+        if (l > 65) return 'Off-White'; // Lowered from 80 to catch gray-ish whites
+        if (l > 50) return 'Gray';
+        if (l > 30) return 'Dark Gray';
+        if (l > 15) return 'Charcoal';
+        return 'Black';
+    }
+
     if (s < 15) {
         if (l > 70) return 'Light Gray';
         if (l > 50) return 'Gray';

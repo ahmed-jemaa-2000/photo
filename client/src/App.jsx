@@ -141,7 +141,7 @@ function App() {
   const [selectedBackground, setSelectedBackground] = useState(null);
   const [colorPalette, setColorPalette] = useState([]);
   const [colorHex, setColorHex] = useState(null);
-  const [manualColor, setManualColor] = useState(null); // New: Manual color override
+
   const [useColorLock, setUseColorLock] = useState(true);
   const [negative, setNegative] = useState('no extra accessories, no text, no logos change, no second person');
 
@@ -156,7 +156,7 @@ function App() {
     setSelectedFile(file);
     setGeneratedResult(null);
     setError(null);
-    setManualColor(null); // Reset manual color on new file
+
     // Auto advance to next step after short delay if file is valid
     if (file) {
       setTimeout(() => setCurrentStep(2), 500);
@@ -167,7 +167,24 @@ function App() {
     if (Array.isArray(palette)) {
       setColorPalette(palette);
       if (palette.length > 0) {
-        setColorHex(palette[0].hex);
+        // Smart Color Selection:
+        // If the top color is Gray/Dark Gray, but we have a White/Off-White candidate in the top 3,
+        // prefer the lighter color as it's likely the true garment color (ignoring shadows).
+        let bestColor = palette[0];
+
+        const topCandidates = palette.slice(0, 3);
+        const whiteCandidate = topCandidates.find(c =>
+          c.name === 'White' || c.name === 'Off-White' || c.name === 'Very Light Gray'
+        );
+
+        const primaryIsGray = bestColor.name.includes('Gray') || bestColor.name === 'Charcoal';
+
+        if (primaryIsGray && whiteCandidate) {
+          console.log('Smart Color: Overriding Gray with White candidate', whiteCandidate);
+          bestColor = whiteCandidate;
+        }
+
+        setColorHex(bestColor.hex);
       }
     } else {
       setColorHex(palette);
@@ -199,8 +216,8 @@ function App() {
         ? `Garment color palette: ${colorPalette.map(c => `${c.simpleName || c.name} (${c.hex})`).slice(0, 3).join(', ')}.`
         : '';
 
-    // Use manual color if set, otherwise detected color
-    const activeColor = manualColor || colorHex;
+    // Use detected color
+    const activeColor = colorHex;
 
     const colorClause =
       useColorLock && activeColor
@@ -208,7 +225,7 @@ function App() {
         : '';
 
     // Strong color enforcement
-    const dominantColorName = manualColor ? 'the selected color' : (colorPalette.length > 0 ? colorPalette[0].name : '');
+    const dominantColorName = colorPalette.length > 0 ? colorPalette[0].name : '';
     const strongColorClause = (useColorLock && activeColor)
       ? `CRITICAL: The garment is ${activeColor}. Maintain this color exactly.`
       : '';
@@ -319,8 +336,8 @@ function App() {
                   <button
                     onClick={() => setGender('female')}
                     className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${gender === 'female'
-                        ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20 scale-105'
-                        : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10'
+                      ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20 scale-105'
+                      : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10'
                       }`}
                   >
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center ${gender === 'female' ? 'bg-primary text-white' : 'bg-white/10 text-slate-400'}`}>
@@ -331,8 +348,8 @@ function App() {
                   <button
                     onClick={() => setGender('male')}
                     className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${gender === 'male'
-                        ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20 scale-105'
-                        : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10'
+                      ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20 scale-105'
+                      : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10'
                       }`}
                   >
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center ${gender === 'male' ? 'bg-primary text-white' : 'bg-white/10 text-slate-400'}`}>
@@ -350,8 +367,8 @@ function App() {
                   <button
                     onClick={() => setCategory('clothes')}
                     className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${category === 'clothes'
-                        ? 'bg-secondary/20 border-secondary shadow-lg shadow-secondary/20 scale-105'
-                        : 'bg-white/5 border-white/10 hover:border-secondary/50 hover:bg-white/10'
+                      ? 'bg-secondary/20 border-secondary shadow-lg shadow-secondary/20 scale-105'
+                      : 'bg-white/5 border-white/10 hover:border-secondary/50 hover:bg-white/10'
                       }`}
                   >
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center ${category === 'clothes' ? 'bg-secondary text-white' : 'bg-white/10 text-slate-400'}`}>
@@ -362,8 +379,8 @@ function App() {
                   <button
                     onClick={() => setCategory('shoes')}
                     className={`p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-4 ${category === 'shoes'
-                        ? 'bg-secondary/20 border-secondary shadow-lg shadow-secondary/20 scale-105'
-                        : 'bg-white/5 border-white/10 hover:border-secondary/50 hover:bg-white/10'
+                      ? 'bg-secondary/20 border-secondary shadow-lg shadow-secondary/20 scale-105'
+                      : 'bg-white/5 border-white/10 hover:border-secondary/50 hover:bg-white/10'
                       }`}
                   >
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center ${category === 'shoes' ? 'bg-secondary text-white' : 'bg-white/10 text-slate-400'}`}>
@@ -384,24 +401,12 @@ function App() {
               <p className="text-slate-400">Select a professional model or customize the look.</p>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <ModelSelection
-                  selectedModel={selectedModel}
-                  onModelSelect={setSelectedModel}
-                  gender={gender}
-                />
-              </div>
-              <div className="space-y-6">
-                <div className="glass-panel p-6 border-l-4 border-primary">
-                  <h3 className="text-lg font-bold mb-2">Custom Persona</h3>
-                  <p className="text-sm text-slate-400 mb-4">Or define specific traits for a unique AI model.</p>
-                  <ModelPersonaSelector
-                    modelPersona={modelPersona}
-                    onChange={setModelPersona}
-                  />
-                </div>
-              </div>
+            <div className="max-w-3xl mx-auto">
+              <ModelSelection
+                selectedModel={selectedModel}
+                onModelSelect={setSelectedModel}
+                gender={gender}
+              />
             </div>
           </div>
         );
@@ -419,37 +424,7 @@ function App() {
                 onBackgroundSelect={setSelectedBackground}
               />
 
-              <div className="glass-panel p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Camera className="w-5 h-5 text-primary" />
-                  Select Pose
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {(category === 'shoes' ? SHOE_POSE_PROMPTS : POSE_PROMPTS).map((item) => {
-                    const selected = pose === item.prompt;
-                    const thumb = new URL(`./assets/pose-${item.key}.svg`, import.meta.url).href;
-                    return (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={() => setPose(item.prompt)}
-                        className={`flex flex-col items-center gap-3 p-4 rounded-xl border transition-all ${selected
-                          ? 'bg-primary/15 border-primary/50 text-white shadow-primary/30 shadow-lg scale-105'
-                          : 'bg-white/5 border-white/10 text-slate-300 hover:border-primary/40 hover:bg-white/10'
-                          }`}
-                      >
-                        <img
-                          src={thumb}
-                          alt={item.label}
-                          className="w-16 h-16 opacity-90"
-                          onError={(e) => { e.target.style.display = 'none'; }}
-                        />
-                        <span className="text-sm font-semibold">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+
             </div>
           </div>
         );
@@ -492,53 +467,17 @@ function App() {
                   </div>
                 </div>
 
-                {/* Color Override Section */}
-                <div className="pt-4 border-t border-white/10">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm text-slate-300">Garment Color</p>
-                    {manualColor && (
-                      <button
-                        onClick={() => setManualColor(null)}
-                        className="text-xs text-primary hover:text-primary/80"
-                      >
-                        Reset to detected
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full border border-white/20 shadow-inner" style={{ background: manualColor || colorHex || '#ccc' }} />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white">
-                        {manualColor ? 'Manual Override' : 'Detected Color'}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {manualColor || colorHex || 'None'}
-                      </p>
+                {colorHex && (
+                  <div className="pt-4 border-t border-white/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full border border-white/20" style={{ background: colorHex }} />
+                      <div className="text-sm">
+                        <p className="text-slate-300">Detected Color</p>
+                        <p className="text-xs text-slate-500">{colorHex}</p>
+                      </div>
                     </div>
-
-                    {/* Color Override Dropdown */}
-                    <select
-                      className="bg-black/40 border border-white/10 rounded-lg text-xs py-1 px-2 text-slate-300 focus:outline-none focus:border-primary"
-                      onChange={(e) => setManualColor(e.target.value)}
-                      value={manualColor || ''}
-                    >
-                      <option value="">Wrong color?</option>
-                      <option value="White">Force White</option>
-                      <option value="Black">Force Black</option>
-                      <option value="Red">Force Red</option>
-                      <option value="Blue">Force Blue</option>
-                      <option value="Green">Force Green</option>
-                      <option value="Yellow">Force Yellow</option>
-                      <option value="Purple">Force Purple</option>
-                      <option value="Pink">Force Pink</option>
-                      <option value="Orange">Force Orange</option>
-                      <option value="Brown">Force Brown</option>
-                      <option value="Gray">Force Gray</option>
-                      <option value="Beige">Force Beige</option>
-                    </select>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="flex flex-col justify-center space-y-6">
@@ -602,10 +541,10 @@ function App() {
               <div key={step} className="flex items-center">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step === currentStep
-                      ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110'
-                      : step < currentStep
-                        ? 'bg-primary/20 text-primary'
-                        : 'bg-white/5 text-slate-600'
+                    ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110'
+                    : step < currentStep
+                      ? 'bg-primary/20 text-primary'
+                      : 'bg-white/5 text-slate-600'
                     }`}
                 >
                   {step < currentStep ? <CheckCircle2 className="w-5 h-5" /> : step}
@@ -629,8 +568,8 @@ function App() {
             onClick={prevStep}
             disabled={currentStep === 1}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${currentStep === 1
-                ? 'opacity-0 pointer-events-none'
-                : 'hover:bg-white/5 text-slate-400 hover:text-white'
+              ? 'opacity-0 pointer-events-none'
+              : 'hover:bg-white/5 text-slate-400 hover:text-white'
               }`}
           >
             <ChevronLeft className="w-5 h-5" />
