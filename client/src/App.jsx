@@ -3,6 +3,7 @@ import ImageUpload from './components/ImageUpload';
 import GenerationResult from './components/GenerationResult';
 import ModelPersonaSelector from './components/ModelPersonaSelector';
 import ModelSelection from './components/ModelSelection';
+import ShoeModelSelection from './components/ShoeModelSelection';
 import BackgroundSelection from './components/BackgroundSelection';
 import AnimatedProgress from './components/AnimatedProgress';
 import ReviewPage from './components/ReviewPage';
@@ -102,6 +103,19 @@ function buildPersonaDescription(persona) {
   return parts.join(', ') + '.';
 }
 
+/**
+ * Build a descriptive shoe persona string from shoe model object
+ * Simplified approach - just use the description from the shoe model
+ */
+function buildShoePersonaDescription(shoeModel) {
+  if (!shoeModel) {
+    return 'Show shoes on neutral legs, photographed from mid-thigh to feet';
+  }
+
+  // Use the description from the shoe model configuration
+  return shoeModel.description + ', photographed from mid-thigh to feet';
+}
+
 function App() {
   // Wizard State
   const [currentStep, setCurrentStep] = useState(1);
@@ -118,7 +132,7 @@ function App() {
   const [category, setCategory] = useState(null); // Force selection
   const [gender, setGender] = useState(null); // Explicit gender selection
 
-  // Model State
+  // Model State (for clothes)
   const [selectedModel, setSelectedModel] = useState(null);
   const [modelPersona, setModelPersona] = useState({
     gender: 'female',
@@ -129,6 +143,9 @@ function App() {
     hairColor: 'brown',
     bodyType: 'average',
   });
+
+  // Shoe Model State (for shoes)
+  const [selectedShoeModel, setSelectedShoeModel] = useState(null);
 
   // Scene State
   const [pose, setPose] = useState(POSE_PROMPTS[0].prompt);
@@ -204,11 +221,19 @@ function App() {
     }
 
     const variationCue = VARIATION_CUES[Math.floor(Math.random() * VARIATION_CUES.length)];
-    const personaDescription = buildPersonaDescription(modelPersona);
+
+    // Use appropriate persona builder based on category
+    const personaDescription = category === 'shoes'
+      ? buildShoePersonaDescription(selectedShoeModel)
+      : buildPersonaDescription(modelPersona);
 
     // Improved Fidelity Guard: Only mention background consistency if NO background is selected
     const backgroundGuard = selectedBackground ? '' : 'Keep background consistent with the style.';
-    const fidelityGuard = `${personaDescription} Match the uploaded garment exactly (shape, silhouette, fit, color, pattern/print, logos). Do not recolor or restyle the garment. Do not add or remove accessories, props, jewelry, text, or extra garments. ${backgroundGuard} Photorealistic, high resolution, skin-safe lighting.`;
+
+    // Adjust fidelity guard based on category
+    const fidelityGuard = category === 'shoes'
+      ? `${personaDescription} Match the uploaded shoes exactly (shape, design, color, logos, details). Do not recolor or restyle the shoes. Focus on shoe details while maintaining natural leg positioning. ${backgroundGuard} Photorealistic, high resolution, natural lighting.`
+      : `${personaDescription} Match the uploaded garment exactly (shape, silhouette, fit, color, pattern/print, logos). Do not recolor or restyle the garment. Do not add or remove accessories, props, jewelry, text, or extra garments. ${backgroundGuard} Photorealistic, high resolution, skin-safe lighting.`;
 
     // Build backdrop clause
     const backdropClause = selectedBackground
@@ -251,12 +276,19 @@ function App() {
     formData.append('image', selectedFile);
     formData.append('prompt', finalPrompt);
     formData.append('gender', gender || modelPersona.gender);
-    formData.append('modelPersona', JSON.stringify(modelPersona));
-
-    if (selectedModel) {
-      formData.append('modelId', selectedModel.id);
-    }
     formData.append('category', category);
+
+    // Handle model selection based on category
+    if (category === 'shoes') {
+      if (selectedShoeModel) {
+        formData.append('shoeModelId', selectedShoeModel.id);
+      }
+    } else {
+      formData.append('modelPersona', JSON.stringify(modelPersona));
+      if (selectedModel) {
+        formData.append('modelId', selectedModel.id);
+      }
+    }
 
     if (selectedBackground) {
       formData.append('backgroundPrompt', selectedBackground.prompt);
@@ -447,15 +479,29 @@ function App() {
         return (
           <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center mb-4">
-              <h2 className="text-3xl font-bold mb-2">Choose a Model</h2>
-              <p className="text-slate-400">Select a professional model for your product.</p>
+              <h2 className="text-3xl font-bold mb-2">
+                {category === 'shoes' ? 'Choose Leg Style' : 'Choose a Model'}
+              </h2>
+              <p className="text-slate-400">
+                {category === 'shoes'
+                  ? 'Select outfit style for your shoe photography'
+                  : 'Select a professional model for your product'}
+              </p>
             </div>
 
-            <ModelSelection
-              selectedModel={selectedModel}
-              onModelSelect={setSelectedModel}
-              gender={gender}
-            />
+            {category === 'shoes' ? (
+              <ShoeModelSelection
+                selectedShoeModel={selectedShoeModel}
+                onShoeModelSelect={setSelectedShoeModel}
+                gender={gender}
+              />
+            ) : (
+              <ModelSelection
+                selectedModel={selectedModel}
+                onModelSelect={setSelectedModel}
+                gender={gender}
+              />
+            )}
           </div>
         );
       case 4: // Scene
@@ -477,6 +523,7 @@ function App() {
           <ReviewPage
             selectedFile={selectedFile}
             selectedModel={selectedModel}
+            selectedShoeModel={selectedShoeModel}
             selectedBackground={selectedBackground}
             category={category}
             gender={gender}

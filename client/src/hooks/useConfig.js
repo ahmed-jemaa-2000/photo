@@ -72,3 +72,36 @@ export function getPosesByCategory(config, category) {
 
   return config.posePrompts || [];
 }
+
+/**
+ * Get all shoe models from config
+ * @param {Object} config - Configuration object
+ * @returns {Array} Shoe models array
+ */
+export function getShoeModels(config) {
+  if (!config) return [];
+  return config.shoeModels || [];
+}
+
+/**
+ * Get shoe models filtered by gender
+ * @param {Object} config - Configuration object
+ * @param {String} gender - 'male' or 'female'
+ * @returns {Array} Filtered shoe models
+ */
+export function getShoeModelsByGender(config, gender) {
+  const shoeModels = getShoeModels(config);
+  if (!gender) return shoeModels;
+  return shoeModels.filter(m => m.gender === gender);
+}
+
+/**
+ * Get a specific shoe model by ID
+ * @param {Object} config - Configuration object
+ * @param {String} id - Shoe model ID
+ * @returns {Object|null} Shoe model or null
+ */
+export function getShoeModelById(config, id) {
+  const shoeModels = getShoeModels(config);
+  return shoeModels.find(m => m.id === id) || null;
+}

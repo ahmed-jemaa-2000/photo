@@ -51,8 +51,9 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// Serve static assets for models and backgrounds
+// Serve static assets for models, legs, and backgrounds
 app.use('/api/assets/models', express.static(path.join(__dirname, 'assets/models')));
+app.use('/api/assets/legs', express.static(path.join(__dirname, 'assets/legs')));
 app.use('/api/assets/backgrounds', express.static(path.join(__dirname, 'assets/background')));
 
 // Health check
@@ -80,12 +81,19 @@ const upload = multer({ storage: storage });
 // Config endpoint - Share botConfig data with web client
 app.get('/api/config', (req, res) => {
   try {
-    const { MODELS, BACKGROUNDS, POSE_PROMPTS, SHOE_POSE_PROMPTS } = require('./config/botConfig');
+    const { MODELS, SHOE_MODELS, BACKGROUNDS, POSE_PROMPTS, SHOE_POSE_PROMPTS } = require('./config/botConfig');
 
     // Transform model paths to web URLs
     const modelsWithUrls = MODELS.map(model => ({
       ...model,
       previewUrl: `/api/assets/models/${path.basename(model.path)}`,
+      path: undefined // Don't expose server paths to client
+    }));
+
+    // Transform shoe model paths to web URLs
+    const shoeModelsWithUrls = SHOE_MODELS.map(shoeModel => ({
+      ...shoeModel,
+      previewUrl: `/api/assets/legs/${path.basename(shoeModel.path)}`,
       path: undefined // Don't expose server paths to client
     }));
 
@@ -98,6 +106,7 @@ app.get('/api/config', (req, res) => {
 
     res.json({
       models: modelsWithUrls,
+      shoeModels: shoeModelsWithUrls,
       backgrounds: backgroundsWithUrls,
       posePrompts: POSE_PROMPTS,
       shoePosePrompts: SHOE_POSE_PROMPTS
@@ -120,11 +129,12 @@ app.post('/api/generate', upload.fields([
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
-    const { prompt, gender, modelPersona, modelId, category, backgroundPrompt } = req.body;
+    const { prompt, gender, modelPersona, modelId, shoeModelId, category, backgroundPrompt } = req.body;
 
     console.log('Received image:', imagePath);
     console.log('Prompt:', prompt);
     console.log('Model ID:', modelId);
+    console.log('Shoe Model ID:', shoeModelId);
     console.log('Category:', category);
 
     // Parse modelPersona if it's a JSON string
@@ -137,9 +147,20 @@ app.post('/api/generate', upload.fields([
       }
     }
 
-    // Resolve model reference path from modelId if provided
+    // Resolve model reference path from modelId or shoeModelId if provided
     let resolvedModelPath = modelReferencePath;
-    if (modelId && !resolvedModelPath) {
+
+    // Handle shoe category with shoe model selection
+    if (category === 'shoes' && shoeModelId && !resolvedModelPath) {
+      const { SHOE_MODELS } = require('./config/botConfig');
+      const selectedShoeModel = SHOE_MODELS.find(m => m.id === shoeModelId);
+      if (selectedShoeModel && fs.existsSync(selectedShoeModel.path)) {
+        resolvedModelPath = selectedShoeModel.path;
+        console.log('Using shoe model reference:', selectedShoeModel.name.en, '(' + resolvedModelPath + ')');
+      }
+    }
+    // Handle regular clothes category with full model selection
+    else if (modelId && !resolvedModelPath) {
       const { MODELS } = require('./config/botConfig');
       const selectedModel = MODELS.find(m => m.id === modelId);
       if (selectedModel && fs.existsSync(selectedModel.path)) {

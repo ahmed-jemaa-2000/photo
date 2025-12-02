@@ -115,11 +115,18 @@ async function generateImage(imagePath, userPrompt, options = {}) {
   }
 
   const formData = new FormData();
-  formData.append('files', fs.createReadStream(imagePath)); // File 1: Garment/Product
+  formData.append('files', fs.createReadStream(imagePath)); // File 1: Garment/Product/Shoes
 
   let promptPrefix = 'Create a high-fidelity fashion product photo: a real human model wearing the exact same garment from the reference image. Preserve all logos, text, details, and EXACT garment color with no hue/brightness shifts.';
 
-  if (options.modelReferencePath && fs.existsSync(options.modelReferencePath)) {
+  // Handle shoe category with leg reference
+  if (options.category === 'shoes' && options.modelReferencePath && fs.existsSync(options.modelReferencePath)) {
+    console.log('Using shoe/leg model reference image:', options.modelReferencePath);
+    formData.append('files', fs.createReadStream(options.modelReferencePath)); // File 2: Leg Reference
+    promptPrefix = 'Create a high-fidelity product photo of the shoes from the first image. Use the second image as reference for leg/feet type and outfit style. Focus on shoe details while maintaining natural leg positioning. Preserve all logos, text, and details from the shoes. LOCK shoe color and design exactly to the first image.';
+  }
+  // Handle regular clothes category with full model reference
+  else if (options.modelReferencePath && fs.existsSync(options.modelReferencePath)) {
     console.log('Using model reference image:', options.modelReferencePath);
     formData.append('files', fs.createReadStream(options.modelReferencePath)); // File 2: Model Reference
     promptPrefix = 'Create a high-fidelity fashion product photo using the first image as the exact garment reference and the second image as the model reference. The model in the output should resemble the person in the second image. Preserve all logos, text, and details from the garment. LOCK garment color and graphics exactly to the first image.';

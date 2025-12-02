@@ -153,6 +153,120 @@ const MODELS = [
     }
 ];
 
+const SHOE_MODELS = [
+    // Female variations
+    {
+        id: 'female-black-jeans',
+        name: { en: 'Black Jeans', tn: 'Jeans Kahla' },
+        gender: 'female',
+        outfitStyle: 'casual',
+        description: 'Female legs wearing fitted black denim jeans',
+        previewUrl: '/api/assets/legs/female-black-jeans.png',
+        path: path.join(__dirname, '../assets/legs/female-black-jeans.png')
+    },
+    {
+        id: 'female-blue-jeans',
+        name: { en: 'Blue Jeans', tn: 'Jeans Azra9' },
+        gender: 'female',
+        outfitStyle: 'casual',
+        description: 'Female legs wearing classic blue denim jeans',
+        previewUrl: '/api/assets/legs/female-blue-jeans.png',
+        path: path.join(__dirname, '../assets/legs/female-blue-jeans.png')
+    },
+    {
+        id: 'female-white-pants',
+        name: { en: 'White Pants', tn: 'Sarwal Abyad' },
+        gender: 'female',
+        outfitStyle: 'casual',
+        description: 'Female legs wearing white casual pants',
+        previewUrl: '/api/assets/legs/female-white-pants.png',
+        path: path.join(__dirname, '../assets/legs/female-white-pants.png')
+    },
+    {
+        id: 'female-beige-pants',
+        name: { en: 'Beige Pants', tn: 'Sarwal Beige' },
+        gender: 'female',
+        outfitStyle: 'casual',
+        description: 'Female legs wearing beige khaki pants',
+        previewUrl: '/api/assets/legs/female-beige-pants.png',
+        path: path.join(__dirname, '../assets/legs/female-beige-pants.png')
+    },
+    {
+        id: 'female-black-leggings',
+        name: { en: 'Black Leggings', tn: 'Leggings Kahla' },
+        gender: 'female',
+        outfitStyle: 'sporty',
+        description: 'Female legs wearing black athletic leggings',
+        previewUrl: '/api/assets/legs/female-black-leggings.png',
+        path: path.join(__dirname, '../assets/legs/female-black-leggings.png')
+    },
+    {
+        id: 'female-dark-skinny-jeans',
+        name: { en: 'Dark Skinny Jeans', tn: 'Skinny Jeans Dahkra' },
+        gender: 'female',
+        outfitStyle: 'casual',
+        description: 'Female legs wearing dark wash skinny jeans',
+        previewUrl: '/api/assets/legs/female-dark-skinny-jeans.png',
+        path: path.join(__dirname, '../assets/legs/female-dark-skinny-jeans.png')
+    },
+
+    // Male variations
+    {
+        id: 'male-black-jeans',
+        name: { en: 'Black Jeans', tn: 'Jeans Kahla' },
+        gender: 'male',
+        outfitStyle: 'casual',
+        description: 'Male legs wearing black denim jeans',
+        previewUrl: '/api/assets/legs/male-black-jeans.png',
+        path: path.join(__dirname, '../assets/legs/male-black-jeans.png')
+    },
+    {
+        id: 'male-blue-jeans',
+        name: { en: 'Blue Jeans', tn: 'Jeans Azra9' },
+        gender: 'male',
+        outfitStyle: 'casual',
+        description: 'Male legs wearing classic blue denim jeans',
+        previewUrl: '/api/assets/legs/male-blue-jeans.png',
+        path: path.join(__dirname, '../assets/legs/male-blue-jeans.png')
+    },
+    {
+        id: 'male-gray-joggers',
+        name: { en: 'Gray Joggers', tn: 'Joggers Rmadi' },
+        gender: 'male',
+        outfitStyle: 'sporty',
+        description: 'Male legs wearing gray athletic jogger pants',
+        previewUrl: '/api/assets/legs/male-gray-joggers.png',
+        path: path.join(__dirname, '../assets/legs/male-gray-joggers.png')
+    },
+    {
+        id: 'male-black-sport-pants',
+        name: { en: 'Black Sport Pants', tn: 'Sarwal Sport Kahla' },
+        gender: 'male',
+        outfitStyle: 'sporty',
+        description: 'Male legs wearing black athletic sport pants',
+        previewUrl: '/api/assets/legs/male-black-sport-pants.png',
+        path: path.join(__dirname, '../assets/legs/male-black-sport-pants.png')
+    },
+    {
+        id: 'male-beige-chinos',
+        name: { en: 'Beige Chinos', tn: 'Chinos Beige' },
+        gender: 'male',
+        outfitStyle: 'smart-casual',
+        description: 'Male legs wearing beige khaki chino pants',
+        previewUrl: '/api/assets/legs/male-beige-chinos.png',
+        path: path.join(__dirname, '../assets/legs/male-beige-chinos.png')
+    },
+    {
+        id: 'male-dark-gray-pants',
+        name: { en: 'Dark Gray Pants', tn: 'Sarwal Rmadi Dahkar' },
+        gender: 'male',
+        outfitStyle: 'casual',
+        description: 'Male legs wearing dark gray casual pants',
+        previewUrl: '/api/assets/legs/male-dark-gray-pants.png',
+        path: path.join(__dirname, '../assets/legs/male-dark-gray-pants.png')
+    }
+];
+
 const BACKGROUNDS = [
     {
         id: 'sidi_bou_said',
@@ -203,6 +317,7 @@ module.exports = {
     POSE_PROMPTS,
     SHOE_POSE_PROMPTS,
     MODELS,
+    SHOE_MODELS,
     BACKGROUNDS
 };
 

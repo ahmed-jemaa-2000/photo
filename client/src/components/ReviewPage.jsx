@@ -4,6 +4,7 @@ import { Check, Sparkles, Camera, Shirt, User, MapPin } from 'lucide-react';
 function ReviewPage({
     selectedFile,
     selectedModel,
+    selectedShoeModel,
     selectedBackground,
     category,
     gender,
@@ -11,6 +12,10 @@ function ReviewPage({
     isGenerating
 }) {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    // Determine which model to display based on category
+    const displayModel = category === 'shoes' ? selectedShoeModel : selectedModel;
+    const modelLabel = category === 'shoes' ? 'Leg Style' : 'Model';
 
     return (
         <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -44,13 +49,13 @@ function ReviewPage({
                         {/* Model Card */}
                         <div className="bg-white p-2 rounded-2xl shadow-sm">
                             <div className="aspect-[3/4] rounded-xl overflow-hidden bg-slate-100 relative mb-3">
-                                {selectedModel ? (
+                                {displayModel ? (
                                     <img
-                                        src={`${apiUrl}${selectedModel.previewUrl}`}
-                                        alt={selectedModel.name.en}
+                                        src={`${apiUrl}${displayModel.previewUrl}`}
+                                        alt={displayModel.name.en}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
-                                            e.target.src = 'https://placehold.co/400x600.png?text=' + encodeURIComponent(selectedModel.name.en);
+                                            e.target.src = 'https://placehold.co/400x600.png?text=' + encodeURIComponent(displayModel.name.en);
                                         }}
                                     />
                                 ) : (
@@ -59,7 +64,7 @@ function ReviewPage({
                                     </div>
                                 )}
                             </div>
-                            <p className="text-center font-medium text-slate-900 text-sm">Model</p>
+                            <p className="text-center font-medium text-slate-900 text-sm">{modelLabel}</p>
                         </div>
 
                         {/* Background Card */}
@@ -100,8 +105,8 @@ function ReviewPage({
                             </div>
 
                             <div className="flex justify-between items-center py-3 border-b border-slate-100">
-                                <span className="text-slate-500 font-medium">Model</span>
-                                <span className="font-bold">{selectedModel?.name?.en || 'Custom'}</span>
+                                <span className="text-slate-500 font-medium">{modelLabel}</span>
+                                <span className="font-bold">{displayModel?.name?.en || 'Custom'}</span>
                             </div>
 
                             <div className="flex justify-between items-center py-3 border-b border-slate-100">
