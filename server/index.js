@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -22,18 +21,31 @@ const corsOrigins = (process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || '')
   .map(o => o.trim())
   .filter(Boolean);
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin || corsOrigins.length === 0 || corsOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    callback(new Error('Not allowed by CORS'));
-  }
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // non-browser or same-origin
+  if (corsOrigins.length === 0) return true; // allow all if none configured
+  return corsOrigins.includes(origin);
 };
 
 // Middleware
-app.use(cors(corsOptions));
-app.options('/:path(*)', cors(corsOptions)); // Preflight for all routes
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowed = isOriginAllowed(origin);
+
+  if (allowed) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  }
+  res.header('Vary', 'Origin');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || 'Content-Type,Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(allowed ? 204 : 403);
+  }
+
+  next();
+});
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
