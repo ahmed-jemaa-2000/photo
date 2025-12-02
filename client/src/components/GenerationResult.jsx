@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Share2, Sparkles, Link2, Video, Loader2, Play } from 'lucide-react';
+import { Download, Share2, Video, Loader2, Play } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -65,11 +65,7 @@ const GenerationResult = ({ result }) => {
         <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden group">
           <img src={result.imageUrl} alt="Generated Model" className="w-full h-full object-cover" />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
-            <div className="inline-flex items-center gap-2 self-start bg-black/40 px-3 py-1 rounded-full text-xs">
-              <Sparkles className="w-4 h-4 text-primary" />
-              {result.meta?.model || 'imagen-pro'}
-            </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
             <div className="flex gap-3 justify-center">
               <a
                 className="btn-primary flex items-center gap-2 py-2 px-4 text-sm"
@@ -149,17 +145,6 @@ const GenerationResult = ({ result }) => {
       </div>
 
       <div className="glass-panel p-4 text-sm space-y-2">
-        <div className="flex items-center gap-2 text-slate-300">
-          <Link2 className="w-4 h-4 text-primary" />
-          <a
-            href={downloadHref}
-            className="underline text-primary hover:text-primary/80"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open hosted link
-          </a>
-        </div>
         {result.pose && (
           <p className="text-slate-200">
             Pose: <span className="text-slate-400">{result.pose}</span>

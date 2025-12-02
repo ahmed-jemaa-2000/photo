@@ -442,11 +442,6 @@ function App() {
       case 5: // Generate
         return (
           <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold mb-2">Ready to Render</h2>
-              <p className="text-slate-400">Review your choices and generate the final image.</p>
-            </div>
-
             <div className="grid md:grid-cols-2 gap-8">
               <div className="glass-panel p-6 space-y-6">
                 <h3 className="text-xl font-semibold border-b border-white/10 pb-4">Summary</h3>
