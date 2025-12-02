@@ -49,11 +49,27 @@ export function getColorName(hex) {
 
   const { h, s, l } = hsl;
 
-  // Handle achromatic colors (grays, black, white)
+  // BRIGHTNESS-FIRST DETECTION
+  // Extract RGB values for brightness check
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (result) {
+    const r = parseInt(result[1], 16);
+    const g = parseInt(result[2], 16);
+    const b = parseInt(result[3], 16);
+    const avgRGB = (r + g + b) / 3;
+
+    // If RGB average is very high, it's white regardless of HSL
+    if (avgRGB > 240) return 'White';
+    if (avgRGB > 220 && s < 15) return 'Off-White';
+  }
+
   // Handle achromatic colors (grays, black, white)
   // Aggressive White detection for cool lighting (shadows on white fabric often look blue/cyan)
   // If it's bright enough, call it white regardless of saturation (within reason)
-  if (l > 90) return 'White';
+
+  // Lower threshold to catch slightly shadowed whites
+  if (l > 85 && s < 10) return 'White';  // Very desaturated light colors
+  if (l > 90) return 'White';  // Pure whites
 
   // If it's reasonably bright and low saturation, it's off-white/white
   if (l > 80 && s < 30) return 'Off-White';
@@ -76,6 +92,17 @@ export function getColorName(hex) {
   }
 
   if (s < 15) {
+    // Check brightness first for very desaturated colors
+    // Re-extract RGB for this check (we already did it above but need it in this scope)
+    const result2 = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (result2) {
+      const r = parseInt(result2[1], 16);
+      const g = parseInt(result2[2], 16);
+      const b = parseInt(result2[3], 16);
+      const avgRGB = (r + g + b) / 3;
+      if (avgRGB > 210) return 'Off-White';  // Bright neutrals are white
+    }
+
     if (l > 70) return 'Light Gray';
     if (l > 50) return 'Gray';
     if (l > 30) return 'Dark Gray';

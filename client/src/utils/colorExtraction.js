@@ -200,7 +200,9 @@ export async function extractColorPalette(imageFile, numColors = 5) {
               const { s, l } = rgbToHsl(r, g, b);
               const isLightNeutral = l > 88 && s < 18;
               const isDeepNeutral = l < 7 && s < 22;
-              const isLikelyBackgroundNeutral = (isLightNeutral || isDeepNeutral) && distanceRatio > 0.65;
+              // Only filter neutrals in outer 15% of image (distanceRatio > 0.85)
+              // This preserves white garments that extend to edges
+              const isLikelyBackgroundNeutral = (isLightNeutral || isDeepNeutral) && distanceRatio > 0.85;
               if (isLikelyBackgroundNeutral) continue;
 
               pixels.push({ r, g, b });
@@ -228,6 +230,23 @@ export async function extractColorPalette(imageFile, numColors = 5) {
 
           // Sort by percentage (most dominant first)
           dominantColors.sort((a, b) => b.percentage - a.percentage);
+
+          // EXPLICIT WHITE DETECTION
+          // Force "White" classification for very bright clusters
+          if (dominantColors.length > 0) {
+            const dominantCluster = dominantColors[0];
+            const avgBrightness = (dominantCluster.r + dominantCluster.g + dominantCluster.b) / 3;
+
+            if (avgBrightness > 210 && dominantCluster.s < 10) {
+              console.log('[Color Detection] Detected bright white garment:', {
+                avgBrightness: avgBrightness.toFixed(1),
+                rgb: `(${dominantCluster.r}, ${dominantCluster.g}, ${dominantCluster.b})`,
+                saturation: dominantCluster.s.toFixed(1) + '%'
+              });
+              // Mark this cluster to be forced as "White" in color naming
+              dominantCluster._forceWhite = true;
+            }
+          }
 
           isResolved = true;
           cleanup();

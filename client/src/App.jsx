@@ -168,19 +168,30 @@ function App() {
       setColorPalette(palette);
       if (palette.length > 0) {
         // Smart Color Selection:
-        // If the top color is Gray/Dark Gray, but we have a White/Off-White candidate in the top 3,
+        // If the top color is Gray/Dark Gray, but we have a White/Off-White candidate in the top 5,
         // prefer the lighter color as it's likely the true garment color (ignoring shadows).
         let bestColor = palette[0];
 
-        const topCandidates = palette.slice(0, 3);
-        const whiteCandidate = topCandidates.find(c =>
-          c.name === 'White' || c.name === 'Off-White' || c.name === 'Very Light Gray'
-        );
+        // Enhanced Smart Override - Check top 5 colors instead of 3
+        const topFive = palette.slice(0, 5);
 
-        const primaryIsGray = bestColor.name.includes('Gray') || bestColor.name === 'Charcoal';
+        // Find white candidate with explicit RGB brightness check
+        const whiteCandidate = topFive.find(c => {
+          const avgRGB = c.hex ? (parseInt(c.hex.slice(1,3), 16) + parseInt(c.hex.slice(3,5), 16) + parseInt(c.hex.slice(5,7), 16)) / 3 : 0;
+          return c.name === 'White' ||
+                 c.name === 'Off-White' ||
+                 c.name === 'Very Light Gray' ||
+                 (c.name === 'Light Gray' && avgRGB > 200) ||  // Bright light gray is actually white
+                 avgRGB > 220;  // Any very bright color
+        });
 
-        if (primaryIsGray && whiteCandidate) {
-          console.log('Smart Color: Overriding Gray with White candidate', whiteCandidate);
+        // Check if primary is gray/desaturated
+        const primaryIsGray = bestColor.name.includes('Gray') ||
+                             bestColor.name === 'Charcoal' ||
+                             (bestColor.s && bestColor.s < 10 && bestColor.l && bestColor.l < 70);  // Low sat, not bright
+
+        if (primaryIsGray && whiteCandidate && whiteCandidate.percentage >= 15) {
+          console.log('✅ Smart Override: Detected gray (#' + bestColor.hex + '), replacing with white candidate:', whiteCandidate);
           bestColor = whiteCandidate;
         }
 
