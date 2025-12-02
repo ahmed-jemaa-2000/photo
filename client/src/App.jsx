@@ -621,7 +621,7 @@ function App() {
                   Create Another
                 </button>
               </div>
-              <GenerationResult result={generatedResult} />
+              <GenerationResult result={generatedResult} category={category} />
             </div>
           ) : (
             renderStepContent()
