@@ -38,11 +38,15 @@ function hexToHsl(hex) {
 /**
  * Get color name from hex code
  * @param {string} hex - Hex color code (e.g., "#FF5733")
+ * @param {boolean} forceWhite - Force white classification for bright garments
  * @returns {string} Human-readable color name
  */
-function getColorName(hex) {
+function getColorName(hex, forceWhite = false) {
     const hsl = hexToHsl(hex);
     if (!hsl) return 'Unknown';
+
+    // Force white if explicitly flagged (from RGB brightness detection)
+    if (forceWhite) return 'White';
 
     const { h, s, l } = hsl;
 

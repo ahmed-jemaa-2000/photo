@@ -29,7 +29,7 @@ class PromptBuilder {
       'Yellow-Green': 'lime',
       'Light Gray': 'light gray',
       'Very Light Gray': 'off-white',
-      'Dark Gray': 'charcoal',
+      'Dark Gray': 'charcoal gray',
       'Very Dark Gray': 'charcoal',
       'Light Pink': 'blush',
       'Pink': 'pink',
@@ -38,7 +38,30 @@ class PromptBuilder {
       'Light Green': 'mint',
       'Dark Green': 'forest green',
       'Very Dark Red': 'burgundy',
-      'Dark Red': 'maroon'
+      'Dark Red': 'maroon',
+      // Whites & Neutrals
+      'White': 'pure white',
+      'Off-White': 'off-white',
+      'Black': 'black',
+      'Gray': 'gray',
+      'Charcoal': 'charcoal',
+      // Blues & Cyans
+      'Cyan': 'cyan',
+      'Light Cyan': 'aqua',
+      // Browns & Earth Tones
+      'Brown': 'brown',
+      'Dark Brown': 'chocolate brown',
+      'Beige': 'beige',
+      'Cream': 'cream',
+      'Tan': 'tan',
+      'Olive': 'olive',
+      // Additional Colors
+      'Teal': 'teal',
+      'Coral': 'coral',
+      'Salmon': 'salmon pink',
+      'Gold': 'gold',
+      'Silver': 'silver',
+      'Khaki': 'khaki'
     };
 
     // Variation cues for pose diversity (randomly selected)
@@ -241,7 +264,7 @@ class PromptBuilder {
     const dominantPercentage = dominant?.percentage || 0;
 
     // Check if dominant color is a neutral (may indicate background noise)
-    const isNeutral = this._isNeutralColor(dominant?.hex);
+    const isNeutral = PromptBuilder._isNeutralColor(dominant?.hex);
 
     // High confidence: Clear dominant color (>40%) and not a neutral
     if (dominantPercentage > 40 && !isNeutral) {
@@ -265,14 +288,17 @@ class PromptBuilder {
 
     // Convert hex to RGB
     const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
 
-    // Convert to HSL
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const l = (max + min) / 2 / 255;
-    const s = max === min ? 0 : (max - min) / (1 - Math.abs(2 * l - 1)) / 255;
+    // Convert to HSL (normalized RGB)
+    const rNorm = r / 255;
+    const gNorm = g / 255;
+    const bNorm = b / 255;
+    const max = Math.max(rNorm, gNorm, bNorm);
+    const min = Math.min(rNorm, gNorm, bNorm);
+    const l = (max + min) / 2;
+    const s = max === min ? 0 : (max - min) / (max + min > 1 ? (2 - max - min) : (max + min));
 
     // Neutral if saturation < 15% (very desaturated)
     return s < 0.15;

@@ -41,11 +41,15 @@ function hexToHsl(hex) {
 /**
  * Get color name from hex code
  * @param {string} hex - Hex color code (e.g., "#FF5733")
+ * @param {boolean} forceWhite - Force white classification for bright garments
  * @returns {string} Human-readable color name
  */
-export function getColorName(hex) {
+export function getColorName(hex, forceWhite = false) {
   const hsl = hexToHsl(hex);
   if (!hsl) return 'Unknown';
+
+  // Force white if explicitly flagged (from RGB brightness detection in extraction)
+  if (forceWhite) return 'White';
 
   const { h, s, l } = hsl;
 
@@ -92,17 +96,6 @@ export function getColorName(hex) {
   }
 
   if (s < 15) {
-    // Check brightness first for very desaturated colors
-    // Re-extract RGB for this check (we already did it above but need it in this scope)
-    const result2 = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (result2) {
-      const r = parseInt(result2[1], 16);
-      const g = parseInt(result2[2], 16);
-      const b = parseInt(result2[3], 16);
-      const avgRGB = (r + g + b) / 3;
-      if (avgRGB > 210) return 'Off-White';  // Bright neutrals are white
-    }
-
     if (l > 70) return 'Light Gray';
     if (l > 50) return 'Gray';
     if (l > 30) return 'Dark Gray';

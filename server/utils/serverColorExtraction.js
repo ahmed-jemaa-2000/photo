@@ -136,19 +136,19 @@ async function extractColorPalette(imagePath, numColors = 5) {
 
             if (a <= 120) return;
 
-            // Aggressive Center Weighting: Only scan the center 50% of the image
-            // This avoids background noise like brick walls, nature, etc.
+            // Center Weighting: Scan the center 85% of the image
+            // This avoids background noise while capturing full garment
             const dx = x - centerX;
             const dy = y - centerY;
             const distanceRatio = Math.sqrt(dx * dx + dy * dy) / maxRadius;
 
-            // Ignore anything outside the center 50% circle
-            if (distanceRatio > 0.50) return;
+            // Ignore anything outside the center 85% circle (aligned with client)
+            if (distanceRatio > 0.85) return;
 
             const { s, l } = rgbToHsl(r, g, b);
             const isLightNeutral = l > 88 && s < 18;
             const isDeepNeutral = l < 7 && s < 22;
-            const isLikelyBackgroundNeutral = (isLightNeutral || isDeepNeutral) && distanceRatio > 0.65;
+            const isLikelyBackgroundNeutral = (isLightNeutral || isDeepNeutral) && distanceRatio > 0.85;
 
             if (isLikelyBackgroundNeutral) return;
 
@@ -184,10 +184,20 @@ async function extractColorPalette(imagePath, numColors = 5) {
 
         const reordered = [primary, ...withLightness.filter(c => c !== primary)];
 
+        // EXPLICIT WHITE DETECTION
+        // Force "White" classification for very bright clusters
+        if (reordered.length > 0) {
+            const dominant = reordered[0];
+            const avgBrightness = (dominant.r + dominant.g + dominant.b) / 3;
+            if (avgBrightness > 210) {
+                dominant._forceWhite = true;
+            }
+        }
+
         // Add color names for better prompt building
         const { getColorName } = require('./colorNaming');
-        return reordered.map(({ lightness, ...color }) => {
-            const fullName = getColorName(color.hex);
+        return reordered.map(({ lightness, _forceWhite, ...color }) => {
+            const fullName = getColorName(color.hex, _forceWhite);
             const simpleName = fullName.split('(')[0].trim();
             return { ...color, name: fullName, simpleName };
         });
