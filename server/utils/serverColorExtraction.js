@@ -183,7 +183,14 @@ async function extractColorPalette(imagePath, numColors = 5) {
         }
 
         const reordered = [primary, ...withLightness.filter(c => c !== primary)];
-        return reordered.map(({ lightness, ...rest }) => rest);
+
+        // Add color names for better prompt building
+        const { getColorName } = require('./colorNaming');
+        return reordered.map(({ lightness, ...color }) => {
+            const fullName = getColorName(color.hex);
+            const simpleName = fullName.split('(')[0].trim();
+            return { ...color, name: fullName, simpleName };
+        });
     } catch (error) {
         console.error("Color extraction error:", error);
         return [{ hex: '#808080', percentage: 100 }]; // Fallback Grey

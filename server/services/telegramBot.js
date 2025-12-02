@@ -755,28 +755,52 @@ if (bot) {
 
       await ctx.sendChatAction('upload_photo');
 
-      // Extract Color
+      // Extract Color with enhanced analysis
+      const { generateRequestId } = require('../utils/requestId');
+      const logger = require('../utils/logger');
+      const PromptBuilder = require('../utils/promptBuilder');
+      const { generatePaletteMessage, getConfidenceMessage } = require('../utils/colorEmoji');
+
+      const requestId = generateRequestId(userId, 'generate');
+      const startTime = Date.now();
+      const log = logger.withContext({ requestId, userId });
+
+      log.info('Generation started', { category: state.category, model: state.selectedModel.id });
+
       const palette = await extractColorPalette(tempPath);
-      const dominantColor = palette[0]?.hex || '#FFFFFF';
-      const colorName = getColorName(dominantColor);
-      console.log(`Detected Color: ${colorName} (${dominantColor})`);
+      const colorConfidence = PromptBuilder.assessColorConfidence(palette);
 
-      let categoryPrompt = '';
-      if (state.category === 'shoes') {
-        categoryPrompt = 'Focus on the footwear. The uploaded image is a shoe. Ensure the model is wearing these exact shoes. Low angle or appropriate camera angle to showcase the shoes.';
-      }
+      // Store palette and confidence in state
+      state.colorPalette = palette;
+      state.colorConfidence = colorConfidence;
 
-      const fullPrompt = [
-        `CRITICAL: The garment/product is ${colorName} (${dominantColor}). Match this exact hex color. No hue/saturation/brightness shift.`,
-        `CRITICAL: You MUST preserve the exact design, logos, text, patterns, and zippers from the reference image. Do not hallucinate new details. Do not remove or move existing logos. This is a Product Replica task.`,
-        `CRITICAL: Garment type, fit, and fabric must stay identical to the input image.`,
-        categoryPrompt,
-        state.selectedModel.description,
-        state.selectedBackground.prompt,
-        `Photorealistic, high resolution, skin-safe lighting.`,
-        `Color lock: use the garment image as ground truth for color and graphics. No artistic reinterpretation.`,
-        `Modesty Lock: Model must wear neutral trousers or skirt. No partial nudity.`
-      ].join(' ');
+      // Show palette to user
+      const paletteMsg = generatePaletteMessage(palette, lang);
+      const confidenceMsg = getConfidenceMessage(colorConfidence, palette, lang);
+      await ctx.reply(`${paletteMsg}\n\n${confidenceMsg}`, { parse_mode: 'Markdown' });
+
+      log.info('Color analysis completed', {
+        dominantColor: palette[0]?.hex,
+        colorName: palette[0]?.name,
+        confidence: colorConfidence
+      });
+
+      // Build sophisticated prompt using PromptBuilder
+      const promptBuilder = new PromptBuilder({
+        category: state.category,
+        colorPalette: state.colorPalette,
+        modelPersona: {
+          gender: state.selectedModel.gender,
+          ethnicity: state.selectedModel.ethnicity,
+          description: state.selectedModel.description
+        },
+        backdrop: state.selectedBackground,
+        colorConfidence: state.colorConfidence
+      });
+
+      const fullPrompt = promptBuilder.build();
+
+      log.info('Prompt built', { promptTokens: promptBuilder.getTokenEstimate() });
 
       const options = {
         modelPersona: { gender: state.selectedModel.gender, ethnicity: state.selectedModel.ethnicity },
@@ -789,6 +813,12 @@ if (bot) {
       clearInterval(progressInterval);
 
       if (genResult.imageUrl) {
+        const duration = Date.now() - startTime;
+        log.info('Generation completed successfully', {
+          duration,
+          imageUrl: genResult.imageUrl
+        });
+
         const credits = await db.getCredits(userId);
         const referenceUrl = genResult.downloadUrl || genResult.imageUrl;
 
@@ -801,7 +831,8 @@ if (bot) {
           styleLabel: 'Custom',
           posePrompt: 'Natural',
           backdropPrompt: state.selectedBackground.prompt,
-          colorName,
+          colorName: palette[0]?.name || 'Unknown',
+          colorPalette: state.colorPalette,
         });
 
         await ctx.deleteMessage().catch(() => { }); // Delete progress message
@@ -825,9 +856,17 @@ if (bot) {
 
     } catch (error) {
       clearInterval(progressInterval); // Stop animation on error
-      console.error('Bot generation error:', error);
-      ctx.reply(t('regen_failed', lang));
-      await db.refundCredit(userId);
+
+      // Use centralized error handler
+      const { handleGenerationError } = require('../utils/errorHandler');
+      await handleGenerationError(error, ctx, userId, requestId, lang);
+
+      // Clean up
+      try {
+        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+      } catch (cleanupError) {
+        logger.error('Failed to cleanup temp file', { requestId, userId, cleanupError: cleanupError.message });
+      }
     }
   });
 
