@@ -142,8 +142,33 @@ app.post('/api/generate', upload.fields([
   }
 });
 
+app.post('/api/generate-video', async (req, res) => {
+  const { imageUrl, prompt } = req.body;
+
+  if (!imageUrl) {
+    return res.status(400).json({ error: 'Image URL is required' });
+  }
+
+  try {
+    console.log('Starting video generation for image:', imageUrl);
+    const result = await geminiService.generateVideoFromImage(imageUrl, prompt || 'Fashion model moving naturally');
+
+    res.json({
+      videoUrl: result.videoUrl,
+      downloadUrl: result.downloadUrl,
+      meta: result.meta,
+    });
+  } catch (error) {
+    console.error('Error generating video:', error.message);
+    res.status(500).json({ error: error.message || 'Failed to generate video' });
+  }
+});
+
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`=================================================`);
+  console.log(`🚀 SERVER STARTED ON PORT ${PORT}`);
+  console.log(`✨ Video Generation Endpoint: /api/generate-video`);
+  console.log(`=================================================`);
   telegramBot.launch();
 });
 
