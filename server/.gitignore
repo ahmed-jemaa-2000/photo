@@ -2,7 +2,7 @@ node_modules/
 package-lock.json
 uploads/
 data/*.db*
-assets/
+
 
 # Environment / secrets
 .env

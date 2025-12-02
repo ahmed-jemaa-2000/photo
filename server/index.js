@@ -16,14 +16,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // CORS: allow only configured origins (or all if none set)
-const corsOrigins = (process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || '')
+const corsOriginsRaw = (process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || '')
   .split(',')
   .map(o => o.trim())
   .filter(Boolean);
+const corsOrigins = corsOriginsRaw.includes('*') ? ['*'] : corsOriginsRaw;
 
 const isOriginAllowed = (origin) => {
   if (!origin) return true; // non-browser or same-origin
   if (corsOrigins.length === 0) return true; // allow all if none configured
+  if (corsOrigins[0] === '*') return true; // wildcard allow
   return corsOrigins.includes(origin);
 };
 
@@ -33,12 +35,12 @@ app.use((req, res, next) => {
   const allowed = isOriginAllowed(origin);
 
   if (allowed) {
-    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Origin', corsOrigins[0] === '*' ? '*' : origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
   }
   res.header('Vary', 'Origin');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || 'Content-Type,Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {
     return res.sendStatus(allowed ? 204 : 403);
