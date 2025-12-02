@@ -16,14 +16,35 @@ db.connectDB();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS: allow only configured origins (or all if none set)
+const corsOrigins = (process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || corsOrigins.length === 0 || corsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  }
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
 // Serve static assets for models and backgrounds
 app.use('/api/assets/models', express.static(path.join(__dirname, 'assets/models')));
 app.use('/api/assets/backgrounds', express.static(path.join(__dirname, 'assets/background')));
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
