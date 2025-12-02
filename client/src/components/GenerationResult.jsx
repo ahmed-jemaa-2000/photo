@@ -38,7 +38,7 @@ const GenerationResult = ({ result }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageUrl: result.imageUrl,
-          prompt: `Fashion model moving naturally, ${result.pose || 'standing'}, high quality, 4k`,
+          prompt: `Cinematic fashion video of a ${result.gender || 'model'} wearing the garment. ${result.pose || 'standing'}, moving naturally. High fidelity, photorealistic, 4k. CRITICAL: Preserve exact face and garment details from the image. Studio lighting, slow motion.`,
         }),
       });
 
