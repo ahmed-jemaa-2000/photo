@@ -81,7 +81,7 @@ const upload = multer({ storage: storage });
 // Config endpoint - Share botConfig data with web client
 app.get('/api/config', (req, res) => {
   try {
-    const { MODELS, SHOE_MODELS, BACKGROUNDS, POSE_PROMPTS, SHOE_POSE_PROMPTS } = require('./config/botConfig');
+    const { MODELS, SHOE_MODELS, BACKGROUNDS, POSE_PROMPTS, SHOE_POSE_PROMPTS, SHOE_CAMERA_ANGLES, SHOE_LIGHTING_STYLES } = require('./config/botConfig');
 
     // Transform model paths to web URLs
     const modelsWithUrls = MODELS.map(model => ({
@@ -109,7 +109,9 @@ app.get('/api/config', (req, res) => {
       shoeModels: shoeModelsWithUrls,
       backgrounds: backgroundsWithUrls,
       posePrompts: POSE_PROMPTS,
-      shoePosePrompts: SHOE_POSE_PROMPTS
+      shoePosePrompts: SHOE_POSE_PROMPTS,
+      shoeCameraAngles: SHOE_CAMERA_ANGLES,
+      shoeLightingStyles: SHOE_LIGHTING_STYLES
     });
   } catch (error) {
     console.error('Error loading config:', error);
@@ -129,7 +131,7 @@ app.post('/api/generate', upload.fields([
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
-    const { prompt, gender, modelPersona, modelId, shoeModelId, category, backgroundPrompt } = req.body;
+    const { prompt, gender, modelPersona, modelId, shoeModelId, category, backgroundPrompt, shoeCameraAngle, shoeLighting } = req.body;
 
     console.log('Received image:', imagePath);
     console.log('Prompt:', prompt);
@@ -174,6 +176,8 @@ app.post('/api/generate', upload.fields([
       modelPersona: parsedPersona,
       modelReferencePath: resolvedModelPath,
       category,
+      shoeCameraAngle,
+      shoeLighting,
     });
 
     res.json({

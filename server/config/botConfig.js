@@ -267,6 +267,96 @@ const SHOE_MODELS = [
     }
 ];
 
+const SHOE_CAMERA_ANGLES = [
+    {
+        id: 'side_profile',
+        name: { en: 'Side Profile', tn: 'Min Jnib' },
+        key: 'side_profile',
+        prompt: 'Side profile view, 90-degree angle showing the full silhouette of the shoe, clean lines, focus on design details and shoe height',
+        icon: 'SideView'
+    },
+    {
+        id: 'three_quarter',
+        name: { en: '3/4 Angle', tn: 'Zewiya 3/4' },
+        key: 'three_quarter',
+        prompt: '3/4 front angle (classic product shot), slightly elevated view, showing both front and side features, professional e-commerce style',
+        icon: 'Camera'
+    },
+    {
+        id: 'front_view',
+        name: { en: 'Front View', tn: 'Min Qoddam' },
+        key: 'front_view',
+        prompt: 'Direct front view, symmetrical composition, showcasing toe box, laces, and front design elements',
+        icon: 'FrontView'
+    },
+    {
+        id: 'top_down',
+        name: { en: 'Top-Down', tn: 'Min Fouq' },
+        key: 'top_down',
+        prompt: 'Overhead top-down view (bird\'s eye), looking directly down at shoes, shows top surface and lacing pattern',
+        icon: 'ArrowDown'
+    },
+    {
+        id: 'low_angle',
+        name: { en: 'Low Angle (Ground)', tn: 'Min Ta7t' },
+        key: 'low_angle',
+        prompt: 'Low ground-level angle, shot from below looking slightly up, dramatic and powerful perspective, emphasizes height and presence',
+        icon: 'ArrowUp'
+    },
+    {
+        id: 'detail_closeup',
+        name: { en: 'Detail Close-Up', tn: 'Tafsil' },
+        key: 'detail_closeup',
+        prompt: 'Extreme close-up detail shot, macro focus on specific features like branding, stitching, material texture, or sole pattern',
+        icon: 'Focus'
+    }
+];
+
+const SHOE_LIGHTING_STYLES = [
+    {
+        id: 'studio_bright',
+        name: { en: 'Studio Bright', tn: 'Studio Mdhawwa' },
+        key: 'studio_bright',
+        prompt: 'Professional studio lighting, bright and evenly diffused, minimal shadows, clean commercial look, pure white or neutral background',
+        mood: 'clean'
+    },
+    {
+        id: 'natural_soft',
+        name: { en: 'Natural Soft', tn: 'Dhaw Tabi3i' },
+        key: 'natural_soft',
+        prompt: 'Soft natural daylight, gentle shadows, outdoor feel, balanced exposure, authentic and approachable aesthetic',
+        mood: 'natural'
+    },
+    {
+        id: 'dramatic_side',
+        name: { en: 'Dramatic Side-Lit', tn: 'Dhaw Qawi Min Jnib' },
+        key: 'dramatic_side',
+        prompt: 'Strong directional side lighting, dramatic shadows, high contrast, bold and edgy mood, emphasizes texture and contours',
+        mood: 'dramatic'
+    },
+    {
+        id: 'golden_hour',
+        name: { en: 'Golden Hour', tn: 'Dhaw Dhahabi' },
+        key: 'golden_hour',
+        prompt: 'Warm golden hour sunlight, sunset glow, long soft shadows, cinematic and premium feel, rich warm tones',
+        mood: 'warm'
+    },
+    {
+        id: 'moody_dark',
+        name: { en: 'Moody Dark', tn: 'Dhaw Dahkar' },
+        key: 'moody_dark',
+        prompt: 'Low-key dark lighting, mysterious atmosphere, spotlight on shoes, dark background, luxury and sophistication',
+        mood: 'moody'
+    },
+    {
+        id: 'high_contrast',
+        name: { en: 'High Contrast', tn: 'Contrast 3ali' },
+        key: 'high_contrast',
+        prompt: 'High contrast lighting setup, deep blacks and bright highlights, punchy and bold, modern editorial style',
+        mood: 'bold'
+    }
+];
+
 const BACKGROUNDS = [
     {
         id: 'sidi_bou_said',
@@ -318,6 +408,8 @@ module.exports = {
     SHOE_POSE_PROMPTS,
     MODELS,
     SHOE_MODELS,
+    SHOE_CAMERA_ANGLES,
+    SHOE_LIGHTING_STYLES,
     BACKGROUNDS
 };
 

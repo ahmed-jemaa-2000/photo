@@ -123,7 +123,23 @@ async function generateImage(imagePath, userPrompt, options = {}) {
   if (options.category === 'shoes' && options.modelReferencePath && fs.existsSync(options.modelReferencePath)) {
     console.log('Using shoe/leg model reference image:', options.modelReferencePath);
     formData.append('files', fs.createReadStream(options.modelReferencePath)); // File 2: Leg Reference
-    promptPrefix = 'Create a high-fidelity product photo of the shoes from the first image. Use the second image as reference for leg/feet type and outfit style. Focus on shoe details while maintaining natural leg positioning. Preserve all logos, text, and details from the shoes. LOCK shoe color and design exactly to the first image.';
+
+    // Build shoe-specific prompt with camera angle and lighting
+    let shoePromptParts = ['Create a high-fidelity product photo of the shoes from the first image. Use the second image as reference for leg/feet type and outfit style.'];
+
+    // Add camera angle instruction if specified
+    if (options.shoeCameraAngle) {
+      shoePromptParts.push(options.shoeCameraAngle);
+    }
+
+    // Add lighting instruction if specified
+    if (options.shoeLighting) {
+      shoePromptParts.push(options.shoeLighting);
+    }
+
+    shoePromptParts.push('Focus on shoe details while maintaining natural leg positioning. Preserve all logos, text, and details from the shoes. LOCK shoe color and design exactly to the first image.');
+
+    promptPrefix = shoePromptParts.join(' ');
   }
   // Handle regular clothes category with full model reference
   else if (options.modelReferencePath && fs.existsSync(options.modelReferencePath)) {

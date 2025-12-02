@@ -4,6 +4,8 @@ import GenerationResult from './components/GenerationResult';
 import ModelPersonaSelector from './components/ModelPersonaSelector';
 import ModelSelection from './components/ModelSelection';
 import ShoeModelSelection from './components/ShoeModelSelection';
+import ShoeCameraAngleSelection from './components/ShoeCameraAngleSelection';
+import ShoeLightingSelection from './components/ShoeLightingSelection';
 import BackgroundSelection from './components/BackgroundSelection';
 import AnimatedProgress from './components/AnimatedProgress';
 import ReviewPage from './components/ReviewPage';
@@ -147,6 +149,10 @@ function App() {
   // Shoe Model State (for shoes)
   const [selectedShoeModel, setSelectedShoeModel] = useState(null);
 
+  // Shoe Camera Angle and Lighting State (for shoes)
+  const [selectedCameraAngle, setSelectedCameraAngle] = useState(null);
+  const [selectedLighting, setSelectedLighting] = useState(null);
+
   // Scene State
   const [pose, setPose] = useState(POSE_PROMPTS[0].prompt);
   const [selectedBackground, setSelectedBackground] = useState(null);
@@ -282,6 +288,13 @@ function App() {
     if (category === 'shoes') {
       if (selectedShoeModel) {
         formData.append('shoeModelId', selectedShoeModel.id);
+      }
+      // Add camera angle and lighting for shoes
+      if (selectedCameraAngle) {
+        formData.append('shoeCameraAngle', selectedCameraAngle.prompt);
+      }
+      if (selectedLighting) {
+        formData.append('shoeLighting', selectedLighting.prompt);
       }
     } else {
       formData.append('modelPersona', JSON.stringify(modelPersona));
@@ -490,11 +503,23 @@ function App() {
             </div>
 
             {category === 'shoes' ? (
-              <ShoeModelSelection
-                selectedShoeModel={selectedShoeModel}
-                onShoeModelSelect={setSelectedShoeModel}
-                gender={gender}
-              />
+              <div className="space-y-8">
+                <ShoeModelSelection
+                  selectedShoeModel={selectedShoeModel}
+                  onShoeModelSelect={setSelectedShoeModel}
+                  gender={gender}
+                />
+
+                <ShoeCameraAngleSelection
+                  selectedAngle={selectedCameraAngle}
+                  onAngleSelect={setSelectedCameraAngle}
+                />
+
+                <ShoeLightingSelection
+                  selectedLighting={selectedLighting}
+                  onLightingSelect={setSelectedLighting}
+                />
+              </div>
             ) : (
               <ModelSelection
                 selectedModel={selectedModel}
@@ -524,6 +549,8 @@ function App() {
             selectedFile={selectedFile}
             selectedModel={selectedModel}
             selectedShoeModel={selectedShoeModel}
+            selectedCameraAngle={selectedCameraAngle}
+            selectedLighting={selectedLighting}
             selectedBackground={selectedBackground}
             category={category}
             gender={gender}

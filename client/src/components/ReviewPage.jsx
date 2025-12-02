@@ -5,6 +5,8 @@ function ReviewPage({
     selectedFile,
     selectedModel,
     selectedShoeModel,
+    selectedCameraAngle,
+    selectedLighting,
     selectedBackground,
     category,
     gender,
@@ -113,6 +115,20 @@ function ReviewPage({
                                 <span className="text-slate-500 font-medium">Background</span>
                                 <span className="font-bold">{selectedBackground?.name?.en || 'Studio'}</span>
                             </div>
+
+                            {category === 'shoes' && selectedCameraAngle && (
+                                <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                                    <span className="text-slate-500 font-medium">Camera Angle</span>
+                                    <span className="font-bold">{selectedCameraAngle.name.en}</span>
+                                </div>
+                            )}
+
+                            {category === 'shoes' && selectedLighting && (
+                                <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                                    <span className="text-slate-500 font-medium">Lighting</span>
+                                    <span className="font-bold">{selectedLighting.name.en}</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="mt-8 space-y-4">
