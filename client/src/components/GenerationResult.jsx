@@ -143,43 +143,6 @@ const GenerationResult = ({ result }) => {
           </div>
         )}
       </div>
-
-      <div className="glass-panel p-4 text-sm space-y-2">
-        {result.pose && (
-          <p className="text-slate-200">
-            Pose: <span className="text-slate-400">{result.pose}</span>
-          </p>
-        )}
-        {result.backdrop && (
-          <p className="text-slate-200">
-            Background: <span className="text-slate-400">{result.backdrop}</span>
-          </p>
-        )}
-        {result.gender && (
-          <p className="text-slate-200">
-            Persona: <span className="text-slate-400 capitalize">{result.gender}</span>
-          </p>
-        )}
-        {result.colorHex && (
-          <p className="text-slate-200 flex items-center gap-2">
-            Color lock:
-            <span className="inline-flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full border border-white/20" style={{ background: result.colorHex }} />
-              <span className="text-slate-400">{result.colorHex}</span>
-            </span>
-          </p>
-        )}
-        {result.negative && (
-          <p className="text-slate-200">
-            Negative: <span className="text-slate-400">{result.negative}</span>
-          </p>
-        )}
-        {result.meta?.statusDesc && (
-          <p className="text-slate-400">
-            Status: <span className="text-slate-200">{result.meta.statusDesc}</span>
-          </p>
-        )}
-      </div>
     </div>
   );
 };
