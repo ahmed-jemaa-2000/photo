@@ -33,14 +33,9 @@ const corsOptions = {
 
 // Middleware
 app.use(cors(corsOptions));
+app.options('/:path(*)', cors(corsOptions)); // Preflight for all routes
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  next();
-});
 
 // Serve static assets for models and backgrounds
 app.use('/api/assets/models', express.static(path.join(__dirname, 'assets/models')));
