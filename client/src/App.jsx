@@ -18,7 +18,7 @@ import ShoeModelSelection from './components/ShoeModelSelection';
 import ShoeCameraAngleSelection from './components/ShoeCameraAngleSelection';
 import ShoeLightingSelection from './components/ShoeLightingSelection';
 import ShoePoseSelection from './components/ShoePoseSelection';
-import BackgroundSelection from './components/BackgroundSelection';
+import ImageStyleSelection from './components/ImageStyleSelection';
 import AnimatedProgress from './components/AnimatedProgress';
 import ReviewPage from './components/ReviewPage';
 
@@ -165,6 +165,7 @@ function App() {
   // Common Settings
   const [gender, setGender] = useState(null);
   const [selectedBackground, setSelectedBackground] = useState(null);
+  const [imageStyle, setImageStyle] = useState('ecommerce_clean');
   const [colorPalette, setColorPalette] = useState([]);
   const [colorHex, setColorHex] = useState(null);
   const [useColorLock, setUseColorLock] = useState(true);
@@ -362,6 +363,11 @@ function App() {
 
     if (selectedBackground) {
       formData.append('backgroundPrompt', selectedBackground.prompt);
+    }
+
+    // Add photography style preset
+    if (imageStyle) {
+      formData.append('imageStyle', imageStyle);
     }
 
     setIsGenerating(true);
@@ -644,15 +650,19 @@ function App() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="max-w-6xl mx-auto space-y-8"
+            className="max-w-6xl mx-auto"
           >
-            <div className="text-center mb-4">
-              <h2 className="text-3xl font-bold mb-2">Set the Scene</h2>
-              <p className="text-slate-400">Choose a background to match your brand</p>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-2">
+                Photography <span className="text-gradient">Style</span>
+              </h2>
+              <p className="text-slate-400">Choose the perfect aesthetic for your product shot</p>
             </div>
-            <BackgroundSelection
-              selectedBackground={selectedBackground}
-              onBackgroundSelect={setSelectedBackground}
+
+            {/* Photography Style Selection - includes background in each style */}
+            <ImageStyleSelection
+              selectedStyle={imageStyle}
+              onStyleSelect={setImageStyle}
             />
           </motion.div>
         );

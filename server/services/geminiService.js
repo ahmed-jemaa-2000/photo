@@ -109,54 +109,230 @@ async function pollForVideoResult(uuid) {
   throw new Error('Timed out waiting for giminigen to finish the video');
 }
 
+// ============================================
+// IMAGE GENERATION STYLE PRESETS
+// ============================================
+
+/**
+ * Professional photography style presets for image generation
+ * Each preset contains optimized prompts for specific use cases
+ */
+const IMAGE_STYLE_PRESETS = {
+  // E-commerce / Clean
+  ecommerce_clean: {
+    id: 'ecommerce_clean',
+    name: 'E-commerce Clean',
+    description: 'Pure white background, perfect for product listings',
+    prompt: 'Clean white studio backdrop, even diffused lighting, no shadows on background, product-focused composition, pure white (#FFFFFF) background, professional e-commerce photography, high-key lighting, crisp sharp focus',
+    aspectRatio: '3:4',
+    category: 'commercial',
+  },
+  ecommerce_soft: {
+    id: 'ecommerce_soft',
+    name: 'E-commerce Soft',
+    description: 'Soft gradient background with subtle shadows',
+    prompt: 'Soft gradient studio background, gentle shadow beneath model, professional catalog photography, neutral gray-to-white gradient, balanced exposure, commercial quality, Amazon/Zalando style product shot',
+    aspectRatio: '3:4',
+    category: 'commercial',
+  },
+
+  // Editorial / Magazine
+  editorial_vogue: {
+    id: 'editorial_vogue',
+    name: 'Editorial Vogue',
+    description: 'High-fashion magazine editorial style',
+    prompt: 'High-fashion editorial photography, Vogue magazine aesthetic, dramatic studio lighting with strong key light, sophisticated pose, fashion-forward composition, deep shadows and highlights, artistic color grading, luxury fashion campaign quality',
+    aspectRatio: '3:4',
+    category: 'editorial',
+  },
+  editorial_minimal: {
+    id: 'editorial_minimal',
+    name: 'Editorial Minimal',
+    description: 'Clean minimalist editorial look',
+    prompt: 'Minimalist editorial photography, clean lines, negative space utilization, understated elegance, modern Scandinavian aesthetic, muted color palette, architectural simplicity, high-end brand campaign style',
+    aspectRatio: '3:4',
+    category: 'editorial',
+  },
+
+  // Lifestyle
+  lifestyle_urban: {
+    id: 'lifestyle_urban',
+    name: 'Street Style Urban',
+    description: 'Urban street photography aesthetic',
+    prompt: 'Street style photography, urban city backdrop, natural candid feel, golden hour sunlight, authentic street fashion vibe, brick walls or city architecture, contemporary urban lifestyle, Instagram influencer aesthetic',
+    aspectRatio: '4:5',
+    category: 'lifestyle',
+  },
+  lifestyle_outdoor: {
+    id: 'lifestyle_outdoor',
+    name: 'Outdoor Natural',
+    description: 'Natural outdoor lifestyle setting',
+    prompt: 'Outdoor lifestyle photography, natural daylight, lush greenery or beach setting, relaxed authentic pose, warm golden tones, aspirational lifestyle imagery, vacation editorial feel, natural environment',
+    aspectRatio: '4:5',
+    category: 'lifestyle',
+  },
+  lifestyle_cafe: {
+    id: 'lifestyle_cafe',
+    name: 'Cafe & Indoor',
+    description: 'Cozy indoor cafe or home setting',
+    prompt: 'Indoor lifestyle photography, cozy cafe or modern interior setting, warm ambient lighting, bokeh background, casual relaxed atmosphere, lifestyle brand aesthetic, social media ready',
+    aspectRatio: '4:5',
+    category: 'lifestyle',
+  },
+
+  // Luxury / Premium
+  luxury_campaign: {
+    id: 'luxury_campaign',
+    name: 'Luxury Campaign',
+    description: 'High-end luxury brand advertising',
+    prompt: 'Luxury brand campaign photography, premium studio setup, dramatic Rembrandt lighting, rich deep shadows, opulent atmosphere, Gucci/Chanel advertising aesthetic, sophisticated color palette, ultra-premium quality',
+    aspectRatio: '3:4',
+    category: 'luxury',
+  },
+  luxury_dark: {
+    id: 'luxury_dark',
+    name: 'Dark Luxury',
+    description: 'Moody dark premium aesthetic',
+    prompt: 'Dark luxury photography, low-key dramatic lighting, deep black background, spotlight on product, mysterious sophisticated mood, high-end watch/jewelry campaign style, cinematic shadows',
+    aspectRatio: '3:4',
+    category: 'luxury',
+  },
+
+  // Social Media
+  instagram_aesthetic: {
+    id: 'instagram_aesthetic',
+    name: 'Instagram Aesthetic',
+    description: 'Optimized for Instagram feed',
+    prompt: 'Instagram-optimized photography, trendy aesthetic, soft warm tones, lifestyle influencer style, perfectly composed for social media, aspirational yet authentic feel, engagement-optimized composition, warm color filter',
+    aspectRatio: '4:5',
+    category: 'social',
+  },
+  tiktok_dynamic: {
+    id: 'tiktok_dynamic',
+    name: 'TikTok Dynamic',
+    description: 'Bold and eye-catching for short-form',
+    prompt: 'Bold dynamic photography, vibrant saturated colors, high contrast, attention-grabbing composition, Gen-Z aesthetic, trendy and energetic, perfect for vertical video thumbnails, pop-culture inspired',
+    aspectRatio: '9:16',
+    category: 'social',
+  },
+
+  // Artistic
+  artistic_film: {
+    id: 'artistic_film',
+    name: 'Film Grain Vintage',
+    description: 'Nostalgic film photography look',
+    prompt: 'Vintage film photography aesthetic, subtle film grain, slightly faded colors, nostalgic 35mm film look, soft analog warmth, Kodak Portra or Fuji color palette, authentic retro feel',
+    aspectRatio: '3:4',
+    category: 'artistic',
+  },
+};
+
+/**
+ * Quality enhancement keywords for image generation
+ */
+const IMAGE_QUALITY_BOOST = [
+  'ultra high resolution',
+  '8K quality',
+  'professional DSLR photography',
+  'sharp focus on product details',
+  'natural skin texture',
+  'authentic fabric rendering',
+  'color-accurate product representation',
+  'photorealistic',
+].join(', ');
+
+/**
+ * Color fidelity guard - critical for product accuracy
+ */
+const COLOR_FIDELITY_GUARD = 'CRITICAL: Preserve EXACT product colors from the reference image. No color shifting, no hue changes, no saturation alterations. Match the original product color precisely.';
+
+/**
+ * Build optimized image generation prompt
+ * @param {string} basePrompt - Base prompt from existing logic
+ * @param {string} userPrompt - User's additional instructions
+ * @param {object} options - Style and category options
+ * @returns {object} { prompt, aspectRatio }
+ */
+function buildImagePrompt(basePrompt, userPrompt, options = {}) {
+  const parts = [];
+
+  // 1. Start with base prompt (product/model instructions)
+  parts.push(basePrompt);
+
+  // 2. Add style preset if specified
+  const styleId = options.imageStyle || 'ecommerce_clean';
+  const stylePreset = IMAGE_STYLE_PRESETS[styleId];
+
+  if (stylePreset) {
+    parts.push(stylePreset.prompt);
+    console.log(`[Image Gen] Using style preset: ${stylePreset.name}`);
+  }
+
+  // 3. Add user's custom prompt
+  if (userPrompt && userPrompt.trim()) {
+    parts.push(userPrompt.trim());
+  }
+
+  // 4. Add quality boosters
+  parts.push(IMAGE_QUALITY_BOOST);
+
+  // 5. Add color fidelity guard (most important for product photos!)
+  parts.push(COLOR_FIDELITY_GUARD);
+
+  // 6. Add negative prompts
+  parts.push('Avoid: blurry images, color shifts, distorted proportions, extra limbs, unnatural poses, watermarks, text overlays, low quality compression artifacts.');
+
+  return {
+    prompt: parts.join(' '),
+    aspectRatio: stylePreset?.aspectRatio || options.aspectRatio || '3:4',
+  };
+}
+
 async function generateImage(imagePath, userPrompt, options = {}) {
   if (!API_KEY) {
     throw new Error('giminigen_API_KEY is not set');
   }
 
   const formData = new FormData();
-  formData.append('files', fs.createReadStream(imagePath)); // File 1: Garment/Product/Shoes
+  formData.append('files', fs.createReadStream(imagePath));
 
-  let promptPrefix = 'Create a high-fidelity fashion product photo: a real human model wearing the exact same garment from the reference image. Preserve all logos, text, details, and EXACT garment color with no hue/brightness shifts.';
+  let basePrompt = 'Create a high-fidelity fashion product photo: a real human model wearing the exact same garment from the reference image. Preserve all logos, text, details, and EXACT garment color with no hue/brightness shifts.';
 
   // Handle shoe category with leg reference
   if (options.category === 'shoes' && options.modelReferencePath && fs.existsSync(options.modelReferencePath)) {
     console.log('Using shoe/leg model reference image:', options.modelReferencePath);
-    formData.append('files', fs.createReadStream(options.modelReferencePath)); // File 2: Leg Reference
+    formData.append('files', fs.createReadStream(options.modelReferencePath));
 
-    // Build shoe-specific prompt with camera angle and lighting
     let shoePromptParts = ['Create a high-fidelity product photo of the shoes from the first image. Use the second image as reference for leg/feet type and outfit style.'];
 
-    // Add camera angle instruction if specified
     if (options.shoeCameraAngle) {
       shoePromptParts.push(options.shoeCameraAngle);
     }
 
-    // Add lighting instruction if specified
     if (options.shoeLighting) {
       shoePromptParts.push(options.shoeLighting);
     }
 
     shoePromptParts.push('Focus on shoe details while maintaining natural leg positioning. Preserve all logos, text, and details from the shoes. LOCK shoe color and design exactly to the first image.');
 
-    promptPrefix = shoePromptParts.join(' ');
+    basePrompt = shoePromptParts.join(' ');
   }
   // Handle regular clothes category with full model reference
   else if (options.modelReferencePath && fs.existsSync(options.modelReferencePath)) {
     console.log('Using model reference image:', options.modelReferencePath);
-    formData.append('files', fs.createReadStream(options.modelReferencePath)); // File 2: Model Reference
-    promptPrefix = 'Create a high-fidelity fashion product photo using the first image as the exact garment reference and the second image as the model reference. The model in the output should resemble the person in the second image. Preserve all logos, text, and details from the garment. LOCK garment color and graphics exactly to the first image.';
+    formData.append('files', fs.createReadStream(options.modelReferencePath));
+    basePrompt = 'Create a high-fidelity fashion product photo using the first image as the exact garment reference and the second image as the model reference. The model in the output should resemble the person in the second image. Preserve all logos, text, and details from the garment. LOCK garment color and graphics exactly to the first image.';
   }
 
-  const fullPrompt = [
-    promptPrefix,
-    'Use studio-quality lighting, soft shadows, high resolution, natural skin tone and authentic fabric texture.',
-    userPrompt || '',
-  ].join(' ');
+  // Build enhanced prompt with style presets
+  const { prompt: enhancedPrompt, aspectRatio } = buildImagePrompt(basePrompt, userPrompt, options);
 
-  formData.append('prompt', fullPrompt.trim());
+  console.log('[Image Gen] Enhanced prompt length:', enhancedPrompt.length);
+  console.log('[Image Gen] Aspect ratio:', aspectRatio);
+
+  formData.append('prompt', enhancedPrompt);
   formData.append('model', DEFAULT_MODEL);
-  formData.append('aspect_ratio', '3:4');
+  formData.append('aspect_ratio', aspectRatio);
 
   if (options.modelPersona?.gender) {
     formData.append('person_generation', options.modelPersona.gender);

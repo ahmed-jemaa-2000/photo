@@ -151,13 +151,14 @@ app.post('/api/generate', upload.fields([
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
-    const { prompt, gender, modelPersona, modelId, shoeModelId, category, backgroundPrompt, shoeCameraAngle, shoeLighting } = req.body;
+    const { prompt, gender, modelPersona, modelId, shoeModelId, category, backgroundPrompt, shoeCameraAngle, shoeLighting, imageStyle } = req.body;
 
     console.log('Received image:', imagePath);
     console.log('Prompt:', prompt);
     console.log('Model ID:', modelId);
     console.log('Shoe Model ID:', shoeModelId);
     console.log('Category:', category);
+    console.log('Image Style:', imageStyle || 'ecommerce_clean (default)');
 
     // Parse modelPersona if it's a JSON string
     let parsedPersona = null;
@@ -198,6 +199,7 @@ app.post('/api/generate', upload.fields([
       category,
       shoeCameraAngle,
       shoeLighting,
+      imageStyle: imageStyle || 'ecommerce_clean',
     });
 
     res.json({
