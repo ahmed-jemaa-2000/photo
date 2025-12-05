@@ -402,6 +402,176 @@ const BACKGROUNDS = [
     }
 ];
 
+// ============================================
+// BAG CATEGORY CONFIGURATIONS
+// ============================================
+
+const BAG_STYLES = [
+    {
+        id: 'handbag',
+        name: { en: 'Handbag', tn: 'Sac à Main' },
+        prompt: 'Fashion handbag held elegantly, professional product photography, clear details on hardware and stitching',
+    },
+    {
+        id: 'backpack',
+        name: { en: 'Backpack', tn: 'Sac à Dos' },
+        prompt: 'Backpack worn on model, lifestyle shot, showing straps and design, urban context',
+    },
+    {
+        id: 'tote',
+        name: { en: 'Tote Bag', tn: 'Cabas' },
+        prompt: 'Large tote bag held by handles, professional fashion photography, spacious interior visible',
+    },
+    {
+        id: 'crossbody',
+        name: { en: 'Crossbody', tn: 'Bandoulière' },
+        prompt: 'Crossbody bag worn across body, showing strap and closure, lifestyle fashion shot',
+    },
+    {
+        id: 'clutch',
+        name: { en: 'Clutch', tn: 'Pochette' },
+        prompt: 'Elegant clutch bag held in hand, evening/formal setting, premium materials and details visible',
+    },
+    {
+        id: 'duffle',
+        name: { en: 'Duffle Bag', tn: 'Sac de Voyage' },
+        prompt: 'Duffle bag in action, sporty or travel context, showing handles and compartments',
+    },
+];
+
+const BAG_DISPLAY_MODES = [
+    {
+        id: 'held_hip',
+        name: { en: 'Held at Hip', tn: 'Porté à la Hanche' },
+        prompt: 'Female model elegantly holding the bag at hip level with relaxed arm position, professional fashion photography',
+        recommended: true,
+    },
+    {
+        id: 'shoulder',
+        name: { en: 'On Shoulder', tn: 'Sur l\'Épaule' },
+        prompt: 'Model wearing bag on shoulder with natural walking pose, lifestyle fashion shot, bag details visible',
+    },
+    {
+        id: 'crossbody_style',
+        name: { en: 'Crossbody Style', tn: 'Style Bandoulière' },
+        prompt: 'Model wearing bag across body in crossbody style, casual urban setting, full body or 3/4 shot',
+    },
+    {
+        id: 'in_hand',
+        name: { en: 'In Hand', tn: 'À la Main' },
+        prompt: 'Model holding bag by handles with arm naturally extended, professional product photography',
+    },
+    {
+        id: 'flat_lay',
+        name: { en: 'Flat Lay', tn: 'Vue de Dessus' },
+        prompt: 'Professional flat lay product photography, bag placed on clean surface, top-down angle, studio lighting',
+        productOnly: true,
+    },
+    {
+        id: 'lifestyle',
+        name: { en: 'Lifestyle Scene', tn: 'Scène Lifestyle' },
+        prompt: 'Lifestyle fashion photography, model with bag in natural setting, candid yet polished aesthetic',
+    },
+];
+
+const BAG_MODELS = [
+    {
+        id: 'bag-female-casual',
+        name: { en: 'Casual Style', tn: 'Style Casual' },
+        gender: 'female',
+        description: 'Casual outfit model for everyday bag styling',
+        path: path.join(__dirname, '../assets/models/bag-female-casual.png')
+    },
+    {
+        id: 'bag-female-elegant',
+        name: { en: 'Elegant Style', tn: 'Style Élégant' },
+        gender: 'female',
+        description: 'Elegant outfit model for formal bag styling',
+        path: path.join(__dirname, '../assets/models/bag-female-elegant.png')
+    },
+    {
+        id: 'bag-male-casual',
+        name: { en: 'Casual Style', tn: 'Style Casual' },
+        gender: 'male',
+        description: 'Casual outfit model for everyday bag styling',
+        path: path.join(__dirname, '../assets/models/bag-male-casual.png')
+    },
+];
+
+// ============================================
+// ACCESSORY CATEGORY CONFIGURATIONS
+// ============================================
+
+const ACCESSORY_TYPES = [
+    {
+        id: 'jewelry',
+        name: { en: 'Jewelry', tn: 'Bijoux' },
+        subtypes: [
+            { id: 'necklace', name: { en: 'Necklace', tn: 'Collier' }, prompt: 'Elegant necklace on model, close-up on neck and collarbone area' },
+            { id: 'bracelet', name: { en: 'Bracelet', tn: 'Bracelet' }, prompt: 'Bracelet on wrist, lifestyle shot with natural hand pose' },
+            { id: 'ring', name: { en: 'Ring', tn: 'Bague' }, prompt: 'Ring on finger, close-up product shot, beautiful hand pose' },
+            { id: 'earrings', name: { en: 'Earrings', tn: 'Boucles d\'Oreille' }, prompt: 'Earrings on model, profile or 3/4 face shot, soft lighting' },
+        ],
+    },
+    {
+        id: 'watches',
+        name: { en: 'Watches', tn: 'Montres' },
+        subtypes: [
+            { id: 'wrist_watch', name: { en: 'Wrist Watch', tn: 'Montre' }, prompt: 'Luxury watch on wrist, elegant arm pose, lifestyle context' },
+            { id: 'smart_watch', name: { en: 'Smart Watch', tn: 'Montre Connectée' }, prompt: 'Smart watch on wrist, active lifestyle context, modern tech aesthetic' },
+        ],
+    },
+    {
+        id: 'eyewear',
+        name: { en: 'Eyewear', tn: 'Lunettes' },
+        subtypes: [
+            { id: 'sunglasses', name: { en: 'Sunglasses', tn: 'Lunettes de Soleil' }, prompt: 'Sunglasses on model face, outdoor setting, stylish pose' },
+            { id: 'optical', name: { en: 'Optical Frames', tn: 'Lunettes de Vue' }, prompt: 'Glasses on model, professional setting, clear view of frame design' },
+        ],
+    },
+    {
+        id: 'scarves',
+        name: { en: 'Scarves & Wraps', tn: 'Foulards' },
+        subtypes: [
+            { id: 'scarf', name: { en: 'Scarf', tn: 'Écharpe' }, prompt: 'Scarf styled on model, elegant draping, showing fabric texture' },
+            { id: 'hijab', name: { en: 'Hijab', tn: 'Hijab' }, prompt: 'Hijab styled beautifully on model, modest fashion photography' },
+            { id: 'shawl', name: { en: 'Shawl', tn: 'Châle' }, prompt: 'Shawl draped over shoulders, lifestyle setting, showing full design' },
+        ],
+    },
+    {
+        id: 'hats',
+        name: { en: 'Hats & Headwear', tn: 'Chapeaux' },
+        subtypes: [
+            { id: 'cap', name: { en: 'Cap', tn: 'Casquette' }, prompt: 'Cap on model, casual streetwear style, urban context' },
+            { id: 'beanie', name: { en: 'Beanie', tn: 'Bonnet' }, prompt: 'Beanie on model, cozy winter aesthetic, lifestyle shot' },
+            { id: 'hat', name: { en: 'Hat', tn: 'Chapeau' }, prompt: 'Hat on model, fashion setting, showing shape and style' },
+        ],
+    },
+];
+
+const ACCESSORY_PLACEMENTS = [
+    {
+        id: 'on_model',
+        name: { en: 'On Model', tn: 'Sur Modèle' },
+        prompt: 'Accessory worn by model, professional fashion photography, focus on product details',
+    },
+    {
+        id: 'close_up',
+        name: { en: 'Close-Up Detail', tn: 'Gros Plan' },
+        prompt: 'Macro close-up of accessory details, sharp focus, professional product photography',
+    },
+    {
+        id: 'lifestyle',
+        name: { en: 'Lifestyle Shot', tn: 'Scène Lifestyle' },
+        prompt: 'Accessory in natural lifestyle context, candid yet polished aesthetic',
+    },
+    {
+        id: 'flat_lay',
+        name: { en: 'Flat Lay', tn: 'Vue de Dessus' },
+        prompt: 'Accessory in styled flat lay composition, clean surface, studio lighting',
+    },
+];
+
 module.exports = {
     PRESET_PROMPTS,
     POSE_PROMPTS,
@@ -410,6 +580,12 @@ module.exports = {
     SHOE_MODELS,
     SHOE_CAMERA_ANGLES,
     SHOE_LIGHTING_STYLES,
-    BACKGROUNDS
+    BACKGROUNDS,
+    // New bag category exports
+    BAG_STYLES,
+    BAG_DISPLAY_MODES,
+    BAG_MODELS,
+    // New accessory category exports
+    ACCESSORY_TYPES,
+    ACCESSORY_PLACEMENTS,
 };
-

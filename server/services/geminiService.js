@@ -188,7 +188,137 @@ async function generateImage(imagePath, userPrompt, options = {}) {
   return pollForResult(data.uuid);
 }
 
-async function generateVideoFromImage(referenceUrl, prompt) {
+// ============================================
+// VIDEO MOTION PROMPT TEMPLATES
+// ============================================
+
+/**
+ * Professional motion prompts for different video styles
+ */
+const VIDEO_MOTION_PRESETS = {
+  // Fashion/Product focused
+  fashion_walk: {
+    name: 'Fashion Walk',
+    prompt: 'Smooth slow-motion runway walk, confident stride, subtle hip movement, professional lighting consistent throughout, camera follows model smoothly, high-end fashion commercial quality, 4K cinematic, shallow depth of field, no camera shake',
+  },
+  product_showcase: {
+    name: 'Product Showcase',
+    prompt: 'Gentle rotation reveal, slow orbit around product, professional studio lighting, seamless loop potential, focus maintained on product details, commercial quality, smooth camera movement, no abrupt changes',
+  },
+  lifestyle_natural: {
+    name: 'Lifestyle Natural',
+    prompt: 'Natural candid movement, subtle head turn or body shift, relaxed breathing animation, warm ambient lighting, lifestyle commercial aesthetic, smooth transitions, realistic motion blur',
+  },
+
+  // Movement types
+  subtle_sway: {
+    name: 'Subtle Sway',
+    prompt: 'Minimal elegant movement, gentle weight shift from foot to foot, slight arm adjustment, maintaining fashion pose, professional model micro-movements, high-end lookbook style',
+  },
+  confident_pose: {
+    name: 'Confident Pose',
+    prompt: 'Model transitions between confident poses, smooth weight shifts, intentional hand placements, strong eye contact with camera, editorial fashion video quality',
+  },
+
+  // Shoe-specific
+  shoe_walk: {
+    name: 'Shoe Walk',
+    prompt: 'Focus on feet and legs, natural walking motion, each step clearly visible, shoe details maintained, clean floor reflection, professional footwear commercial, steady low-angle tracking shot',
+  },
+  shoe_display: {
+    name: 'Shoe Display',
+    prompt: 'Feet movement showcase, subtle ankle rotation, weight shift highlighting shoe design, close focus on footwear, product photography in motion',
+  },
+
+  // Bag-specific
+  bag_carry: {
+    name: 'Bag Carry',
+    prompt: 'Model walking with bag naturally, arm swing with bag visible, lifestyle context, bag moves realistically with body motion, fashion accessory commercial style',
+  },
+
+  // Dynamic
+  dynamic_turn: {
+    name: 'Dynamic Turn',
+    prompt: 'Graceful 180-degree turn, fabric movement visible, hair movement natural, smooth pivot, fashion show quality, professional lighting maintained through rotation',
+  },
+
+  // Cinematic
+  cinematic_slow: {
+    name: 'Cinematic Slow-Mo',
+    prompt: 'Ultra slow motion capture, 120fps aesthetic, dramatic lighting, every detail visible, high-fashion editorial, film-grain optional, premium commercial quality',
+  },
+};
+
+/**
+ * Quality enhancement keywords for video generation
+ */
+const VIDEO_QUALITY_BOOST = [
+  '8K resolution quality',
+  'professional color grading',
+  'smooth 60fps motion',
+  'studio lighting consistency',
+  'no flickering or artifacts',
+  'natural motion blur',
+  'high dynamic range',
+  'commercial broadcast quality',
+].join(', ');
+
+/**
+ * Build optimized video generation prompt
+ * @param {string} userPrompt - User's base prompt or style preference
+ * @param {object} options - Additional options (category, style, etc.)
+ * @returns {string} Optimized video prompt
+ */
+function buildVideoPrompt(userPrompt, options = {}) {
+  const parts = [];
+
+  // 1. Core instruction - animate the static image
+  parts.push('Transform this static fashion product image into a smooth, professional video.');
+
+  // 2. Add motion style based on category or user preference
+  const category = options.category || 'clothes';
+  const motionStyle = options.motionStyle || 'subtle_sway';
+
+  // Select appropriate motion preset
+  let motionPreset = VIDEO_MOTION_PRESETS[motionStyle];
+
+  // Fallback to category-appropriate motion if custom style not found
+  if (!motionPreset) {
+    switch (category) {
+      case 'shoes':
+        motionPreset = VIDEO_MOTION_PRESETS.shoe_walk;
+        break;
+      case 'bags':
+        motionPreset = VIDEO_MOTION_PRESETS.bag_carry;
+        break;
+      case 'accessories':
+        motionPreset = VIDEO_MOTION_PRESETS.lifestyle_natural;
+        break;
+      default:
+        motionPreset = VIDEO_MOTION_PRESETS.subtle_sway;
+    }
+  }
+
+  parts.push(motionPreset.prompt);
+
+  // 3. Add user's custom prompt if provided
+  if (userPrompt && userPrompt.trim()) {
+    parts.push(userPrompt.trim());
+  }
+
+  // 4. Add quality boosters
+  parts.push(VIDEO_QUALITY_BOOST);
+
+  // 5. Add safety/consistency guards
+  parts.push('Maintain exact product appearance, colors, and details from the source image. No morphing or distortion of product features. Consistent lighting throughout.');
+
+  // 6. Negative prompts (what to avoid)
+  parts.push('Avoid: jump cuts, camera shake, sudden movements, unnatural poses, color shifts, blurry frames, low quality compression.');
+
+  return parts.join(' ');
+}
+
+async function generateVideoFromImage(referenceUrl, prompt, options = {}) {
   if (!API_KEY) {
     throw new Error('giminigen_API_KEY is not set');
   }
@@ -197,9 +327,14 @@ async function generateVideoFromImage(referenceUrl, prompt) {
     throw new Error('Reference image URL is required to animate the result');
   }
 
+  // Build enhanced prompt
+  const enhancedPrompt = buildVideoPrompt(prompt, options);
+
+  console.log('[Video Gen] Enhanced prompt:', enhancedPrompt.substring(0, 200) + '...');
+
   const formData = new FormData();
 
-  formData.append('prompt', prompt.trim());
+  formData.append('prompt', enhancedPrompt);
   formData.append('model', VIDEO_MODEL);
   formData.append('resolution', VIDEO_RESOLUTION);
   formData.append('aspect_ratio', VIDEO_ASPECT_RATIO);

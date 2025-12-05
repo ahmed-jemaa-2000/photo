@@ -1,6 +1,10 @@
 /**
- * Color extraction using k-means clustering
- * Extracts the 5 most dominant colors from an image
+ * ADVANCED COLOR EXTRACTION for Product Photography
+ * 
+ * Problem: Background colors (like brick walls) were being detected instead of product colors.
+ * Solution: Aggressive center-focused sampling with smart product isolation.
+ * 
+ * Uses k-means clustering with heavy center-weighting to extract the actual product color.
  */
 
 /**
@@ -55,23 +59,59 @@ function colorDistance(c1, c2) {
 }
 
 /**
- * K-means clustering for color quantization
- * @param {Array} pixels - Array of {r, g, b} objects
- * @param {number} k - Number of clusters (colors to extract)
- * @param {number} maxIterations - Maximum iterations for convergence
- * @returns {Array} Array of cluster centroids (dominant colors)
+ * Check if a color is likely "background" noise (very common in product photos)
+ * Things like: white/gray studio backdrops, brick walls, wood textures
  */
-function kMeansClustering(pixels, k = 5, maxIterations = 20) {
+function isLikelyBackground(r, g, b, hsl) {
+  const { h, s, l } = hsl;
+
+  // Pure white/off-white backgrounds
+  if (l > 90 && s < 15) return true;
+
+  // Very dark backgrounds (black, dark gray)
+  if (l < 8 && s < 15) return true;
+
+  // Brown/tan background tones (like brick walls, wooden surfaces)
+  // Hue 15-45 is orange-brown range with low-medium saturation
+  if (h >= 15 && h <= 50 && s >= 20 && s <= 60 && l >= 25 && l <= 55) {
+    // This is likely a brown background, not a product
+    // But we need to be careful - shoes can be brown too!
+    // We'll use position-based weighting instead of outright exclusion
+    return false; // Don't exclude, let position weighting handle it
+  }
+
+  return false;
+}
+
+/**
+ * K-means clustering for color quantization with weighted pixels
+ */
+function kMeansClustering(pixels, k = 5, maxIterations = 25) {
   if (pixels.length === 0) return [];
 
   const clusterCount = Math.max(1, Math.min(k, pixels.length));
 
-  // Initialize centroids with random pixels
+  // Initialize centroids using k-means++ for better convergence
   const centroids = [];
-  const step = Math.max(1, Math.floor(pixels.length / clusterCount));
-  for (let i = 0; i < clusterCount; i++) {
-    const idx = Math.min(i * step, pixels.length - 1);
-    centroids.push({ ...pixels[idx] });
+  centroids.push({ ...pixels[Math.floor(Math.random() * pixels.length)] });
+
+  while (centroids.length < clusterCount) {
+    // Find pixel furthest from all current centroids
+    let maxDist = 0;
+    let bestPixel = pixels[0];
+
+    for (const pixel of pixels) {
+      let minDistToCentroid = Infinity;
+      for (const centroid of centroids) {
+        const dist = colorDistance(pixel, centroid);
+        if (dist < minDistToCentroid) minDistToCentroid = dist;
+      }
+      if (minDistToCentroid > maxDist) {
+        maxDist = minDistToCentroid;
+        bestPixel = pixel;
+      }
+    }
+    centroids.push({ ...bestPixel });
   }
 
   let iterations = 0;
@@ -79,9 +119,10 @@ function kMeansClustering(pixels, k = 5, maxIterations = 20) {
   let finalClusters = null;
 
   while (!hasConverged && iterations < maxIterations) {
-    // Assign each pixel to nearest centroid
     const clusters = Array.from({ length: clusterCount }, () => []);
+    const clusterWeights = Array.from({ length: clusterCount }, () => 0);
 
+    // Assign each pixel to nearest centroid (using weights)
     pixels.forEach(pixel => {
       let minDist = Infinity;
       let closestCluster = 0;
@@ -95,23 +136,24 @@ function kMeansClustering(pixels, k = 5, maxIterations = 20) {
       });
 
       clusters[closestCluster].push(pixel);
+      clusterWeights[closestCluster] += pixel.weight || 1;
     });
 
-    // Store final clusters
     finalClusters = clusters;
 
-    // Recalculate centroids
+    // Recalculate centroids using weighted average
     hasConverged = true;
     centroids.forEach((centroid, i) => {
       if (clusters[i].length === 0) return;
 
+      const totalWeight = clusters[i].reduce((sum, p) => sum + (p.weight || 1), 0);
       const newCentroid = {
-        r: clusters[i].reduce((sum, p) => sum + p.r, 0) / clusters[i].length,
-        g: clusters[i].reduce((sum, p) => sum + p.g, 0) / clusters[i].length,
-        b: clusters[i].reduce((sum, p) => sum + p.b, 0) / clusters[i].length,
+        r: clusters[i].reduce((sum, p) => sum + p.r * (p.weight || 1), 0) / totalWeight,
+        g: clusters[i].reduce((sum, p) => sum + p.g * (p.weight || 1), 0) / totalWeight,
+        b: clusters[i].reduce((sum, p) => sum + p.b * (p.weight || 1), 0) / totalWeight,
       };
 
-      if (colorDistance(centroid, newCentroid) > 1) {
+      if (colorDistance(centroid, newCentroid) > 0.5) {
         hasConverged = false;
       }
 
@@ -121,21 +163,32 @@ function kMeansClustering(pixels, k = 5, maxIterations = 20) {
     iterations++;
   }
 
-  // Use the final cluster assignments to calculate sizes (no re-computation)
-  const totalPixels = pixels.length;
-  const clusterSizes = finalClusters.map(cluster => cluster.length);
+  // Calculate weighted percentages
+  const totalWeight = pixels.reduce((sum, p) => sum + (p.weight || 1), 0);
+  const clusterWeights = finalClusters.map(cluster =>
+    cluster.reduce((sum, p) => sum + (p.weight || 1), 0)
+  );
 
-  return centroids.map((centroid, i) => ({
-    r: Math.round(centroid.r),
-    g: Math.round(centroid.g),
-    b: Math.round(centroid.b),
-    hex: rgbToHex(centroid.r, centroid.g, centroid.b),
-    percentage: Math.round((clusterSizes[i] / totalPixels) * 100)
-  }));
+  return centroids.map((centroid, i) => {
+    const hsl = rgbToHsl(centroid.r, centroid.g, centroid.b);
+    return {
+      r: Math.round(centroid.r),
+      g: Math.round(centroid.g),
+      b: Math.round(centroid.b),
+      hex: rgbToHex(centroid.r, centroid.g, centroid.b),
+      percentage: Math.round((clusterWeights[i] / totalWeight) * 100),
+      h: hsl.h,
+      s: hsl.s,
+      l: hsl.l,
+    };
+  });
 }
 
 /**
- * Extract dominant color palette from an image file
+ * MAIN FUNCTION: Extract dominant color palette from an image file
+ * 
+ * Uses aggressive center-weighting to focus on the PRODUCT, not the background.
+ * 
  * @param {File} imageFile - The image file to analyze
  * @param {number} numColors - Number of colors to extract (default: 5)
  * @returns {Promise<Array>} Array of color objects with hex, percentage, and name
@@ -146,7 +199,6 @@ export async function extractColorPalette(imageFile, numColors = 5) {
     const img = new Image();
     let isResolved = false;
 
-    // Cleanup function
     const cleanup = () => {
       reader.onload = null;
       reader.onerror = null;
@@ -160,26 +212,42 @@ export async function extractColorPalette(imageFile, numColors = 5) {
         if (isResolved) return;
 
         try {
-          // Create canvas and scale down image for performance
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
 
-          const maxSize = 180;
+          // Scale down for performance but keep enough detail
+          const maxSize = 200;
           const scale = Math.min(maxSize / img.width, maxSize / img.height);
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
+          canvas.width = Math.floor(img.width * scale);
+          canvas.height = Math.floor(img.height * scale);
 
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-          // Get pixel data
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const pixels = [];
 
-          // Sample pixels while biasing to center and removing neutral backgrounds
-          const sampleRate = 1;
           const centerX = canvas.width / 2;
           const centerY = canvas.height / 2;
-          const maxRadius = Math.min(centerX, centerY);
+
+          // ======================================================
+          // AGGRESSIVE CENTER FOCUS - The key to fixing the bug!
+          // ======================================================
+          // For product photos, the product is almost always centered.
+          // We use a Gaussian-like falloff to heavily weight center pixels.
+          // 
+          // Center 20% of image = weight 10 (very high priority)
+          // 20-40% = weight 5
+          // 40-60% = weight 2
+          // 60-80% = weight 0.5
+          // 80-100% = weight 0.1 (nearly ignored)
+
+          const maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
+          const innerRadius = maxRadius * 0.25;  // Inner 25% = product zone
+          const midRadius = maxRadius * 0.45;    // 25-45% = product edge
+          const outerRadius = maxRadius * 0.65;  // 45-65% = transition
+
+          // Sample every other pixel for performance
+          const sampleRate = 2;
 
           for (let y = 0; y < canvas.height; y += sampleRate) {
             for (let x = 0; x < canvas.width; x += sampleRate) {
@@ -189,62 +257,81 @@ export async function extractColorPalette(imageFile, numColors = 5) {
               const b = imageData.data[idx + 2];
               const a = imageData.data[idx + 3];
 
-              if (a <= 120) continue;
+              // Skip transparent pixels
+              if (a < 100) continue;
 
-              // Down-weight edges where backgrounds dominate
+              // Calculate distance from center
               const dx = x - centerX;
               const dy = y - centerY;
-              const distanceRatio = Math.sqrt(dx * dx + dy * dy) / maxRadius;
-              if (distanceRatio > 0.95) continue;
+              const distance = Math.sqrt(dx * dx + dy * dy);
 
-              const { s, l } = rgbToHsl(r, g, b);
-              const isLightNeutral = l > 88 && s < 18;
-              const isDeepNeutral = l < 7 && s < 22;
-              // Only filter neutrals in outer 15% of image (distanceRatio > 0.85)
-              // This preserves white garments that extend to edges
-              const isLikelyBackgroundNeutral = (isLightNeutral || isDeepNeutral) && distanceRatio > 0.85;
-              if (isLikelyBackgroundNeutral) continue;
+              // Calculate weight based on distance from center
+              let weight;
+              if (distance <= innerRadius) {
+                // PRODUCT ZONE - Maximum priority
+                weight = 10;
+              } else if (distance <= midRadius) {
+                // Product edge - High priority
+                weight = 6;
+              } else if (distance <= outerRadius) {
+                // Transition zone
+                weight = 2;
+              } else {
+                // Background zone - Very low priority (but not zero)
+                // We still sample it in case product extends to edges
+                weight = 0.3;
+              }
 
-              pixels.push({ r, g, b });
+              // Check if this looks like a pure background color
+              const hsl = rgbToHsl(r, g, b);
+
+              // Skip pure white/black backgrounds in outer areas
+              if (distance > midRadius) {
+                if (isLikelyBackground(r, g, b, hsl)) {
+                  continue; // Skip entirely
+                }
+              }
+
+              pixels.push({ r, g, b, weight });
             }
           }
 
-          // If filtering was too aggressive, fall back to raw sampling
-          if (pixels.length === 0) {
-            for (let i = 0; i < imageData.data.length; i += 4) {
-              const a = imageData.data[i + 3];
-              if (a > 120) {
+          // Fallback if too few pixels collected
+          if (pixels.length < 50) {
+            console.log('[ColorExtraction] Too few pixels, using raw sampling');
+            pixels.length = 0; // Clear
+            for (let i = 0; i < imageData.data.length; i += 8) {
+              if (imageData.data[i + 3] > 100) {
                 pixels.push({
                   r: imageData.data[i],
                   g: imageData.data[i + 1],
-                  b: imageData.data[i + 2]
+                  b: imageData.data[i + 2],
+                  weight: 1
                 });
               }
             }
           }
 
-          // Fallback to avoid empty palettes
+          console.log(`[ColorExtraction] Sampled ${pixels.length} weighted pixels`);
+
+          // Run clustering
           const paletteSize = Math.max(1, Math.min(numColors, pixels.length));
-          // Extract dominant colors using k-means
           const dominantColors = kMeansClustering(pixels, paletteSize);
 
-          // Sort by percentage (most dominant first)
+          // Sort by weighted percentage
           dominantColors.sort((a, b) => b.percentage - a.percentage);
 
-          // EXPLICIT WHITE DETECTION
-          // Force "White" classification for very bright clusters
-          if (dominantColors.length > 0) {
-            const dominantCluster = dominantColors[0];
-            const avgBrightness = (dominantCluster.r + dominantCluster.g + dominantCluster.b) / 3;
+          // Log the detected colors for debugging
+          console.log('[ColorExtraction] Detected palette:',
+            dominantColors.map(c => `${c.hex} (${c.percentage}%)`).join(', ')
+          );
 
-            if (avgBrightness > 210 && dominantCluster.s < 10) {
-              console.log('[Color Detection] Detected bright white garment:', {
-                avgBrightness: avgBrightness.toFixed(1),
-                rgb: `(${dominantCluster.r}, ${dominantCluster.g}, ${dominantCluster.b})`,
-                saturation: dominantCluster.s.toFixed(1) + '%'
-              });
-              // Mark this cluster to be forced as "White" in color naming
-              dominantCluster._forceWhite = true;
+          // Mark white if detected
+          if (dominantColors.length > 0) {
+            const top = dominantColors[0];
+            const avgBrightness = (top.r + top.g + top.b) / 3;
+            if (avgBrightness > 215 && top.s < 12) {
+              top._forceWhite = true;
             }
           }
 
@@ -281,8 +368,6 @@ export async function extractColorPalette(imageFile, numColors = 5) {
 
 /**
  * Extract a single average color (legacy fallback)
- * @param {File} imageFile
- * @returns {Promise<string>} Hex color code
  */
 export async function extractAverageColor(imageFile) {
   const palette = await extractColorPalette(imageFile, 1);

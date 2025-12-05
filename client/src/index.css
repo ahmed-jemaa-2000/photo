@@ -1,18 +1,207 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
+@import "./styles/design-system.css";
 @config "../tailwind.config.js";
 @source "./**/*.{js,jsx,ts,tsx,html}";
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-slate-950 text-slate-50 antialiased font-sans;
+    @apply bg-dark-deep text-slate-50 antialiased font-sans;
+    background: linear-gradient(135deg, #030712 0%, #0a0f1e 50%, #111827 100%);
+    min-height: 100vh;
   }
 }
 
-.glass-panel {
-  @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl;
+@layer components {
+
+  /* Glass Panel - Premium glassmorphism */
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-panel:hover {
+    @apply bg-white/[0.07] border-white/15 shadow-2xl;
+  }
+
+  /* Primary Button - Gradient with glow */
+  .btn-primary {
+    @apply relative bg-gradient-to-r from-primary to-primary-dark text-white font-bold py-3.5 px-7 rounded-xl;
+    @apply transition-all duration-300 shadow-lg shadow-primary/30;
+    @apply hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5;
+    @apply active:translate-y-0 active:shadow-lg;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+    overflow: hidden;
+  }
+
+  .btn-primary::before {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-full;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+  }
+
+  .btn-primary:hover::before {
+    transform: translateX(100%);
+  }
+
+  /* Secondary Button - Glass style */
+  .btn-secondary {
+    @apply bg-white/5 backdrop-blur-sm border border-white/10 text-slate-200 font-semibold;
+    @apply py-3.5 px-7 rounded-xl transition-all duration-300;
+    @apply hover:bg-white/10 hover:border-white/20 hover:-translate-y-0.5;
+    @apply active:translate-y-0;
+  }
+
+  /* Ghost Button */
+  .btn-ghost {
+    @apply text-slate-400 font-medium py-2 px-4 rounded-lg;
+    @apply transition-all duration-200;
+    @apply hover:text-white hover:bg-white/5;
+  }
+
+  /* Category Cards */
+  .category-card {
+    @apply relative p-8 rounded-3xl border-2 transition-all duration-300;
+    @apply flex flex-col items-center gap-6 overflow-hidden cursor-pointer;
+    @apply bg-white/5 border-white/10;
+    @apply hover:border-primary/50 hover:bg-white/[0.07] hover:scale-[1.02];
+  }
+
+  .category-card.selected {
+    @apply bg-primary/10 border-primary shadow-2xl shadow-primary/20 scale-105;
+  }
+
+  .category-card.category-clothes.selected {
+    @apply bg-clothes/10 border-clothes shadow-clothes/20;
+  }
+
+  .category-card.category-shoes.selected {
+    @apply bg-shoes/10 border-shoes shadow-shoes/20;
+  }
+
+  .category-card.category-bags.selected {
+    @apply bg-bags/10 border-bags shadow-bags/20;
+  }
+
+  .category-card.category-accessories.selected {
+    @apply bg-accessories/10 border-accessories shadow-accessories/20;
+  }
+
+  /* Step Indicator */
+  .step-indicator {
+    @apply w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold;
+    @apply transition-all duration-300;
+  }
+
+  .step-indicator.active {
+    @apply bg-primary text-white shadow-lg shadow-primary/30 scale-110;
+  }
+
+  .step-indicator.completed {
+    @apply bg-primary/20 text-primary;
+  }
+
+  .step-indicator.pending {
+    @apply bg-white/5 text-slate-600;
+  }
+
+  /* Model Card */
+  .model-card {
+    @apply relative rounded-2xl overflow-hidden cursor-pointer;
+    @apply border-2 border-transparent transition-all duration-300;
+    @apply hover:border-primary/50 hover:shadow-lg hover:shadow-primary/20;
+  }
+
+  .model-card.selected {
+    @apply border-primary shadow-xl shadow-primary/30;
+    @apply ring-2 ring-primary/50 ring-offset-2 ring-offset-dark;
+  }
+
+  /* Input Fields */
+  .input-field {
+    @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3;
+    @apply text-white placeholder-slate-500;
+    @apply transition-all duration-200;
+    @apply focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20;
+  }
+
+  /* Section Title */
+  .section-title {
+    @apply text-2xl md:text-3xl font-bold text-white mb-2;
+  }
+
+  .section-subtitle {
+    @apply text-slate-400 text-base md:text-lg;
+  }
+
+  /* Progress Bar */
+  .progress-bar {
+    @apply h-1.5 bg-white/10 rounded-full overflow-hidden;
+  }
+
+  .progress-bar-fill {
+    @apply h-full bg-gradient-to-r from-primary to-secondary rounded-full;
+    @apply transition-all duration-500 ease-out;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    @apply absolute z-50 px-3 py-2 text-sm text-white bg-dark-elevated rounded-lg;
+    @apply border border-white/10 shadow-xl;
+    @apply opacity-0 invisible transition-all duration-200;
+    @apply -translate-y-1;
+  }
+
+  .tooltip.visible {
+    @apply opacity-100 visible translate-y-0;
+  }
 }
 
-.btn-primary {
-  @apply bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-primary/50 transform hover:-translate-y-1;
+@layer utilities {
+
+  /* Text Gradient */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary via-primary-light to-secondary;
+    @apply bg-clip-text text-transparent;
+  }
+
+  /* Mask Gradient */
+  .mask-gradient {
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  }
+
+  /* Scrollbar Hide */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Aspect Ratios */
+  .aspect-portrait {
+    aspect-ratio: 3/4;
+  }
+
+  .aspect-model {
+    aspect-ratio: 2/3;
+  }
+
+  /* Safe Area */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

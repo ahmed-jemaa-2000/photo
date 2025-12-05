@@ -81,37 +81,57 @@ const upload = multer({ storage: storage });
 // Config endpoint - Share botConfig data with web client
 app.get('/api/config', (req, res) => {
   try {
-    const { MODELS, SHOE_MODELS, BACKGROUNDS, POSE_PROMPTS, SHOE_POSE_PROMPTS, SHOE_CAMERA_ANGLES, SHOE_LIGHTING_STYLES } = require('./config/botConfig');
+    const {
+      MODELS, SHOE_MODELS, BACKGROUNDS, POSE_PROMPTS, SHOE_POSE_PROMPTS,
+      SHOE_CAMERA_ANGLES, SHOE_LIGHTING_STYLES,
+      BAG_STYLES, BAG_DISPLAY_MODES, BAG_MODELS,
+      ACCESSORY_TYPES, ACCESSORY_PLACEMENTS
+    } = require('./config/botConfig');
 
     // Transform model paths to web URLs
     const modelsWithUrls = MODELS.map(model => ({
       ...model,
       previewUrl: `/api/assets/models/${path.basename(model.path)}`,
-      path: undefined // Don't expose server paths to client
+      path: undefined
     }));
 
     // Transform shoe model paths to web URLs
     const shoeModelsWithUrls = SHOE_MODELS.map(shoeModel => ({
       ...shoeModel,
       previewUrl: `/api/assets/legs/${path.basename(shoeModel.path)}`,
-      path: undefined // Don't expose server paths to client
+      path: undefined
     }));
 
     // Transform background paths to web URLs
     const backgroundsWithUrls = BACKGROUNDS.map(bg => ({
       ...bg,
       previewUrl: `/api/assets/backgrounds/${path.basename(bg.path)}`,
-      path: undefined // Don't expose server paths to client
+      path: undefined
+    }));
+
+    // Transform bag model paths to web URLs
+    const bagModelsWithUrls = BAG_MODELS.map(model => ({
+      ...model,
+      previewUrl: `/api/assets/models/${path.basename(model.path)}`,
+      path: undefined
     }));
 
     res.json({
+      // Existing configs
       models: modelsWithUrls,
       shoeModels: shoeModelsWithUrls,
       backgrounds: backgroundsWithUrls,
       posePrompts: POSE_PROMPTS,
       shoePosePrompts: SHOE_POSE_PROMPTS,
       shoeCameraAngles: SHOE_CAMERA_ANGLES,
-      shoeLightingStyles: SHOE_LIGHTING_STYLES
+      shoeLightingStyles: SHOE_LIGHTING_STYLES,
+      // New bag configs
+      bagStyles: BAG_STYLES,
+      bagDisplayModes: BAG_DISPLAY_MODES,
+      bagModels: bagModelsWithUrls,
+      // New accessory configs
+      accessoryTypes: ACCESSORY_TYPES,
+      accessoryPlacements: ACCESSORY_PLACEMENTS,
     });
   } catch (error) {
     console.error('Error loading config:', error);
@@ -203,7 +223,7 @@ app.post('/api/generate', upload.fields([
 });
 
 app.post('/api/generate-video', async (req, res) => {
-  const { imageUrl, prompt } = req.body;
+  const { imageUrl, prompt, category, motionStyle } = req.body;
 
   if (!imageUrl) {
     return res.status(400).json({ error: 'Image URL is required' });
@@ -211,7 +231,17 @@ app.post('/api/generate-video', async (req, res) => {
 
   try {
     console.log('Starting video generation for image:', imageUrl);
-    const result = await geminiService.generateVideoFromImage(imageUrl, prompt || 'Fashion model moving naturally');
+    console.log('Category:', category || 'clothes');
+    console.log('Motion Style:', motionStyle || 'auto');
+
+    const result = await geminiService.generateVideoFromImage(
+      imageUrl,
+      prompt || 'Fashion model moving naturally',
+      {
+        category: category || 'clothes',
+        motionStyle: motionStyle || null, // null = auto-select based on category
+      }
+    );
 
     res.json({
       videoUrl: result.videoUrl,
