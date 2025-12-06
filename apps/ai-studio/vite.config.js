@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3002,
+    host: true,
+    allowedHosts: 'all',
     // Proxy API calls to the AI API server
     proxy: {
       '/api': {
@@ -31,7 +33,7 @@ export default defineConfig({
   // Disable source maps in development preview too
   preview: {
     port: 3002,
-    sourcemap: false,
-    allowedHosts: true,
+    host: true,
+    allowedHosts: 'all',
   },
 })
