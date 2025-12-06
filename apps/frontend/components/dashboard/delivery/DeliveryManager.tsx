@@ -86,7 +86,7 @@ export default function DeliveryManager({ initialOrders, shopName }: DeliveryMan
               <p>Commandes: ${selectedOrders.length}</p>
             </div>
             <div style="text-align: right;">
-              <h2>${shopName || selectedOrders[0]?.shop?.name || 'Boutique'}</h2>
+              <h2>${shopName || (typeof selectedOrders[0]?.shop === 'object' ? selectedOrders[0]?.shop?.name : '') || 'Boutique'}</h2>
             </div>
           </div>
 
