@@ -27,7 +27,7 @@ export default function BasicSettings({ shop, formData, setFormData }: BasicSett
       ? getStrapiMediaUrl(shop.logo.url)
       : null;
 
-  const shopUrl = `https://${shop.subdomain}.${process.env.NODE_ENV === 'development' ? 'brandini.test:3000' : 'brandini.tn'}`;
+  const shopUrl = `https://${shop.subdomain}.${process.env.NODE_ENV === 'development' ? 'brandini.test:3000' : 'brandili.shop'}`;
 
   const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

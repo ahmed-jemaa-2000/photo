@@ -23,11 +23,11 @@
             "target": "api::product.product"
         },
         "imageUrl": {
-            "type": "string",
+            "type": "text",
             "required": true
         },
         "downloadUrl": {
-            "type": "string"
+            "type": "text"
         },
         "category": {
             "type": "enumeration",

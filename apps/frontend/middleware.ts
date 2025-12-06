@@ -10,11 +10,11 @@ export async function middleware(request: NextRequest) {
   const parts = hostname.split('.');
 
   // Determine if this is a subdomain request
-  // For production: *.brandini.tn (3+ parts, not dashboard/api)
+  // For production: *.brandili.shop (3+ parts, not dashboard/api)
   // For development: *.brandini.test (3+ parts, not dashboard/api)
   const isDevelopment = hostname.includes('.test') || hostname.includes('localhost');
-  const baseDomain = isDevelopment ? '.brandini.test' : '.brandini.tn';
-  const minParts = isDevelopment || hostname.includes('.tn') ? 3 : 2;
+  const baseDomain = isDevelopment ? '.brandini.test' : '.brandili.shop';
+  const minParts = isDevelopment || hostname.includes('.shop') ? 3 : 2;
   const isProd = process.env.NODE_ENV === 'production';
 
   const isSubdomain = parts.length >= minParts &&
@@ -104,9 +104,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // MAIN DOMAIN ROUTING (brandini.tn or brandini.test)
+  // MAIN DOMAIN ROUTING (brandili.shop or brandini.test)
   if (
-    hostname === 'brandini.tn' ||
+    hostname === 'brandili.shop' ||
     hostname === 'brandini.test' ||
     hostname === 'localhost' ||
     hostname.startsWith('localhost:')

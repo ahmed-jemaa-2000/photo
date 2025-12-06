@@ -815,8 +815,8 @@ export interface ApiAiGenerationAiGeneration extends Schema.CollectionType {
       'manyToOne',
       'api::product.product'
     >;
-    imageUrl: Attribute.String & Attribute.Required;
-    downloadUrl: Attribute.String;
+    imageUrl: Attribute.Text & Attribute.Required;
+    downloadUrl: Attribute.Text;
     category: Attribute.Enumeration<
       ['clothes', 'shoes', 'bags', 'accessories']
     > &

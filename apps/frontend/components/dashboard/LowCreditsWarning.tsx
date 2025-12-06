@@ -72,7 +72,7 @@ export default function LowCreditsWarning({
                             : " Top up to continue generating AI photos."}
                     </p>
                     <a
-                        href="mailto:support@brandini.tn?subject=Credit Top-up Request"
+                        href="mailto:support@brandili.shop?subject=Credit Top-up Request"
                         className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-xl transition"
                     >
                         📧 Contact Us to Top Up

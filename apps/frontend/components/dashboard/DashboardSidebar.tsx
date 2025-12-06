@@ -28,9 +28,8 @@ export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps
     { name: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
   ];
 
-  // AI Studio URL - uses subdomain in production, localhost in dev
   const aiStudioUrl = process.env.NODE_ENV === 'production'
-    ? 'https://studio.brandini.tn'
+    ? 'https://studio.brandili.shop'
     : 'http://localhost:3002';
 
   return (
@@ -60,8 +59,8 @@ export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps
           <Link
             href="/dashboard/ai-gallery"
             className={`flex items-center px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-300 group mb-1.5 ${isActive('/dashboard/ai-gallery')
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/25 translate-x-1'
-                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-1'
+              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/25 translate-x-1'
+              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-1'
               }`}
           >
             <span className={`mr-3 text-lg transition-transform duration-300 ${isActive('/dashboard/ai-gallery') ? 'scale-110' : 'group-hover:scale-110'}`}>🖼️</span>

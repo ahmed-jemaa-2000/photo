@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     // Set httpOnly cookie for security
     // In production, set domain to .brandini.tn to share across subdomains
-    // (dashboard.brandini.tn and studio.brandini.tn)
+    // (dashboard.brandili.shop and studio.brandili.shop)
     const cookieStore = await cookies();
     cookieStore.set('auth_token', jwt, {
       httpOnly: true,
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
       // Domain for cross-subdomain SSO in production
-      ...(isProduction && { domain: '.brandini.tn' }),
+      ...(isProduction && { domain: '.brandili.shop' }),
     });
 
     return NextResponse.json({ success: true, user });

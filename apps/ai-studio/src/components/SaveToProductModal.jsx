@@ -4,7 +4,7 @@ import { X, Save, ExternalLink, CheckCircle2, Loader2 } from 'lucide-react';
 
 // Dashboard URL
 const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL ||
-    (import.meta.env.PROD ? 'https://dashboard.brandini.tn' : 'http://localhost:3000');
+    (import.meta.env.PROD ? 'https://dashboard.brandili.shop' : 'http://localhost:3000');
 
 /**
  * Modal to save generated image back to the source product in Dashboard

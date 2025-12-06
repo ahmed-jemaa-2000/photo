@@ -6,7 +6,7 @@ interface StorefrontCardProps {
 
 export default function StorefrontCard({ shop }: StorefrontCardProps) {
     const isDevelopment = process.env.NODE_ENV === 'development';
-    const baseDomain = isDevelopment ? 'brandini.test:3000' : 'brandini.tn';
+    const baseDomain = isDevelopment ? 'brandini.test:3000' : 'brandili.shop';
     const protocol = isDevelopment ? 'http' : 'https';
     const shopUrl = `${protocol}://${shop.subdomain}.${baseDomain}`;
 

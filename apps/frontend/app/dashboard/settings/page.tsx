@@ -175,7 +175,7 @@ export default function SettingsPage() {
     );
   }
 
-  const shopUrl = `https://${shop.subdomain}.${process.env.NODE_ENV === 'development' ? 'brandini.test:3000' : 'brandini.tn'}`;
+  const shopUrl = `https://${shop.subdomain}.${process.env.NODE_ENV === 'development' ? 'brandini.test:3000' : 'brandili.shop'}`;
 
   const tabs = [
     {

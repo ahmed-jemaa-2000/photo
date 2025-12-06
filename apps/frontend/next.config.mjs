@@ -11,7 +11,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'api.brandini.tn',
+        hostname: 'api.brandili.shop',
         pathname: '/uploads/**',
       },
     ],

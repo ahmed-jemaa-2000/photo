@@ -13,14 +13,14 @@ module.exports = ({ env }) => [
             'data:',
             'blob:',
             'market-assets.strapi.io',
-            env('NODE_ENV') === 'production' ? 'https://api.brandini.tn' : 'http://localhost:1337',
+            env('NODE_ENV') === 'production' ? 'https://api.brandili.shop' : 'http://localhost:1337',
           ],
           'media-src': [
             "'self'",
             'data:',
             'blob:',
             'market-assets.strapi.io',
-            env('NODE_ENV') === 'production' ? 'https://api.brandini.tn' : 'http://localhost:1337',
+            env('NODE_ENV') === 'production' ? 'https://api.brandili.shop' : 'http://localhost:1337',
           ],
           upgradeInsecureRequests: null,
         },
@@ -34,16 +34,16 @@ module.exports = ({ env }) => [
       headers: '*',
       origin: env('NODE_ENV') === 'production'
         ? [
-            'https://brandini.tn',
-            'https://dashboard.brandini.tn',
-            /^https:\/\/.*\.brandini\.tn$/,
-          ]
+          'https://brandili.shop',
+          'https://dashboard.brandili.shop',
+          /^https:\/\/.*\.brandili\.shop$/,
+        ]
         : [
-            'http://localhost:3000',
-            'http://localhost:1337',
-            'http://dashboard.brandini.test:3000',
-            /^http:\/\/.*\.brandini\.test:3000$/,
-          ],
+          'http://localhost:3000',
+          'http://localhost:1337',
+          'http://dashboard.brandini.test:3000',
+          /^http:\/\/.*\.brandini\.test:3000$/,
+        ],
       credentials: true,
     },
   },

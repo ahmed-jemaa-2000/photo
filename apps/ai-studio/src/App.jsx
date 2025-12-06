@@ -50,7 +50,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Dashboard URL - uses subdomain in production, localhost in dev
 const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL ||
-  (import.meta.env.PROD ? 'https://dashboard.brandini.tn' : 'http://localhost:3000/dashboard');
+  (import.meta.env.PROD ? 'https://dashboard.brandili.shop' : 'http://localhost:3000/dashboard');
 
 // ============================================
 // PROMPT CONFIGURATIONS

@@ -105,7 +105,7 @@ export default function DashboardLogin() {
 
         <p className="text-center text-sm text-gray-600">
           Don't have access?{' '}
-          <a href="mailto:support@brandini.tn" className="text-primary hover:underline">
+          <a href="mailto:support@brandili.shop" className="text-primary hover:underline">
             Contact Support
           </a>
         </p>

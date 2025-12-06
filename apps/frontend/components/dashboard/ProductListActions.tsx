@@ -15,7 +15,7 @@ interface ProductListActionsProps {
 
 // AI Studio URL - uses subdomain in production, localhost in dev
 const AI_STUDIO_URL = process.env.NODE_ENV === 'production'
-  ? 'https://studio.brandini.tn'
+  ? 'https://studio.brandili.shop'
   : 'http://localhost:3002';
 
 export default function ProductListActions({
