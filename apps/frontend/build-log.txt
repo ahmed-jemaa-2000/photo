@@ -1,0 +1,397 @@
+﻿
+> frontend@1.0.0 build
+> next build
+
+  Ôû▓ Next.js 14.2.33
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully
+   Linting and checking validity of types ...
+npm : 
+Au caractère Ligne:1 : 1
++ npm run build 2>&1 | Out-File -FilePath 
+build-log.txt -Encoding utf8; ...
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecifie 
+   d: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeComma 
+   ndError
+ 
+Failed to compile.
+
+./app/api/dashboard/categories/create/rout
+e.ts
+40:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/api/dashboard/categories/route.ts
+8:27  Error: 'request' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+26:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/api/dashboard/categories/[id]/route.
+ts
+37:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+63:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/api/dashboard/orders/route.ts
+8:27  Error: 'request' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+26:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+69:31  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+84:63  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+87:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/api/dashboard/products/create/route.
+ts
+51:14  Error: 'e' is defined but never 
+used.  @typescript-eslint/no-unused-vars
+59:66  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+111:16  Error: 'e' is defined but never 
+used.  @typescript-eslint/no-unused-vars
+123:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/api/dashboard/products/route.ts
+8:27  Error: 'request' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+30:21  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/api/dashboard/products/[id]/route.ts
+29:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+110:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/api/dashboard/shop/route.ts
+4:23  Error: 'updateShop' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+11:27  Error: 'request' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+33:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+132:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/api/shop/order/route.ts
+51:28  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+52:25  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+76:41  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/dashboard/layout.tsx
+1:10  Error: 'redirect' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+
+./app/dashboard/login/page.tsx
+3:20  Error: 'useEffect' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+42:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+107:14  Error: `'` can be escaped with 
+`&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  
+react/no-unescaped-entities
+
+./app/dashboard/orders/page.tsx
+9:3  Error: 'MoreVertical' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+190:63  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/dashboard/page.tsx
+7:8  Error: 'Link' is defined but never 
+used.  @typescript-eslint/no-unused-vars
+49:9  Error: 'categories' is assigned a 
+value but never used.  
+@typescript-eslint/no-unused-vars
+55:21  Error: `'` can be escaped with 
+`&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  
+react/no-unescaped-entities
+74:17  Error: `'` can be escaped with 
+`&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  
+react/no-unescaped-entities
+74:24  Error: `'` can be escaped with 
+`&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  
+react/no-unescaped-entities
+
+./app/dashboard/products/create/page.tsx
+50:13  Error: 'result' is assigned a 
+value but never used.  
+@typescript-eslint/no-unused-vars
+56:21  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/dashboard/products/[id]/edit/page.ts
+x
+24:6  Warning: React Hook useEffect has a 
+missing dependency: 'fetchData'. Either 
+include it or remove the dependency 
+array.  react-hooks/exhaustive-deps
+42:21  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+68:21  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./app/dashboard/settings/page-old-backup.t
+sx
+455:6  Warning: React Hook useEffect has 
+a missing dependency: 'fetchShop'. Either 
+include it or remove the dependency 
+array.  react-hooks/exhaustive-deps
+554:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+922:22  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+922:41  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+
+./app/dashboard/settings/page.tsx
+115:19  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./components/dashboard/DashboardSidebar.ts
+x
+12:50  Error: 'shopId' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+
+./components/dashboard/delivery/DeliveryMa
+nager.tsx
+14:20  Error: 'setOrders' is assigned a 
+value but never used.  
+@typescript-eslint/no-unused-vars
+
+./components/dashboard/orders/CreateOrderM
+odal.tsx
+27:12  Error: 'loadingProducts' is 
+assigned a value but never used.  
+@typescript-eslint/no-unused-vars
+
+./components/dashboard/ProductForm.tsx
+3:20  Error: 'useEffect' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+165:17  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./components/dashboard/ProductListActions.
+tsx
+7:10  Error: 'deleteProduct' is defined 
+but never used.  
+@typescript-eslint/no-unused-vars
+
+./components/dashboard/products/ProductFor
+mWizard/StepMedia.tsx
+6:10  Error: 'motion' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+7:10  Error: 'staggerItem' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+20:22  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./components/dashboard/products/ProductFor
+mWizard/StepSettings.tsx
+271:76  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+271:89  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+
+./components/dashboard/products/ProductFor
+mWizard/StepVariants.tsx
+87:15  Error: 'attrs' is assigned a value 
+but never used.  
+@typescript-eslint/no-unused-vars
+110:64  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+201:35  Error: 'variantIndex' is defined 
+but never used.  
+@typescript-eslint/no-unused-vars
+332:34  Error: 'k' is defined but never 
+used.  @typescript-eslint/no-unused-vars
+
+./components/dashboard/products/ProductSta
+tsCards.tsx
+99:25  Error: 'index' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+
+./components/dashboard/settings/BasicSetti
+ngs.tsx
+18:23  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+203:28  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+203:47  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+
+./components/dashboard/settings/ColorCusto
+mizer.tsx
+107:10  Error: 'activeColor' is assigned 
+a value but never used.  
+@typescript-eslint/no-unused-vars
+107:23  Error: 'setActiveColor' is 
+assigned a value but never used.  
+@typescript-eslint/no-unused-vars
+
+./components/dashboard/settings/LayoutDesi
+gner.tsx
+276:38  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+276:56  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+
+./components/dashboard/settings/PresetCard
+.tsx
+4:8  Error: 'Image' is defined but never 
+used.  @typescript-eslint/no-unused-vars
+
+./components/dashboard/settings/PresetGall
+ery.tsx
+119:75  Error: `'` can be escaped with 
+`&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  
+react/no-unescaped-entities
+249:130  Error: `'` can be escaped with 
+`&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  
+react/no-unescaped-entities
+
+./components/shared/ThemeProvider.tsx
+489:6  Warning: React Hook useEffect has 
+a missing dependency: 'themeId'. Either 
+include it or remove the dependency 
+array.  react-hooks/exhaustive-deps
+
+./components/storefront/Hero.tsx
+12:38  Error: 'featuredProducts' is 
+defined but never used.  
+@typescript-eslint/no-unused-vars
+
+./components/storefront/ValueProposition.t
+sx
+60:19  Error: `'` can be escaped with 
+`&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  
+react/no-unescaped-entities
+
+./components/ui/Select.tsx
+203:30  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+203:44  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+254:26  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+254:40  Error: `"` can be escaped with 
+`&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  
+react/no-unescaped-entities
+
+./components/ui/Slider.tsx
+74:6  Warning: React Hook useEffect has a 
+missing dependency: 'handleMouseMove'. 
+Either include it or remove the 
+dependency array.  
+react-hooks/exhaustive-deps
+215:6  Warning: React Hook useEffect has 
+a missing dependency: 'updateValue'. 
+Either include it or remove the 
+dependency array.  
+react-hooks/exhaustive-deps
+
+./lib/auth-server.ts
+69:46  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+./lib/hooks/useLocalStorage.ts
+1:20  Error: 'useEffect' is defined but 
+never used.  
+@typescript-eslint/no-unused-vars
+
+./lib/sanitize.ts
+9:16  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+11:15  Error: A `require()` style import 
+is forbidden.  
+@typescript-eslint/no-require-imports
+
+./lib/strapi.ts
+27:26  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+73:39  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+82:24  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+165:20  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+436:70  Error: Unexpected any. Specify a 
+different type.  
+@typescript-eslint/no-explicit-any
+
+info  - Need to disable some ESLint 
+rules? Learn more here: https://nextjs.org
+/docs/basic-features/eslint#disabling-rule
+s

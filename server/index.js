@@ -6,6 +6,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const fileType = require('file-type');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const db = require('./db/database');
@@ -117,6 +118,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const fileFilter = (req, file, cb) => {
+  // Check MIME type first (fast)
   if (ALLOWED_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -226,6 +228,27 @@ app.post('/api/generate', generateLimiter, upload.fields([
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
+    // Validate file magic bytes
+    try {
+      if (imagePath) {
+        const type = await fileType.fromFile(imagePath);
+        const allowedMagic = ['image/jpeg', 'image/png', 'image/webp'];
+
+        if (!type || !allowedMagic.includes(type.mime)) {
+          // Clean up and reject
+          if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+          if (modelReferencePath && fs.existsSync(modelReferencePath)) fs.unlinkSync(modelReferencePath);
+
+          return res.status(400).json({
+            error: 'Invalid image file. File appears to be corrupted or not a valid image.'
+          });
+        }
+      }
+    } catch (valErr) {
+      console.error('Validation error:', valErr);
+      // Continue if validation fails (fallback)
+    }
+
     const { prompt, gender, modelPersona, modelId, shoeModelId, category, backgroundPrompt, shoeCameraAngle, shoeLighting, imageStyle } = req.body;
 
     console.log('Received image:', imagePath);
@@ -331,10 +354,69 @@ app.post('/api/generate-video', async (req, res) => {
   }
 });
 
+// ============================================
+// DOWNLOAD PROXY ENDPOINT
+// ============================================
+
+/**
+ * Download proxy - Fetches external image and streams to client
+ * Solves CORS issues with AI-generated image downloads
+ */
+app.get('/api/download-image', async (req, res) => {
+  const { url, quality = 'original', filename = 'generated-image' } = req.query;
+
+  if (!url) {
+    return res.status(400).json({ error: 'URL parameter is required' });
+  }
+
+  try {
+    const axios = require('axios');
+
+    // Fetch the image from the external URL
+    const response = await axios.get(url, {
+      responseType: 'arraybuffer',
+      timeout: 30000,
+      headers: {
+        'User-Agent': 'ProductStudio-Download/1.0'
+      }
+    });
+
+    // Determine content type and extension
+    const contentType = response.headers['content-type'] || 'image/png';
+    let extension = 'png';
+    if (contentType.includes('jpeg') || contentType.includes('jpg')) {
+      extension = 'jpg';
+    } else if (contentType.includes('webp')) {
+      extension = 'webp';
+    }
+
+    // Sanitize filename
+    const safeFilename = filename.replace(/[^a-zA-Z0-9-_]/g, '_');
+
+    // Set headers for file download
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.${extension}"`);
+    res.setHeader('Content-Length', response.data.length);
+    res.setHeader('Cache-Control', 'no-cache');
+
+    // Send the image data
+    res.send(response.data);
+
+    console.log(`Download proxy: Served ${safeFilename}.${extension} (${(response.data.length / 1024).toFixed(1)}KB)`);
+  } catch (error) {
+    console.error('Download proxy error:', error.message);
+    res.status(500).json({
+      error: 'Failed to download image',
+      details: error.message
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`=================================================`);
   console.log(`🚀 SERVER STARTED ON PORT ${PORT}`);
   console.log(`✨ Video Generation Endpoint: /api/generate-video`);
+  console.log(`📥 Download Proxy Endpoint: /api/download-image`);
   console.log(`=================================================`);
   telegramBot.launch();
 });

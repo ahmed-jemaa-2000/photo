@@ -1,0 +1,43 @@
+{
+    "kind": "collectionType",
+    "collectionName": "credit_transactions",
+    "info": {
+        "singularName": "credit-transaction",
+        "pluralName": "credit-transactions",
+        "displayName": "Credit Transaction",
+        "description": "Transaction history for credit changes"
+    },
+    "options": {
+        "draftAndPublish": false
+    },
+    "pluginOptions": {},
+    "attributes": {
+        "user": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "plugin::users-permissions.user"
+        },
+        "type": {
+            "type": "enumeration",
+            "enum": [
+                "signup_bonus",
+                "admin_add",
+                "photo_generation",
+                "video_generation",
+                "refund"
+            ],
+            "required": true
+        },
+        "amount": {
+            "type": "integer",
+            "required": true
+        },
+        "balanceAfter": {
+            "type": "integer",
+            "required": true
+        },
+        "metadata": {
+            "type": "json"
+        }
+    }
+}

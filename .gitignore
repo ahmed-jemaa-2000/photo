@@ -30,3 +30,91 @@ Thumbs.db
 coverage/
 *.zip
 *.tmp
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production builds
+dist/
+build/
+.next/
+out/
+
+# Environment variables
+.env
+.env*.local
+.env.production
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Strapi specific
+apps/backend/.cache/
+apps/backend/.tmp/
+apps/backend/build/
+apps/backend/public/uploads/*
+!apps/backend/public/uploads/.gitkeep
+apps/backend/.strapi-updater.json
+apps/backend/.strapi/
+
+# Next.js specific
+.next/
+apps/frontend/.next/
+apps/frontend/out/
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+
+# Backups
+*.sql
+*.sql.gz
+*.tar.gz
+
+# PM2
+.pm2/
+
+# AI API uploads (temp files)
+apps/ai-api/uploads/
+
+# Lock files (keep package-lock.json for consistency)
+# pnpm-lock.yaml
+
+# Build artifacts
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Temp/cache
+.tmp/
+.cache/
+*.tmp

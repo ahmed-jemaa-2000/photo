@@ -1,0 +1,123 @@
+{
+  "kind": "collectionType",
+  "collectionName": "shops",
+  "info": {
+    "singularName": "shop",
+    "pluralName": "shops",
+    "displayName": "Shop",
+    "description": "Multi-tenant shop/boutique"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "minLength": 2,
+      "maxLength": 100
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "subdomain": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "regex": "^[a-z0-9-]+$",
+      "minLength": 3,
+      "maxLength": 50
+    },
+    "customDomain": {
+      "type": "string",
+      "unique": true
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "primaryColor": {
+      "type": "string",
+      "default": "#000000",
+      "regex": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+    },
+    "secondaryColor": {
+      "type": "string",
+      "default": "#ffffff",
+      "regex": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+    },
+    "font": {
+      "type": "enumeration",
+      "enum": ["inter", "playfair", "montserrat", "roboto", "poppins"],
+      "default": "inter"
+    },
+    "template": {
+      "type": "enumeration",
+      "enum": ["minimal", "boutique", "kids", "street"],
+      "default": "minimal"
+    },
+    "themeId": {
+      "type": "enumeration",
+      "enum": ["soft-pastel", "monochrome-editorial", "high-contrast-dark", "vivid-accent", "brutalist", "glassmorphic"],
+      "required": false
+    },
+    "heroStyle": {
+      "type": "enumeration",
+      "enum": ["big-banner", "small-hero", "carousel"],
+      "default": "big-banner"
+    },
+    "cardStyle": {
+      "type": "enumeration",
+      "enum": ["rounded", "square", "elevated"],
+      "default": "rounded"
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "plan": {
+      "type": "enumeration",
+      "enum": ["free", "starter", "pro"],
+      "default": "free"
+    },
+    "whatsappNumber": {
+      "type": "string",
+      "regex": "^[+]?[0-9]{8,15}$"
+    },
+    "instagramUrl": {
+      "type": "string"
+    },
+    "facebookUrl": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "shops"
+    },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product",
+      "mappedBy": "shop"
+    },
+    "categories": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::category.category",
+      "mappedBy": "shop"
+    },
+    "orders": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order.order",
+      "mappedBy": "shop"
+    }
+  }
+}

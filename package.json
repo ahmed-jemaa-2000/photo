@@ -1,0 +1,39 @@
+{
+  "name": "brandini-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-tenant e-commerce SaaS platform with AI Photo Studio",
+  "scripts": {
+    "dev:backend": "npm run dev --prefix apps/backend",
+    "dev:frontend": "npm run dev --prefix apps/frontend",
+    "dev:ai-api": "npm run dev --prefix apps/ai-api",
+    "dev:ai-studio": "npm run dev --prefix apps/ai-studio",
+    "dev": "concurrently \"npm:dev:ai-api\" \"npm:dev:ai-studio\"",
+    "dev:cms": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:ai": "concurrently \"npm:dev:ai-api\" \"npm:dev:ai-studio\"",
+    "dev:all": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\" \"npm:dev:ai-api\" \"npm:dev:ai-studio\"",
+    "build:backend": "npm run build --prefix apps/backend",
+    "build:frontend": "npm run build --prefix apps/frontend",
+    "build:ai-studio": "npm run build --prefix apps/ai-studio",
+    "build": "npm run build:backend && npm run build:frontend && npm run build:ai-studio",
+    "start:backend": "npm run start --prefix apps/backend",
+    "start:frontend": "npm run start --prefix apps/frontend",
+    "start:ai-api": "npm run start --prefix apps/ai-api",
+    "start": "concurrently \"npm:start:*\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "dependencies": {
+    "sharp": "0.32.6"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp"
+    ]
+  }
+}

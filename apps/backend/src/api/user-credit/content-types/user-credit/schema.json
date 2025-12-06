@@ -1,0 +1,37 @@
+{
+    "kind": "collectionType",
+    "collectionName": "user_credits",
+    "info": {
+        "singularName": "user-credit",
+        "pluralName": "user-credits",
+        "displayName": "User Credit",
+        "description": "Tracks credit balance for AI generation"
+    },
+    "options": {
+        "draftAndPublish": false
+    },
+    "pluginOptions": {},
+    "attributes": {
+        "user": {
+            "type": "relation",
+            "relation": "oneToOne",
+            "target": "plugin::users-permissions.user"
+        },
+        "balance": {
+            "type": "integer",
+            "default": 10,
+            "min": 0,
+            "required": true
+        },
+        "totalPurchased": {
+            "type": "integer",
+            "default": 10,
+            "min": 0
+        },
+        "totalUsed": {
+            "type": "integer",
+            "default": 0,
+            "min": 0
+        }
+    }
+}

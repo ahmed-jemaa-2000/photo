@@ -1,0 +1,393 @@
+/**
+ * PromptBuilder - Production-grade prompt construction for AI image generation
+ *
+ * This class builds sophisticated prompts matching the web UI's quality by:
+ * - Using weighted priority sections (CRITICAL > IMPORTANT > SUPPORTING > CONTEXT)
+ * - Applying category-specific templates (shoes vs clothes)
+ * - Implementing color confidence-based adjustments
+ * - Using semantic color naming for better AI interpretation
+ */
+
+class PromptBuilder {
+  constructor({ category, colorPalette, modelPersona, backdrop, colorConfidence }) {
+    this.category = category || 'clothes';
+    this.colorPalette = colorPalette || [];
+    this.modelPersona = modelPersona || {};
+    this.backdrop = backdrop || {};
+    this.colorConfidence = colorConfidence || 'medium';
+
+    // Semantic color mapping for AI-friendly naming
+    this.AI_COLOR_MAP = {
+      'Light Red-Orange (Vibrant)': 'coral',
+      'Light Red-Orange': 'coral',
+      'Red-Orange': 'burnt orange',
+      'Very Dark Blue': 'navy',
+      'Dark Blue': 'navy',
+      'Light Blue': 'sky blue',
+      'Very Light Blue': 'powder blue',
+      'Yellow-Orange': 'amber',
+      'Yellow-Green': 'lime',
+      'Light Gray': 'light gray',
+      'Very Light Gray': 'off-white',
+      'Dark Gray': 'charcoal gray',
+      'Very Dark Gray': 'charcoal',
+      'Light Pink': 'blush',
+      'Pink': 'pink',
+      'Light Purple': 'lavender',
+      'Dark Purple': 'deep purple',
+      'Light Green': 'mint',
+      'Dark Green': 'forest green',
+      'Very Dark Red': 'burgundy',
+      'Dark Red': 'maroon',
+      // Whites & Neutrals
+      'White': 'pure white',
+      'Off-White': 'off-white',
+      'Black': 'black',
+      'Gray': 'gray',
+      'Charcoal': 'charcoal',
+      // Blues & Cyans
+      'Cyan': 'cyan',
+      'Light Cyan': 'aqua',
+      // Browns & Earth Tones
+      'Brown': 'brown',
+      'Dark Brown': 'chocolate brown',
+      'Beige': 'beige',
+      'Cream': 'cream',
+      'Tan': 'tan',
+      'Olive': 'olive',
+      // Additional Colors
+      'Teal': 'teal',
+      'Coral': 'coral',
+      'Salmon': 'salmon pink',
+      'Gold': 'gold',
+      'Silver': 'silver',
+      'Khaki': 'khaki'
+    };
+
+    // Variation cues for pose diversity (randomly selected)
+    this.VARIATION_CUES = [
+      'Use a fresh pose variation: slight head tilt, relaxed weight shift, natural arm positioning.',
+      'Change the stance: a gentle walk mid-step, natural arm swing, confident stride.',
+      'Try a seated or leaning pose with natural posture and garment drape visible.',
+      'Vary the camera: slightly lower angle for presence, direct eye contact.',
+      'Add dynamic energy: a light turn of the torso, fabric in motion, natural movement.'
+    ];
+  }
+
+  /**
+   * Builds the complete prompt with all sections
+   */
+  build() {
+    return [
+      this._buildCriticalSection(),
+      this._buildImportantSection(),
+      this._buildSupportingSection(),
+      this._buildContextSection(),
+      this._buildNegativeSection()
+    ].filter(Boolean).join(' ');
+  }
+
+  /**
+   * CRITICAL SECTION - Non-negotiable requirements
+   * Priority: Highest
+   */
+  _buildCriticalSection() {
+    const parts = [];
+
+    // Color fidelity with semantic naming
+    if (this.colorPalette.length > 0) {
+      const dominantColor = this.colorPalette[0];
+      const semanticName = this._getSemanticColorName(dominantColor.name);
+      const hex = dominantColor.hex;
+
+      // Get product type label based on category
+      const productLabel = this._getProductLabel();
+
+      // Adjust aggressiveness based on confidence
+      if (this.colorConfidence === 'high') {
+        parts.push(`CRITICAL: The ${productLabel} is ${semanticName} (${hex}). Match this exact color with precision. No hue shifts, no recoloring.`);
+      } else if (this.colorConfidence === 'medium') {
+        parts.push(`CRITICAL: The ${productLabel} is primarily ${semanticName} (${hex}). Use this as the dominant color, maintaining accuracy.`);
+      } else {
+        parts.push(`IMPORTANT: The ${productLabel} features ${semanticName} tones (${hex}). Interpret naturally while respecting the overall palette.`);
+      }
+    }
+
+    // Design preservation rules - category aware
+    const preservationRule = this._getDesignPreservationRule();
+    parts.push(preservationRule);
+
+    // Category-specific critical requirements
+    switch (this.category) {
+      case 'shoes':
+        parts.push(
+          'CRITICAL: This is footwear. Maintain exact shoe type, sole design, upper construction, lacing/closure system, and heel type. Focus on shoe details with appropriate low-angle or profile view.'
+        );
+        break;
+      case 'bags':
+        parts.push(
+          'CRITICAL: This is a bag/handbag. Maintain exact bag shape, hardware (zippers, clasps, buckles), strap design, material texture (leather, canvas, etc.), stitching patterns, and all branding elements. Show the bag as the hero product.'
+        );
+        break;
+      case 'accessories':
+        parts.push(
+          'CRITICAL: This is an accessory (jewelry, watch, eyewear, or similar). Maintain exact product design, material finish (metal, gem, glass), craftsmanship details, engravings, and branding. Capture sparkle and reflections accurately.'
+        );
+        break;
+      default: // clothes
+        parts.push(
+          'CRITICAL: Maintain exact garment silhouette, fit, length, fabric texture, and drape. The garment type and construction must stay identical.'
+        );
+    }
+
+    return parts.join(' ');
+  }
+
+  /**
+   * Get product label based on category for natural language
+   */
+  _getProductLabel() {
+    switch (this.category) {
+      case 'shoes': return 'footwear';
+      case 'bags': return 'bag';
+      case 'accessories': return 'accessory';
+      default: return 'garment';
+    }
+  }
+
+  /**
+   * Get design preservation rule based on category
+   */
+  _getDesignPreservationRule() {
+    switch (this.category) {
+      case 'shoes':
+        return 'CRITICAL: Preserve the exact shoe design - logos, branding, sole pattern, lace style, and all visual details must remain identical. Do not add, remove, or modify any design elements.';
+      case 'bags':
+        return 'CRITICAL: Preserve the exact bag design - logos, hardware, patterns, material texture, and all visual details must remain identical. Do not add, remove, or modify any design elements.';
+      case 'accessories':
+        return 'CRITICAL: Preserve the exact accessory design - engravings, gemstones, metal finish, branding, and all visual details must remain identical. Do not add, remove, or modify any design elements.';
+      default:
+        return 'CRITICAL: Preserve the exact garment design - logos, text, patterns, prints, embroidery, and all visual details must remain identical. Do not add, remove, or modify any design elements.';
+    }
+  }
+
+  /**
+   * IMPORTANT SECTION - Core directives
+   * Priority: High
+   */
+  _buildImportantSection() {
+    const parts = [];
+
+    // Model persona description
+    if (this.modelPersona.description) {
+      parts.push(this.modelPersona.description);
+    }
+
+    // Category-specific pose/angle guidance
+    switch (this.category) {
+      case 'shoes':
+        parts.push(
+          'Camera angle: Low angle 30-45 degrees from ground, or profile view to showcase shoe design. Model feet positioned to display both sole and upper. Natural standing or walking position.'
+        );
+        break;
+      case 'bags':
+        parts.push(
+          'Product-focused composition with bag as hero element. Camera at product level or slightly above. Show bag structure, hardware details, stitching quality, and material texture. Professional fashion accessory photography with clean background or lifestyle context.'
+        );
+        break;
+      case 'accessories':
+        parts.push(
+          'Macro or close-up detail focus showcasing craftsmanship and materials. Shallow depth of field to emphasize product. Professional jewelry/watch photography lighting. Capture sparkle, reflections, and fine details. Product should be the clear focal point.'
+        );
+        break;
+      default: // clothes
+        parts.push(
+          'Full-body or 3/4 length shot with garment fully visible. Natural standing pose with relaxed weight shift, arms at sides or naturally positioned. Camera at eye level or slightly below.'
+        );
+    }
+
+    return parts.join(' ');
+  }
+
+  /**
+   * SUPPORTING SECTION - Enhancements
+   * Priority: Medium
+   */
+  _buildSupportingSection() {
+    const parts = [];
+
+    // Backdrop description
+    if (this.backdrop.prompt) {
+      parts.push(this.backdrop.prompt);
+    }
+
+    // Full palette context (top 3 colors)
+    if (this.colorPalette.length > 1) {
+      const paletteDesc = this.colorPalette
+        .slice(0, 3)
+        .map(c => {
+          const semantic = this._getSemanticColorName(c.name);
+          return `${semantic} (${c.percentage}%)`;
+        })
+        .join(', ');
+      parts.push(`Garment color palette: ${paletteDesc}.`);
+    }
+
+    // Random variation cue for diversity
+    const variationCue = this.VARIATION_CUES[Math.floor(Math.random() * this.VARIATION_CUES.length)];
+    parts.push(variationCue);
+
+    return parts.join(' ');
+  }
+
+  /**
+   * CONTEXT SECTION - Technical specs
+   * Priority: Low-Medium
+   */
+  _buildContextSection() {
+    const parts = [];
+
+    // Quality specifications
+    parts.push('Photorealistic rendering, high resolution output (minimum 1024px), professional photography quality.');
+
+    // Lighting requirements
+    parts.push('Skin-safe lighting with natural color temperature. Avoid harsh shadows or overexposure. Soft, even illumination that shows fabric texture.');
+
+    // Color accuracy reinforcement
+    if (this.colorConfidence === 'high') {
+      parts.push('Use the uploaded garment image as ground truth for color matching. Lock to exact hex values.');
+    }
+
+    return parts.join(' ');
+  }
+
+  /**
+   * NEGATIVE SECTION - Avoidance rules
+   * Priority: Low (but important)
+   */
+  _buildNegativeSection() {
+    const negatives = [
+      'Do not add accessories, jewelry, props, or extra garments not in the original',
+      'Do not alter garment colors, patterns, or designs',
+      'Do not add text, graphics, or decorative elements',
+      'Avoid distortions, warping, or unnatural body proportions',
+      'Avoid blurry, low-quality, or artificial-looking results'
+    ];
+
+    // Category-specific negatives
+    switch (this.category) {
+      case 'shoes':
+        negatives.push('No floating shoes, no disembodied feet, no unnatural shoe deformations');
+        break;
+      case 'bags':
+        negatives.push('No floating bags, no distorted hardware, no warped straps, no unnatural bag shape, no missing zippers or clasps');
+        break;
+      case 'accessories':
+        negatives.push('No floating jewelry, no distorted gems, no unnatural metal reflections, no missing product details, no blurred engravings');
+        break;
+      default:
+        negatives.push('No wardrobe malfunctions, no garment transparency issues, no inappropriate fit');
+    }
+
+    return `Negative prompt: ${negatives.join('; ')}.`;
+  }
+
+  /**
+   * Converts technical color names to AI-friendly semantic names
+   */
+  _getSemanticColorName(colorName) {
+    if (!colorName) return 'neutral';
+
+    // Check direct mapping first
+    if (this.AI_COLOR_MAP[colorName]) {
+      return this.AI_COLOR_MAP[colorName];
+    }
+
+    // Fallback: extract base color (remove parentheticals and prefixes)
+    let semantic = colorName
+      .split('(')[0]  // Remove (Vibrant), (Muted), etc.
+      .trim()
+      .toLowerCase();
+
+    // Simplify "very light/dark" to just "light/dark"
+    semantic = semantic.replace(/^very\s+/i, '');
+
+    return semantic;
+  }
+
+  /**
+   * Static method to assess color palette confidence
+   * Returns 'high', 'medium', or 'low'
+   */
+  static assessColorConfidence(palette) {
+    if (!palette || palette.length === 0) return 'low';
+
+    const dominant = palette[0];
+    const dominantPercentage = dominant?.percentage || 0;
+
+    // Check if dominant color is a neutral (may indicate background noise)
+    const isNeutral = PromptBuilder._isNeutralColor(dominant?.hex);
+
+    // High confidence: Clear dominant color (>40%) and not a neutral
+    if (dominantPercentage > 40 && !isNeutral) {
+      return 'high';
+    }
+
+    // Medium confidence: Moderate dominance (25-40%) or neutral with high coverage
+    if (dominantPercentage > 25) {
+      return 'medium';
+    }
+
+    // Low confidence: Fragmented palette or very low dominance
+    return 'low';
+  }
+
+  /**
+   * Helper to detect neutral colors that might be background
+   */
+  static _isNeutralColor(hex) {
+    if (!hex) return true;
+
+    // Convert hex to RGB
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    // Convert to HSL (normalized RGB)
+    const rNorm = r / 255;
+    const gNorm = g / 255;
+    const bNorm = b / 255;
+    const max = Math.max(rNorm, gNorm, bNorm);
+    const min = Math.min(rNorm, gNorm, bNorm);
+    const l = (max + min) / 2;
+    const s = max === min ? 0 : (max - min) / (max + min > 1 ? (2 - max - min) : (max + min));
+
+    // Neutral if saturation < 15% (very desaturated)
+    return s < 0.15;
+  }
+
+  /**
+   * Utility to get prompt token estimate (rough approximation)
+   */
+  getTokenEstimate() {
+    const prompt = this.build();
+    // Rough estimate: 4 characters per token
+    return Math.ceil(prompt.length / 4);
+  }
+
+  /**
+   * Debug method to see all sections separately
+   */
+  debug() {
+    return {
+      critical: this._buildCriticalSection(),
+      important: this._buildImportantSection(),
+      supporting: this._buildSupportingSection(),
+      context: this._buildContextSection(),
+      negative: this._buildNegativeSection(),
+      tokenEstimate: this.getTokenEstimate()
+    };
+  }
+}
+
+module.exports = PromptBuilder;

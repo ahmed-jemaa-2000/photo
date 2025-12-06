@@ -19,7 +19,6 @@ import ShoeCameraAngleSelection, { CAMERA_ANGLES } from './components/ShoeCamera
 import ShoeLightingSelection, { LIGHTING_OPTIONS } from './components/ShoeLightingSelection';
 import ShoePoseSelection, { SHOE_POSES } from './components/ShoePoseSelection';
 import ImageStyleSelection from './components/ImageStyleSelection';
-import AnimatedProgress from './components/AnimatedProgress';
 import ReviewPage from './components/ReviewPage';
 import BodySizeSelection, { BODY_SIZES } from './components/BodySizeSelection';
 
@@ -34,6 +33,10 @@ import AccessoryShotTypeSelection, { ACCESSORY_SHOT_TYPES } from './components/a
 import AccessoryLightingSelection, { ACCESSORY_LIGHTING_OPTIONS } from './components/accessories/AccessoryLightingSelection';
 import AnimatedButton from './components/common/AnimatedButton';
 import AspectRatioSelector, { ASPECT_RATIOS } from './components/AspectRatioSelector';
+
+// Enhanced UX components
+import GenerationProgressOverlay from './components/GenerationProgressOverlay';
+import { useSwipeNavigation } from './hooks/useSwipeNavigation';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -550,6 +553,38 @@ function App() {
     }
   };
 
+  // === SWIPE NAVIGATION FOR MOBILE ===
+  const { ref: swipeRef, isSwiping } = useSwipeNavigation({
+    onSwipeLeft: () => {
+      if (!generatedResult && canProceed() && currentStepIndex < totalSteps - 1) {
+        nextStep();
+      }
+    },
+    onSwipeRight: () => {
+      if (!generatedResult && currentStepIndex > 0) {
+        prevStep();
+      }
+    },
+    threshold: 60,
+  });
+
+  // === ORIGINAL IMAGE URL FOR COMPARISON ===
+  const originalImageUrl = useMemo(() => {
+    if (selectedFile) {
+      return URL.createObjectURL(selectedFile);
+    }
+    return null;
+  }, [selectedFile]);
+
+  // Cleanup object URL on unmount or file change
+  useEffect(() => {
+    return () => {
+      if (originalImageUrl) {
+        URL.revokeObjectURL(originalImageUrl);
+      }
+    };
+  }, [originalImageUrl]);
+
   // === RENDER STEP CONTENT ===
 
   const renderStepContent = () => {
@@ -873,8 +908,15 @@ function App() {
         )}
       </div>
 
-      {/* Full Screen Progress Overlay */}
-      <AnimatedProgress isGenerating={isGenerating} />
+      {/* Full Screen Progress Overlay - Enhanced with phases and tips */}
+      <GenerationProgressOverlay
+        isGenerating={isGenerating}
+        category={category}
+        onCancel={() => {
+          setIsGenerating(false);
+          setError('Generation cancelled.');
+        }}
+      />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 min-h-screen flex flex-col safe-top">
         {/* Header */}
@@ -936,8 +978,27 @@ function App() {
           )}
         </header>
 
-        {/* Main Content */}
-        <main className="flex-1 relative">
+        {/* Mobile Step Progress Indicator */}
+        {category && !generatedResult && (
+          <div className="flex md:hidden items-center justify-center gap-1.5 pb-4">
+            {steps.map((_, idx) => (
+              <motion.div
+                key={idx}
+                className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentStepIndex
+                    ? 'w-6 bg-primary'
+                    : idx < currentStepIndex
+                      ? 'w-2.5 bg-primary/50'
+                      : 'w-2 bg-white/20'
+                  }`}
+                animate={{ scale: idx === currentStepIndex ? [1, 1.1, 1] : 1 }}
+                transition={{ duration: 1, repeat: idx === currentStepIndex ? Infinity : 0 }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Main Content with Swipe Navigation */}
+        <main ref={swipeRef} className={`flex-1 relative touch-pan-y ${isSwiping ? 'select-none' : ''}`}>
           <AnimatePresence mode="wait">
             {generatedResult ? (
               <motion.div
@@ -957,6 +1018,7 @@ function App() {
                   result={generatedResult}
                   category={category}
                   onRegenerate={handleGenerate}
+                  originalImage={originalImageUrl}
                 />
               </motion.div>
             ) : (

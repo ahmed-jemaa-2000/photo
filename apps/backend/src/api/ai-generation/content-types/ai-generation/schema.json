@@ -1,0 +1,49 @@
+{
+    "kind": "collectionType",
+    "collectionName": "ai_generations",
+    "info": {
+        "singularName": "ai-generation",
+        "pluralName": "ai-generations",
+        "displayName": "AI Generation",
+        "description": "Tracks AI-generated images for history and gallery"
+    },
+    "options": {
+        "draftAndPublish": false
+    },
+    "pluginOptions": {},
+    "attributes": {
+        "user": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "plugin::users-permissions.user"
+        },
+        "product": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "api::product.product"
+        },
+        "imageUrl": {
+            "type": "string",
+            "required": true
+        },
+        "downloadUrl": {
+            "type": "string"
+        },
+        "category": {
+            "type": "enumeration",
+            "enum": [
+                "clothes",
+                "shoes",
+                "bags",
+                "accessories"
+            ],
+            "required": true
+        },
+        "prompt": {
+            "type": "text"
+        },
+        "metadata": {
+            "type": "json"
+        }
+    }
+}

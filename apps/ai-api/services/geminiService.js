@@ -1,0 +1,686 @@
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const FormData = require('form-data');
+
+// Ensure .env is loaded even when this module is required directly
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+// Support both legacy env names (giminigen_*) and corrected ones (GEMINIGEN_*)
+const API_KEY = process.env.giminigen_API_KEY || process.env.GEMINIGEN_API_KEY;
+const BASE_URL = process.env.giminigen_BASE_URL || process.env.GEMINIGEN_BASE_URL || 'https://api.geminigen.ai';
+const DEFAULT_MODEL = process.env.giminigen_MODEL || 'imagen-pro';
+const POLL_INTERVAL_MS = 5000;
+const POLL_LIMIT = 60;
+const VIDEO_MODEL = process.env.giminigen_VIDEO_MODEL || 'veo-3.1-fast';
+const VIDEO_RESOLUTION = process.env.giminigen_VIDEO_RESOLUTION || '1080p';
+const VIDEO_ASPECT_RATIO = process.env.giminigen_VIDEO_ASPECT_RATIO || '16:9';
+const VIDEO_POLL_INTERVAL_MS = 5000;
+const VIDEO_POLL_LIMIT = 60;
+
+const apiClient = axios.create({
+  baseURL: BASE_URL,
+  timeout: 120000,
+});
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function pollForResult(uuid) {
+  for (let attempt = 0; attempt < POLL_LIMIT; attempt++) {
+    const { data } = await apiClient.get(`/uapi/v1/history/${uuid}`, {
+      headers: { 'x-api-key': API_KEY },
+    });
+
+    const images = data?.generated_image || [];
+    const status = data?.status ?? 0;
+
+    if (images.length && status >= 2) {
+      const primary = images[0];
+      return {
+        imageUrl: primary.image_url || primary.file_download_url || data.thumbnail_url,
+        downloadUrl: primary.file_download_url || primary.image_url,
+        historyUrl: `${BASE_URL}/uapi/v1/history/${uuid}`,
+        meta: {
+          status,
+          statusDesc: data?.status_desc || '',
+          queuePosition: data?.queue_position,
+          thumbnail: data?.thumbnail_url,
+          model: primary.model || data?.model_name,
+          generatedAt: data?.updated_at || data?.created_at,
+        },
+      };
+    }
+
+    if (status < 0 || data?.error_message) {
+      throw new Error(data?.error_message || 'giminigen reported a failure');
+    }
+
+    await wait(POLL_INTERVAL_MS);
+  }
+
+  throw new Error('Timed out waiting for giminigen to finish the render');
+}
+
+async function pollForVideoResult(uuid) {
+  for (let attempt = 0; attempt < VIDEO_POLL_LIMIT; attempt++) {
+    const { data } = await apiClient.get(`/uapi/v1/history/${uuid}`, {
+      headers: { 'x-api-key': API_KEY },
+    });
+
+    const videos = data?.generated_video ||
+      data?.generated_videos ||
+      data?.generated_file ||
+      data?.generated_files ||
+      [];
+
+    const status = data?.status ?? 0;
+
+    if (Array.isArray(videos) && videos.length && status >= 2) {
+      const primary = videos[0];
+      const videoUrl = primary.video_url || primary.file_download_url || primary.url || data?.video_url;
+      const downloadUrl = primary.file_download_url || primary.video_url || primary.url || data?.video_url;
+
+      if (!videoUrl && !downloadUrl) {
+        throw new Error('giminigen finished but did not return a video URL');
+      }
+
+      return {
+        videoUrl: videoUrl || downloadUrl,
+        downloadUrl: downloadUrl || videoUrl,
+        historyUrl: `${BASE_URL}/uapi/v1/history/${uuid}`,
+        meta: {
+          status,
+          statusDesc: data?.status_desc || '',
+          queuePosition: data?.queue_position,
+          thumbnail: data?.thumbnail_url,
+          model: primary.model || data?.model_name,
+          generatedAt: data?.updated_at || data?.created_at,
+        },
+      };
+    }
+
+    if (status === 3 || status < 0 || data?.error_message) {
+      throw new Error(data?.error_message || 'giminigen reported a failure while rendering video');
+    }
+
+    await wait(VIDEO_POLL_INTERVAL_MS);
+  }
+
+  throw new Error('Timed out waiting for giminigen to finish the video');
+}
+
+// ============================================
+// IMAGE GENERATION STYLE PRESETS
+// ============================================
+
+/**
+ * Professional photography style presets for image generation
+ * Each preset contains optimized prompts for specific use cases
+ */
+const IMAGE_STYLE_PRESETS = {
+  // E-commerce / Clean
+  ecommerce_clean: {
+    id: 'ecommerce_clean',
+    name: 'E-commerce Clean',
+    description: 'Pure white background, perfect for product listings',
+    prompt: 'Clean white studio backdrop, even diffused lighting, no shadows on background, product-focused composition, pure white (#FFFFFF) background, professional e-commerce photography, high-key lighting, crisp sharp focus',
+    aspectRatio: '3:4',
+    category: 'commercial',
+  },
+  ecommerce_soft: {
+    id: 'ecommerce_soft',
+    name: 'E-commerce Soft',
+    description: 'Soft gradient background with subtle shadows',
+    prompt: 'Soft gradient studio background, gentle shadow beneath model, professional catalog photography, neutral gray-to-white gradient, balanced exposure, commercial quality, Amazon/Zalando style product shot',
+    aspectRatio: '3:4',
+    category: 'commercial',
+  },
+
+  // Editorial / Magazine
+  editorial_vogue: {
+    id: 'editorial_vogue',
+    name: 'Editorial Vogue',
+    description: 'High-fashion magazine editorial style',
+    prompt: 'High-fashion editorial photography, Vogue magazine aesthetic, dramatic studio lighting with strong key light, sophisticated pose, fashion-forward composition, deep shadows and highlights, artistic color grading, luxury fashion campaign quality',
+    aspectRatio: '3:4',
+    category: 'editorial',
+  },
+  editorial_minimal: {
+    id: 'editorial_minimal',
+    name: 'Editorial Minimal',
+    description: 'Clean minimalist editorial look',
+    prompt: 'Minimalist editorial photography, clean lines, negative space utilization, understated elegance, modern Scandinavian aesthetic, muted color palette, architectural simplicity, high-end brand campaign style',
+    aspectRatio: '3:4',
+    category: 'editorial',
+  },
+
+  // Lifestyle
+  lifestyle_urban: {
+    id: 'lifestyle_urban',
+    name: 'Street Style Urban',
+    description: 'Urban street photography aesthetic',
+    prompt: 'Street style photography, urban city backdrop, natural candid feel, golden hour sunlight, authentic street fashion vibe, brick walls or city architecture, contemporary urban lifestyle, Instagram influencer aesthetic',
+    aspectRatio: '4:5',
+    category: 'lifestyle',
+  },
+  lifestyle_outdoor: {
+    id: 'lifestyle_outdoor',
+    name: 'Outdoor Natural',
+    description: 'Natural outdoor lifestyle setting',
+    prompt: 'Outdoor lifestyle photography, natural daylight, lush greenery or beach setting, relaxed authentic pose, warm golden tones, aspirational lifestyle imagery, vacation editorial feel, natural environment',
+    aspectRatio: '4:5',
+    category: 'lifestyle',
+  },
+  lifestyle_cafe: {
+    id: 'lifestyle_cafe',
+    name: 'Cafe & Indoor',
+    description: 'Cozy indoor cafe or home setting',
+    prompt: 'Indoor lifestyle photography, cozy cafe or modern interior setting, warm ambient lighting, bokeh background, casual relaxed atmosphere, lifestyle brand aesthetic, social media ready',
+    aspectRatio: '4:5',
+    category: 'lifestyle',
+  },
+
+  // Luxury / Premium
+  luxury_campaign: {
+    id: 'luxury_campaign',
+    name: 'Luxury Campaign',
+    description: 'High-end luxury brand advertising',
+    prompt: 'Luxury brand campaign photography, premium studio setup, dramatic Rembrandt lighting, rich deep shadows, opulent atmosphere, Gucci/Chanel advertising aesthetic, sophisticated color palette, ultra-premium quality',
+    aspectRatio: '3:4',
+    category: 'luxury',
+  },
+  luxury_dark: {
+    id: 'luxury_dark',
+    name: 'Dark Luxury',
+    description: 'Moody dark premium aesthetic',
+    prompt: 'Dark luxury photography, low-key dramatic lighting, deep black background, spotlight on product, mysterious sophisticated mood, high-end watch/jewelry campaign style, cinematic shadows',
+    aspectRatio: '3:4',
+    category: 'luxury',
+  },
+
+  // Social Media
+  instagram_aesthetic: {
+    id: 'instagram_aesthetic',
+    name: 'Instagram Aesthetic',
+    description: 'Optimized for Instagram feed',
+    prompt: 'Instagram-optimized photography, trendy aesthetic, soft warm tones, lifestyle influencer style, perfectly composed for social media, aspirational yet authentic feel, engagement-optimized composition, warm color filter',
+    aspectRatio: '4:5',
+    category: 'social',
+  },
+  tiktok_dynamic: {
+    id: 'tiktok_dynamic',
+    name: 'TikTok Dynamic',
+    description: 'Bold and eye-catching for short-form',
+    prompt: 'Bold dynamic photography, vibrant saturated colors, high contrast, attention-grabbing composition, Gen-Z aesthetic, trendy and energetic, perfect for vertical video thumbnails, pop-culture inspired',
+    aspectRatio: '9:16',
+    category: 'social',
+  },
+
+  // Artistic
+  artistic_film: {
+    id: 'artistic_film',
+    name: 'Film Grain Vintage',
+    description: 'Nostalgic film photography look',
+    prompt: 'Vintage film photography aesthetic, subtle film grain, slightly faded colors, nostalgic 35mm film look, soft analog warmth, Kodak Portra or Fuji color palette, authentic retro feel',
+    aspectRatio: '3:4',
+    category: 'artistic',
+  },
+};
+
+/**
+ * Quality enhancement keywords for image generation
+ */
+const IMAGE_QUALITY_BOOST = [
+  'ultra high resolution 8K quality',
+  'professional product photography',
+  'sharp focus on product details',
+  'natural skin texture',
+  'authentic fabric and material rendering',
+  'photorealistic',
+  'shot on Phase One IQ4 150MP',
+].join(', ');
+
+/**
+ * Build a STRONG color lock clause
+ * This is critical for color accuracy in AI generation
+ * We repeat the color information multiple ways to reinforce it
+ */
+function buildColorLockClause(colorHex, colorName, colorPalette) {
+  if (!colorHex) return '';
+
+  const parts = [];
+
+  // Layer 1: Direct color instruction at the START (AI pays most attention to beginning)
+  // OPTIMIZED: Combined multiple statements into one powerful instruction
+  parts.push(`[COLOR LOCKED: ${colorHex}] Product is ${colorName || 'this color'}. Preserve EXACTLY - no hue shift, no brightness change.`);
+
+  // Layer 2: Include palette if available (helps AI understand color context)
+  if (colorPalette && colorPalette.length > 0) {
+    const colorList = colorPalette.slice(0, 2).map(c => c.hex).join(', ');
+    parts.push(`Palette: ${colorList}.`);
+  }
+
+  return parts.join(' ');
+}
+
+/**
+ * Build negative prompt for color protection (OPTIMIZED)
+ */
+function buildColorNegativePrompt() {
+  // Reduced from 9 items to 4 most impactful ones
+  return 'no color shift, no color cast, no tint, no saturation change';
+}
+
+/**
+ * Build optimized image generation prompt
+ * @param {string} basePrompt - Base prompt from existing logic
+ * @param {string} userPrompt - User's additional instructions
+ * @param {object} options - Style and category options
+ * @returns {object} { prompt, aspectRatio }
+ */
+function buildImagePrompt(basePrompt, userPrompt, options = {}) {
+  const parts = [];
+
+  // 1. COLOR LOCK FIRST (AI pays most attention to beginning of prompt)
+  const colorHexMatch = userPrompt?.match(/#[A-Fa-f0-9]{6}/);
+  const colorHex = colorHexMatch ? colorHexMatch[0].toUpperCase() : null;
+
+  if (colorHex) {
+    const colorLock = buildColorLockClause(colorHex, null, null);
+    parts.push(colorLock);
+    console.log(`[Image Gen] Color lock activated: ${colorHex}`);
+  }
+
+  // 2. Base prompt (product/model instructions)
+  parts.push(basePrompt);
+
+  // 3. Add style preset if specified
+  const styleId = options.imageStyle || 'ecommerce_clean';
+  const stylePreset = IMAGE_STYLE_PRESETS[styleId];
+
+  if (stylePreset) {
+    parts.push(stylePreset.prompt);
+    console.log(`[Image Gen] Using style preset: ${stylePreset.name}`);
+  }
+
+  // 4. Add user's custom prompt
+  if (userPrompt && userPrompt.trim()) {
+    parts.push(userPrompt.trim());
+  }
+
+  // 5. Quality boost (kept as is - important)
+  parts.push(IMAGE_QUALITY_BOOST);
+
+  // 6. Combined negative prompts (color + general) - REDUCED
+  const negatives = colorHex
+    ? `Avoid: ${buildColorNegativePrompt()}, blurry, distorted proportions, watermarks.`
+    : 'Avoid: blurry, distorted proportions, watermarks.';
+  parts.push(negatives);
+
+  // 7. END color reminder (3rd strategic mention)
+  if (colorHex) {
+    parts.push(`Maintain product color ${colorHex} exactly.`);
+  }
+
+  return {
+    prompt: parts.join(' '),
+    aspectRatio: stylePreset?.aspectRatio || options.aspectRatio || '3:4',
+  };
+}
+
+async function generateImage(imagePath, userPrompt, options = {}) {
+  if (!API_KEY) {
+    throw new Error('giminigen_API_KEY is not set');
+  }
+
+  const formData = new FormData();
+  formData.append('files', fs.createReadStream(imagePath));
+
+  let basePrompt = 'Create a high-fidelity fashion product photo: a real human model wearing the exact same garment from the reference image. Preserve all logos, text, details, and EXACT garment color with no hue/brightness shifts.';
+
+  // Handle shoe category with leg reference
+  if (options.category === 'shoes' && options.modelReferencePath && fs.existsSync(options.modelReferencePath)) {
+    console.log('Using shoe/leg model reference image:', options.modelReferencePath);
+    formData.append('files', fs.createReadStream(options.modelReferencePath));
+
+    let shoePromptParts = ['Create a high-fidelity product photo of the shoes from the first image. Use the second image as reference for leg/feet type and outfit style.'];
+
+    if (options.shoeCameraAngle) {
+      shoePromptParts.push(options.shoeCameraAngle);
+    }
+
+    if (options.shoeLighting) {
+      shoePromptParts.push(options.shoeLighting);
+    }
+
+    shoePromptParts.push('Focus on shoe details while maintaining natural leg positioning. Preserve all logos, text, and details from the shoes. LOCK shoe color and design exactly to the first image.');
+
+    basePrompt = shoePromptParts.join(' ');
+  }
+  // Handle regular clothes category with full model reference
+  else if (options.modelReferencePath && fs.existsSync(options.modelReferencePath)) {
+    console.log('Using model reference image:', options.modelReferencePath);
+    formData.append('files', fs.createReadStream(options.modelReferencePath));
+    basePrompt = 'Create a high-fidelity fashion product photo using the first image as the exact garment reference and the second image as the model reference. The model in the output should resemble the person in the second image. Preserve all logos, text, and details from the garment. LOCK garment color and graphics exactly to the first image.';
+  }
+
+  // Build enhanced prompt with style presets
+  const { prompt: enhancedPrompt, aspectRatio } = buildImagePrompt(basePrompt, userPrompt, options);
+
+  console.log('[Image Gen] Enhanced prompt length:', enhancedPrompt.length);
+  console.log('[Image Gen] Aspect ratio:', aspectRatio);
+
+  formData.append('prompt', enhancedPrompt);
+  formData.append('model', DEFAULT_MODEL);
+  formData.append('aspect_ratio', aspectRatio);
+
+  if (options.modelPersona?.gender) {
+    formData.append('person_generation', options.modelPersona.gender);
+  } else if (options.gender) {
+    formData.append('person_generation', options.gender);
+  }
+
+  // Debug: Log what we're sending
+  console.log('[Image Gen] ===== API REQUEST DEBUG =====');
+  console.log('[Image Gen] Files attached:', formData.getBuffer ? 'FormData with files' : 'unknown');
+  console.log('[Image Gen] Model:', DEFAULT_MODEL);
+  console.log('[Image Gen] Prompt (first 500 chars):', enhancedPrompt.substring(0, 500));
+  console.log('[Image Gen] API URL:', apiClient.defaults.baseURL + '/uapi/v1/generate_image');
+  console.log('[Image Gen] API Key set:', !!API_KEY);
+  console.log('[Image Gen] ================================');
+
+  console.log('Sending request to giminigen API...');
+
+  let data;
+  try {
+    const response = await apiClient.post('/uapi/v1/generate_image', formData, {
+      headers: {
+        ...formData.getHeaders(),
+        'x-api-key': API_KEY,
+      },
+    });
+    data = response.data;
+  } catch (err) {
+    const apiError = err?.response?.data;
+    console.error('[Image Gen] ===== API ERROR DEBUG =====');
+    console.error('[Image Gen] Status Code:', err?.response?.status);
+    console.error('[Image Gen] Status Text:', err?.response?.statusText);
+    console.error('[Image Gen] Response Headers:', JSON.stringify(err?.response?.headers, null, 2));
+    console.error('[Image Gen] Error Data:', JSON.stringify(apiError, null, 2));
+    console.error('[Image Gen] Request URL:', err?.config?.url);
+    console.error('[Image Gen] ================================');
+    const message = apiError?.detail?.error_message || apiError?.error_message || apiError?.message || err.message || 'giminigen request failed';
+    throw new Error(message);
+  }
+
+  if (!data?.uuid) {
+    throw new Error('giminigen did not return a job id');
+  }
+
+  return pollForResult(data.uuid);
+}
+
+// ============================================
+// VIDEO MOTION PROMPT TEMPLATES - CATEGORY SPECIFIC
+// ============================================
+
+/**
+ * Category-specific video motion presets
+ * Each category has its own optimized animation styles
+ */
+const VIDEO_MOTION_PRESETS = {
+  // ===== CLOTHES / FASHION =====
+  clothes: {
+    runway_walk: {
+      id: 'runway_walk',
+      name: 'Runway Walk',
+      description: 'Model walks like on a fashion runway',
+      prompt: 'Smooth runway walk, confident stride, subtle hip movement, fabric flowing naturally, professional lighting consistent, camera follows model smoothly, high-end fashion commercial, 4K cinematic, garment details visible throughout',
+      recommended: true,
+    },
+    model_turn: {
+      id: 'model_turn',
+      name: 'Model Turn',
+      description: '360° turn to show all angles',
+      prompt: 'Graceful 360-degree turn on spot, fabric movement visible, smooth pivot, showing front, side, and back of garment, professional lighting maintained through rotation, fashion show quality',
+      recommended: true,
+    },
+    subtle_pose: {
+      id: 'subtle_pose',
+      name: 'Subtle Movement',
+      description: 'Gentle pose transitions',
+      prompt: 'Minimal elegant movement, gentle weight shift, slight arm adjustment, breathing animation, maintaining fashion pose, professional model micro-movements, high-end lookbook style',
+    },
+    fabric_flow: {
+      id: 'fabric_flow',
+      name: 'Fabric in Motion',
+      description: 'Highlight fabric movement',
+      prompt: 'Dramatic fabric movement, wind-blown effect, material flowing and draping, showcasing texture and flow, editorial fashion aesthetic, slow motion fabric physics, premium commercial quality',
+    },
+  },
+
+  // ===== SHOES / FOOTWEAR =====
+  shoes: {
+    walking_feet: {
+      id: 'walking_feet',
+      name: 'Walking Feet',
+      description: 'Natural walking motion close-up',
+      prompt: 'Focus on feet and legs, natural walking motion from low angle, each step clearly visible, shoe flex and movement shown, clean floor reflection, professional footwear commercial, steady tracking shot',
+      recommended: true,
+    },
+    shoe_rotation: {
+      id: 'shoe_rotation',
+      name: '360° Rotation',
+      description: 'Orbit around the shoe',
+      prompt: 'Smooth 360-degree orbit around the shoe, revealing all angles, focus on design details and craftsmanship, professional product photography in motion, studio lighting, no model visible',
+      recommended: true,
+    },
+    step_detail: {
+      id: 'step_detail',
+      name: 'Step Detail',
+      description: 'Close-up stepping motion',
+      prompt: 'Close-up shot of foot stepping forward, slow motion, sole flex visible, heel-to-toe motion, showcasing shoe performance and comfort, athletic commercial style',
+    },
+    lacing_focus: {
+      id: 'lacing_focus',
+      name: 'Lacing Focus',
+      description: 'Zoom on lacing and details',
+      prompt: 'Camera slowly zooms and pans across shoe details, focusing on lacing, stitching, material texture, tongue, and branding, macro product video style',
+    },
+  },
+
+  // ===== BAGS / ACCESSORIES =====
+  bags: {
+    carry_walk: {
+      id: 'carry_walk',
+      name: 'Carry & Walk',
+      description: 'Model walking with bag',
+      prompt: 'Model walking naturally with bag, arm swing with bag visible, lifestyle context, bag moves realistically with body motion, fashion accessory commercial, focus on bag throughout',
+      recommended: true,
+    },
+    bag_360: {
+      id: 'bag_360',
+      name: '360° Display',
+      description: 'Full rotation product shot',
+      prompt: 'Smooth 360-degree rotation of bag, floating or on display stand, studio lighting, showing all sides, hardware details, interior briefly visible, luxury product commercial',
+      recommended: true,
+    },
+    open_close: {
+      id: 'open_close',
+      name: 'Open & Close',
+      description: 'Show interior and closure',
+      prompt: 'Hands opening bag to reveal interior, showing pockets and organization, then closing with click of clasp or zipper, luxury detail shot, close-up hands product video',
+    },
+    strap_adjust: {
+      id: 'strap_adjust',
+      name: 'Strap Adjustment',
+      description: 'Adjusting shoulder strap',
+      prompt: 'Model adjusting bag strap on shoulder, showing strap length and comfort, lifestyle natural movement, casual confident styling, fashion accessory lifestyle video',
+    },
+  },
+
+  // ===== ACCESSORIES (Watches, Jewelry, etc.) =====
+  accessories: {
+    sparkle_reveal: {
+      id: 'sparkle_reveal',
+      name: 'Sparkle Reveal',
+      description: 'Light catching details',
+      prompt: 'Slow elegant movement, light catching on jewelry/watch surfaces, subtle sparkle effects, rotating to show facets and details, luxury commercial style, dramatic lighting',
+      recommended: true,
+    },
+    wrist_gesture: {
+      id: 'wrist_gesture',
+      name: 'Wrist Gesture',
+      description: 'Natural wrist/hand movement',
+      prompt: 'Natural wrist and hand movement, watch or bracelet visible, elegant gestures, checking time or adjusting cuff, lifestyle context, premium accessory commercial',
+      recommended: true,
+    },
+    zoom_detail: {
+      id: 'zoom_detail',
+      name: 'Zoom Detail',
+      description: 'Macro zoom on details',
+      prompt: 'Camera slowly zooms into product details, extreme close-up on craftsmanship, engravings, gemstones, mechanism, premium macro photography in motion',
+    },
+    floating_orbit: {
+      id: 'floating_orbit',
+      name: 'Floating Orbit',
+      description: 'Product floating with camera orbit',
+      prompt: 'Product floating in space with gentle rotation, camera orbiting slowly, dramatic rim lighting, luxury product video, clean dark background, jewelry commercial quality',
+    },
+  },
+};
+
+/**
+ * Get motion presets for a specific category
+ */
+function getMotionPresetsForCategory(category) {
+  const presets = VIDEO_MOTION_PRESETS[category];
+  if (!presets) {
+    return VIDEO_MOTION_PRESETS.clothes; // Fallback to clothes
+  }
+  return presets;
+}
+
+/**
+ * Get default motion preset for category
+ */
+function getDefaultMotionPreset(category) {
+  const presets = getMotionPresetsForCategory(category);
+  const recommended = Object.values(presets).find(p => p.recommended);
+  return recommended || Object.values(presets)[0];
+}
+
+/**
+ * Quality enhancement keywords for video generation
+ */
+const VIDEO_QUALITY_BOOST = [
+  '8K resolution quality',
+  'professional color grading',
+  'smooth 60fps motion',
+  'studio lighting consistency',
+  'no flickering or artifacts',
+  'natural motion blur',
+  'high dynamic range',
+  'commercial broadcast quality',
+].join(', ');
+
+/**
+ * Build optimized video generation prompt
+ * @param {string} userPrompt - User's base prompt or style preference
+ * @param {object} options - Additional options (category, motionStyle, etc.)
+ * @returns {string} Optimized video prompt
+ */
+function buildVideoPrompt(userPrompt, options = {}) {
+  const parts = [];
+  const category = options.category || 'clothes';
+  const motionStyleId = options.motionStyle;
+
+  // 1. Core instruction - animate the static image
+  parts.push('Transform this static fashion product image into a smooth, professional video.');
+
+  // 2. Get motion preset based on category and selected style
+  let motionPreset;
+
+  // Get category-specific presets
+  const categoryPresets = VIDEO_MOTION_PRESETS[category] || VIDEO_MOTION_PRESETS.clothes;
+
+  // If a specific motion style was selected, use it
+  if (motionStyleId && categoryPresets[motionStyleId]) {
+    motionPreset = categoryPresets[motionStyleId];
+  } else {
+    // Fall back to recommended or first preset for this category
+    motionPreset = Object.values(categoryPresets).find(p => p.recommended) || Object.values(categoryPresets)[0];
+  }
+
+  parts.push(motionPreset.prompt);
+
+  // 3. Add user's custom prompt if provided
+  if (userPrompt && userPrompt.trim()) {
+    parts.push(userPrompt.trim());
+  }
+
+  // 4. Add quality boosters
+  parts.push(VIDEO_QUALITY_BOOST);
+
+  // 5. Add safety/consistency guards
+  parts.push('Maintain exact product appearance, colors, and details from the source image. No morphing or distortion of product features. Consistent lighting throughout.');
+
+  // 6. Negative prompts (what to avoid)
+  parts.push('Avoid: jump cuts, camera shake, sudden movements, unnatural poses, color shifts, blurry frames, low quality compression.');
+
+  return parts.join(' ');
+}
+
+async function generateVideoFromImage(referenceUrl, prompt, options = {}) {
+  if (!API_KEY) {
+    throw new Error('giminigen_API_KEY is not set');
+  }
+
+  if (!referenceUrl) {
+    throw new Error('Reference image URL is required to animate the result');
+  }
+
+  // Build enhanced prompt
+  const enhancedPrompt = buildVideoPrompt(prompt, options);
+
+  console.log('[Video Gen] Enhanced prompt:', enhancedPrompt.substring(0, 200) + '...');
+
+  const formData = new FormData();
+
+  formData.append('prompt', enhancedPrompt);
+  formData.append('model', VIDEO_MODEL);
+  formData.append('resolution', VIDEO_RESOLUTION);
+  formData.append('aspect_ratio', VIDEO_ASPECT_RATIO);
+  formData.append('file_urls', referenceUrl);
+
+  console.log('Sending request to giminigen Veo API...');
+
+  let data;
+  try {
+    const response = await apiClient.post('/uapi/v1/video-gen/veo', formData, {
+      headers: {
+        ...formData.getHeaders(),
+        'x-api-key': API_KEY,
+      },
+    });
+    data = response.data;
+  } catch (err) {
+    const apiError = err?.response?.data;
+    const message = apiError?.detail?.error_message || apiError?.error_message || err.message || 'giminigen video request failed';
+    throw new Error(message);
+  }
+
+  if (!data?.uuid) {
+    throw new Error('giminigen did not return a job id for the video');
+  }
+
+  return pollForVideoResult(data.uuid);
+}
+
+module.exports = {
+  generateImage,
+  generateVideoFromImage,
+  VIDEO_MOTION_PRESETS,
+  getMotionPresetsForCategory,
+  getDefaultMotionPreset,
+};
