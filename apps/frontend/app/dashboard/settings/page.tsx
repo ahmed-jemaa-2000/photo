@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import type { Shop } from '@busi/types';
+import type { Shop, ShopFont, ShopTemplate, ShopHeroStyle, ShopCardStyle, ShopThemeId } from '@busi/types';
 import { Tabs, TabPanel } from '@/components/ui/Tabs';
 import PresetGallery from '@/components/dashboard/settings/PresetGallery';
 import ColorCustomizer from '@/components/dashboard/settings/ColorCustomizer';
@@ -18,19 +18,32 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    primaryColor: string;
+    secondaryColor: string;
+    font: ShopFont;
+    template: ShopTemplate;
+    themeId: ShopThemeId | undefined;
+    heroStyle: ShopHeroStyle;
+    cardStyle: ShopCardStyle;
+    whatsappNumber: string;
+    instagramUrl: string;
+    facebookUrl: string;
+    logo: File | null;
+  }>({
     name: '',
     primaryColor: '#2563EB',
     secondaryColor: '#F59E0B',
-    font: 'inter' as const,
-    template: 'minimal' as const,
-    themeId: undefined as string | undefined,
-    heroStyle: 'big-banner' as const,
-    cardStyle: 'rounded' as const,
+    font: 'inter',
+    template: 'minimal',
+    themeId: undefined,
+    heroStyle: 'big-banner',
+    cardStyle: 'rounded',
     whatsappNumber: '',
     instagramUrl: '',
     facebookUrl: '',
-    logo: null as File | null,
+    logo: null,
   });
 
   useEffect(() => {
