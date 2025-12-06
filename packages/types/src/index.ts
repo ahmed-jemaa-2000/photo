@@ -1,5 +1,5 @@
 // Shop types
-export type ShopTemplate = 'minimal' | 'boutique' | 'kids' | 'street';
+export type ShopTemplate = 'minimal' | 'boutique' | 'kids' | 'street' | 'playful' | 'bold';
 export type ShopHeroStyle = 'big-banner' | 'small-hero' | 'carousel';
 export type ShopCardStyle = 'rounded' | 'square' | 'elevated';
 export type ShopFont = 'inter' | 'playfair' | 'montserrat' | 'roboto' | 'poppins';

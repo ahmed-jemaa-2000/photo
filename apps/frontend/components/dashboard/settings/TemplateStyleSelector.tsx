@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ShopTemplate } from '@/lib/types';
+import { ShopTemplate } from '@busi/types';
 import { Check } from 'lucide-react';
 
 interface TemplateStyleSelectorProps {
@@ -237,10 +237,9 @@ export default function TemplateStyleSelector({
                 whileHover="hover"
                 className={`
                   relative rounded-xl border-2 transition-all duration-300 overflow-hidden
-                  ${
-                    isSelected
-                      ? 'border-indigo-600 bg-indigo-50/50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  ${isSelected
+                    ? 'border-indigo-600 bg-indigo-50/50'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
                   }
                 `}
               >
@@ -264,9 +263,8 @@ export default function TemplateStyleSelector({
                 <div className="p-3 space-y-1">
                   <div className="flex items-center gap-2">
                     <h4
-                      className={`font-semibold text-sm ${
-                        isSelected ? 'text-indigo-900' : 'text-gray-900'
-                      }`}
+                      className={`font-semibold text-sm ${isSelected ? 'text-indigo-900' : 'text-gray-900'
+                        }`}
                     >
                       {template.label}
                     </h4>
