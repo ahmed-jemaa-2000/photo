@@ -63,7 +63,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const breadcrumbItems = [{ label: 'Shop', href: '/' }];
+  const breadcrumbItems: { label: string; href?: string }[] = [{ label: 'Shop', href: '/' }];
 
   if (product.category) {
     const categoryName = typeof product.category === 'object' ? product.category.name : '';

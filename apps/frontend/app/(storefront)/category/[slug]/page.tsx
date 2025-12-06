@@ -56,11 +56,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold mb-3">{category.name}</h1>
-              {category.description && (
-                <p className="text-lg text-gray-600 max-w-3xl">
-                  {category.description}
-                </p>
-              )}
+
             </div>
             <div className="flex items-center gap-4">
               <div className="text-sm text-gray-600">
