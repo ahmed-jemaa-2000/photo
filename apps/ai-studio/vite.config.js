@@ -32,6 +32,6 @@ export default defineConfig({
   preview: {
     port: 3002,
     sourcemap: false,
-    allowedHosts: ['studio.brandili.shop', 'localhost'],
+    allowedHosts: true,
   },
 })
