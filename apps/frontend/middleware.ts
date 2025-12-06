@@ -78,13 +78,6 @@ export async function middleware(request: NextRequest) {
 
   // DASHBOARD ROUTING
   if (pathname.startsWith('/dashboard')) {
-    // Only enforce dashboard subdomain in production to avoid dev redirect loops
-    if (isProd && !hostname.startsWith('dashboard.')) {
-      const dashboardUrl = new URL(request.url);
-      dashboardUrl.host = `dashboard${baseDomain}`;
-      return NextResponse.redirect(dashboardUrl);
-    }
-
     // Check authentication for protected dashboard routes
     if (pathname !== '/dashboard/login') {
       const token = request.cookies.get('auth_token');
@@ -95,10 +88,6 @@ export async function middleware(request: NextRequest) {
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);
       }
-
-      // Optional: Verify token with Strapi
-      // For now, we trust the cookie exists
-      // You can add token verification here if needed
     }
 
     return NextResponse.next();
@@ -111,11 +100,9 @@ export async function middleware(request: NextRequest) {
     hostname === 'localhost' ||
     hostname.startsWith('localhost:')
   ) {
-    // Redirect main domain to dashboard
+    // Redirect main domain root to dashboard
     if (pathname === '/' || pathname === '') {
-      const dashboardUrl = new URL(request.url);
-      dashboardUrl.host = `dashboard${baseDomain}`;
-      dashboardUrl.pathname = '/dashboard';
+      const dashboardUrl = new URL('/dashboard', request.url);
       return NextResponse.redirect(dashboardUrl);
     }
 
