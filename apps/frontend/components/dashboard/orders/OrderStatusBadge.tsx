@@ -31,6 +31,12 @@ const statusConfig = {
     icon: '✓✓',
     label: 'Delivered',
   },
+  completed: {
+    bg: 'bg-green-100',
+    text: 'text-green-800',
+    icon: '✨',
+    label: 'Completed',
+  },
   cancelled: {
     bg: 'bg-red-100',
     text: 'text-red-800',
