@@ -31,14 +31,14 @@ const contentVariants = {
   visible: {
     scale: 1,
     opacity: 1,
-    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
+    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const },
   },
   exit: {
     scale: 0.95,
     opacity: 0,
     transition: { duration: 0.2 },
   },
-};
+} as const;
 
 export default function PresetPreviewModal({ preset, isOpen, onClose, onApply }: PresetPreviewModalProps) {
   const [device, setDevice] = useState<DeviceType>('desktop');
@@ -128,11 +128,10 @@ export default function PresetPreviewModal({ preset, isOpen, onClose, onApply }:
                   <div className="flex gap-2 rounded-lg bg-white p-1 shadow-sm">
                     <button
                       onClick={() => setDevice('desktop')}
-                      className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors ${
-                        device === 'desktop'
+                      className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors ${device === 'desktop'
                           ? 'bg-primary text-white'
                           : 'text-gray-600 hover:bg-gray-100'
-                      }`}
+                        }`}
                       title="Desktop (1440px)"
                     >
                       <svg className="mx-auto h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -141,11 +140,10 @@ export default function PresetPreviewModal({ preset, isOpen, onClose, onApply }:
                     </button>
                     <button
                       onClick={() => setDevice('tablet')}
-                      className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors ${
-                        device === 'tablet'
+                      className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors ${device === 'tablet'
                           ? 'bg-primary text-white'
                           : 'text-gray-600 hover:bg-gray-100'
-                      }`}
+                        }`}
                       title="Tablet (768px)"
                     >
                       <svg className="mx-auto h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -154,11 +152,10 @@ export default function PresetPreviewModal({ preset, isOpen, onClose, onApply }:
                     </button>
                     <button
                       onClick={() => setDevice('mobile')}
-                      className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors ${
-                        device === 'mobile'
+                      className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors ${device === 'mobile'
                           ? 'bg-primary text-white'
                           : 'text-gray-600 hover:bg-gray-100'
-                      }`}
+                        }`}
                       title="Mobile (375px)"
                     >
                       <svg className="mx-auto h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -334,11 +331,10 @@ export default function PresetPreviewModal({ preset, isOpen, onClose, onApply }:
                         {[1, 2, 3].map((i) => (
                           <div
                             key={i}
-                            className={`overflow-hidden bg-white ${
-                              preset.values.cardStyle === 'rounded' ? 'rounded-lg' :
-                              preset.values.cardStyle === 'square' ? 'rounded-none' :
-                              'rounded-lg shadow-lg'
-                            }`}
+                            className={`overflow-hidden bg-white ${preset.values.cardStyle === 'rounded' ? 'rounded-lg' :
+                                preset.values.cardStyle === 'square' ? 'rounded-none' :
+                                  'rounded-lg shadow-lg'
+                              }`}
                             style={{
                               border: `1px solid ${preset.values.secondaryColor}`,
                             }}

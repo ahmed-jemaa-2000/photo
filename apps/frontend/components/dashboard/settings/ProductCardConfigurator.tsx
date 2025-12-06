@@ -33,9 +33,9 @@ const itemVariants = {
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
+    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const },
   },
-};
+} as const;
 
 // Product card style previews
 const CleanCardPreview = () => (
@@ -234,16 +234,15 @@ export default function ProductCardConfigurator({
                   boxShadow: isSelected
                     ? '0 20px 25px -5px rgba(79, 70, 229, 0.2)'
                     : isHovered
-                    ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                      : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                 }}
                 transition={{ duration: 0.2 }}
                 className={`
                   relative rounded-xl border-2 transition-colors duration-200 overflow-hidden
-                  ${
-                    isSelected
-                      ? 'border-indigo-600 bg-indigo-50/30'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  ${isSelected
+                    ? 'border-indigo-600 bg-indigo-50/30'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
                   }
                 `}
               >
@@ -269,9 +268,8 @@ export default function ProductCardConfigurator({
                 <div className="p-4 space-y-2">
                   <div>
                     <h4
-                      className={`font-semibold text-sm mb-1 ${
-                        isSelected ? 'text-indigo-900' : 'text-gray-900'
-                      }`}
+                      className={`font-semibold text-sm mb-1 ${isSelected ? 'text-indigo-900' : 'text-gray-900'
+                        }`}
                     >
                       {style.label}
                     </h4>
@@ -288,9 +286,8 @@ export default function ProductCardConfigurator({
                         className="flex items-center gap-1.5 text-xs text-gray-700"
                       >
                         <div
-                          className={`w-1 h-1 rounded-full ${
-                            isSelected ? 'bg-indigo-600' : 'bg-gray-400'
-                          }`}
+                          className={`w-1 h-1 rounded-full ${isSelected ? 'bg-indigo-600' : 'bg-gray-400'
+                            }`}
                         ></div>
                         {feature}
                       </div>

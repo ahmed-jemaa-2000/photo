@@ -54,7 +54,7 @@ export default function ProductFilters({
       <Select
         options={categoryOptions}
         value={selectedCategory}
-        onChange={onCategoryChange}
+        onChange={(val) => onCategoryChange(val as string)}
         placeholder="Filter by category"
         className="w-full sm:w-48"
       />
@@ -63,7 +63,7 @@ export default function ProductFilters({
       <Select
         options={statusOptions}
         value={selectedStatus}
-        onChange={onStatusChange}
+        onChange={(val) => onStatusChange(val as string)}
         placeholder="Filter by status"
         className="w-full sm:w-48"
       />
@@ -72,7 +72,7 @@ export default function ProductFilters({
       <Select
         options={stockOptions}
         value={selectedStock}
-        onChange={onStockChange}
+        onChange={(val) => onStockChange(val as string)}
         placeholder="Filter by stock"
         className="w-full sm:w-48"
       />

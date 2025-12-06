@@ -36,7 +36,7 @@ const paneVariants = {
     x: 0,
     opacity: 1,
     transition: {
-      type: 'spring',
+      type: 'spring' as const,
       stiffness: 300,
       damping: 30,
     },
@@ -48,7 +48,7 @@ const paneVariants = {
       duration: 0.2,
     },
   },
-};
+} as const;
 
 const fullscreenVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -186,8 +186,8 @@ export default function LivePreviewPane({
                   device === 'mobile'
                     ? '1fr'
                     : device === 'tablet'
-                    ? 'repeat(2, 1fr)'
-                    : 'repeat(3, 1fr)',
+                      ? 'repeat(2, 1fr)'
+                      : 'repeat(3, 1fr)',
               }}
             >
               {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -311,10 +311,9 @@ export default function LivePreviewPane({
                     onClick={() => setDevice(key as DeviceType)}
                     className={`
                       p-2 rounded-lg transition-all
-                      ${
-                        device === key
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-white text-gray-600 hover:bg-gray-100'
+                      ${device === key
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-white text-gray-600 hover:bg-gray-100'
                       }
                     `}
                     title={label}
@@ -381,10 +380,9 @@ export default function LivePreviewPane({
                     onClick={() => setDevice(key as DeviceType)}
                     className={`
                       flex items-center gap-2 px-3 py-2 rounded-lg transition-all font-medium text-sm
-                      ${
-                        device === key
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-white text-gray-600 hover:bg-gray-100'
+                      ${device === key
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-white text-gray-600 hover:bg-gray-100'
                       }
                     `}
                   >

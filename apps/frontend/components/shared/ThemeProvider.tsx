@@ -411,6 +411,8 @@ function getThemeTokens(shop: Shop): { id: ShopThemeId; tokens: ThemeTokens } {
     boutique: 'soft-pastel',
     kids: 'vivid-accent',
     street: 'high-contrast-dark',
+    playful: 'vivid-accent',
+    bold: 'brutalist',
   };
 
   const explicitThemeId = shop.themeId as ShopThemeId | undefined;

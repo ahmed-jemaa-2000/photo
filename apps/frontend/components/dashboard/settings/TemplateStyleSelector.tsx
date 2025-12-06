@@ -31,7 +31,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as any },
   },
 };
 
@@ -43,7 +43,7 @@ const cardVariants = {
   hover: {
     scale: 1.03,
     boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
+    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as any },
   },
 };
 

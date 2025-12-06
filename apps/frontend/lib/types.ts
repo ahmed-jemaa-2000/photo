@@ -1,0 +1,36 @@
+/**
+ * Re-export types from @busi/types for convenience
+ * This file allows importing types using @/lib/types path alias
+ */
+export type {
+    Shop,
+    ShopTemplate,
+    ShopHeroStyle,
+    ShopCardStyle,
+    ShopFont,
+    ShopPlan,
+    ShopThemeId,
+    ShopTheme,
+    Product,
+    Category,
+    Order,
+    OrderItem,
+    OrderStatus,
+    PaymentMethod,
+    User,
+    UserRole,
+    Media,
+    MediaFormat,
+    StrapiResponse,
+    StrapiEntity,
+    StrapiCollectionResponse,
+    StrapiSingleResponse,
+    LoginCredentials,
+    AuthResponse,
+    StrapiError,
+    WhatsAppMessageParams,
+    DashboardStats,
+    ProductFormData,
+    CategoryFormData,
+    ShopSettingsFormData,
+} from '@busi/types';

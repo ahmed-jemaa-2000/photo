@@ -21,9 +21,9 @@ const cardVariants = {
     scale: 1.02,
     y: -8,
     boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
+    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const },
   },
-};
+} as const;
 
 const overlayVariants = {
   rest: {
@@ -72,11 +72,10 @@ export default function PresetCard({ preset, isSelected, onPreview, onApply }: P
       initial="rest"
       whileHover="hover"
       animate="rest"
-      className={`group relative overflow-hidden rounded-2xl bg-white transition-all duration-200 ${
-        isSelected
+      className={`group relative overflow-hidden rounded-2xl bg-white transition-all duration-200 ${isSelected
           ? 'border-2 border-primary shadow-lg shadow-primary/20 ring-4 ring-primary/10'
           : 'border border-gray-200'
-      }`}
+        }`}
     >
       {/* Screenshot/Preview Image */}
       <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">

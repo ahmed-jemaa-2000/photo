@@ -1,7 +1,7 @@
 // Shop types
 export type ShopTemplate = 'minimal' | 'boutique' | 'kids' | 'street' | 'playful' | 'bold';
-export type ShopHeroStyle = 'big-banner' | 'small-hero' | 'carousel';
-export type ShopCardStyle = 'rounded' | 'square' | 'elevated';
+export type ShopHeroStyle = 'big-banner' | 'small-hero' | 'carousel' | 'full-image' | 'split' | 'video' | 'minimal' | 'slider';
+export type ShopCardStyle = 'rounded' | 'square' | 'elevated' | 'clean' | 'minimal' | 'bordered' | 'compact';
 export type ShopFont = 'inter' | 'playfair' | 'montserrat' | 'roboto' | 'poppins';
 export type ShopPlan = 'free' | 'starter' | 'pro';
 export type ShopThemeId = 'soft-pastel' | 'monochrome-editorial' | 'high-contrast-dark' | 'vivid-accent' | 'brutalist' | 'glassmorphic';
@@ -32,6 +32,17 @@ export interface Shop {
   updatedAt: string;
 }
 
+// Theme configuration for live preview
+export interface ShopTheme {
+  name?: string;
+  primaryColor: string;
+  secondaryColor: string;
+  font: ShopFont;
+  template?: ShopTemplate;
+  heroStyle?: ShopHeroStyle;
+  cardStyle: ShopCardStyle;
+}
+
 // Product types
 export interface Product {
   id: number;
@@ -46,6 +57,10 @@ export interface Product {
   isFeatured: boolean;
   isActive: boolean;
   stock?: number;
+  sku?: string;
+  tags?: string[];
+  seoTitle?: string;
+  seoDescription?: string;
   shop: Shop | number;
   category?: Category | number;
   createdAt: string;

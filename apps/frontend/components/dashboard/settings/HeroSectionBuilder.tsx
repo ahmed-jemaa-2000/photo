@@ -34,9 +34,9 @@ const itemVariants = {
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const },
   },
-};
+} as const;
 
 // Hero style previews
 const FullImagePreview = () => (
@@ -233,16 +233,15 @@ export default function HeroSectionBuilder({
                   boxShadow: isSelected
                     ? '0 10px 15px -3px rgba(79, 70, 229, 0.2)'
                     : isHovered
-                    ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                      : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                 }}
                 transition={{ duration: 0.2 }}
                 className={`
                   relative rounded-xl border-2 transition-colors duration-300
-                  ${
-                    isSelected
-                      ? 'border-indigo-600 bg-indigo-50/30'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  ${isSelected
+                    ? 'border-indigo-600 bg-indigo-50/30'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
                   }
                 `}
               >
@@ -260,19 +259,17 @@ export default function HeroSectionBuilder({
                           <div
                             className={`
                             p-1.5 rounded-lg transition-colors
-                            ${
-                              isSelected
+                            ${isSelected
                                 ? 'bg-indigo-100 text-indigo-600'
                                 : 'bg-gray-100 text-gray-600'
-                            }
+                              }
                           `}
                           >
                             {style.icon}
                           </div>
                           <h4
-                            className={`font-semibold text-base ${
-                              isSelected ? 'text-indigo-900' : 'text-gray-900'
-                            }`}
+                            className={`font-semibold text-base ${isSelected ? 'text-indigo-900' : 'text-gray-900'
+                              }`}
                           >
                             {style.label}
                           </h4>
@@ -286,10 +283,9 @@ export default function HeroSectionBuilder({
                               key={tag}
                               className={`
                                 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                                ${
-                                  isSelected
-                                    ? 'bg-indigo-100 text-indigo-700'
-                                    : 'bg-gray-100 text-gray-700'
+                                ${isSelected
+                                  ? 'bg-indigo-100 text-indigo-700'
+                                  : 'bg-gray-100 text-gray-700'
                                 }
                               `}
                             >
