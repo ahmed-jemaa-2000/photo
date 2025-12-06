@@ -6,48 +6,45 @@ import {
     ArrowDown,
     ArrowUp,
     CheckCircle2,
+    Eye
 } from 'lucide-react';
 
 /**
- * SIMPLIFIED Camera Angles - Only 4 Essential Options
- * These cover 95% of use cases for shoe photography
+ * BAG Camera Angles - 4 Essential Options
  */
-const CAMERA_ANGLES = [
+const BAG_CAMERA_ANGLES = [
     {
-        id: 'three_quarter',
-        name: '3/4 Hero',
-        description: 'Best for e-commerce, shows depth + design',
+        id: 'straight_on',
+        name: 'Straight On',
+        description: 'Classic hero shot, shows front design',
         icon: Camera,
-        prompt: '3/4 front angle (classic hero product shot), slightly elevated view at 30 degrees, showing both front and side features, professional e-commerce style, sharp focus on details',
+        prompt: 'Straight front-facing camera angle, eye-level, showing full bag design clearly, symmetrical composition, professional e-commerce style, sharp focus on hardware and material',
         recommended: true,
     },
     {
-        id: 'side_profile',
-        name: 'Side Profile',
-        description: 'Full silhouette, design lines visible',
+        id: 'three_quarter',
+        name: '3/4 Angle',
+        description: 'Shows depth and side details',
         icon: ArrowRight,
-        prompt: 'Side profile view at 90 degrees, full shoe silhouette visible, clean horizontal composition, focus on design lines, sole and heel clearly shown',
+        prompt: '3/4 side angle view at 45 degrees, showing both front and side of the bag, emphasizing dimensionality and structure, classic product photography angle',
         recommended: true,
     },
     {
         id: 'top_down',
         name: 'Top-Down',
-        description: 'Overhead view, shows lacing + texture',
+        description: 'Flat lay or open view',
         icon: ArrowDown,
-        prompt: 'Overhead top-down view (birds eye), looking directly down at shoes, clean surface background, lacing pattern and top details clearly visible, flat lay style',
+        prompt: 'Overhead top-down view (flat lay), simple background, showing bag shape and handles clearly, minimalist composition, soft lighting',
     },
     {
-        id: 'low_angle',
-        name: 'Low Angle',
-        description: 'Dramatic, powerful perspective',
+        id: 'detail_zoom',
+        name: 'Low Dramtic',
+        description: 'Low angle for powerful look',
         icon: ArrowUp,
-        prompt: 'Low angle ground-level shot looking upward, dramatic and powerful perspective, emphasizes presence and height, cinematic urban context',
+        prompt: 'Low angle shot looking upward at the bag, dramatic perspective making the bag look premium and substantial, luxury advertising style',
     },
 ];
 
-/**
- * Animation variants
- */
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -67,41 +64,41 @@ const itemVariants = {
 };
 
 /**
- * Simplified Camera Angle Selection - 4 Essential Options
+ * Bag Camera Angle Selection Component
  */
-function ShoeCameraAngleSelection({ selectedAngle, onAngleSelect }) {
+function BagCameraAngleSelection({ selectedAngle, onAngleSelect }) {
     return (
         <div className="space-y-4">
             {/* Section Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                        <Camera className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
+                        <Eye className="w-5 h-5 text-white" />
                     </div>
                     <div>
                         <h3 className="text-lg sm:text-xl font-bold text-white">Camera Angle</h3>
-                        <p className="text-xs sm:text-sm text-slate-400">How should we frame the shot?</p>
+                        <p className="text-xs sm:text-sm text-slate-400">Best angle for your bag</p>
                     </div>
                 </div>
                 {selectedAngle && (
                     <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="hidden sm:flex px-3 py-1.5 bg-orange-500/20 rounded-full items-center gap-2"
+                        className="hidden sm:flex px-3 py-1.5 bg-pink-500/20 rounded-full items-center gap-2"
                     >
-                        <span className="text-sm font-medium text-orange-400">{selectedAngle.name}</span>
+                        <span className="text-sm font-medium text-pink-400">{selectedAngle.name}</span>
                     </motion.div>
                 )}
             </div>
 
-            {/* Angle Cards - Simple 4-option grid */}
+            {/* Angle Cards */}
             <motion.div
                 className="grid grid-cols-2 lg:grid-cols-4 gap-3"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
             >
-                {CAMERA_ANGLES.map((angle) => {
+                {BAG_CAMERA_ANGLES.map((angle) => {
                     const isSelected = selectedAngle?.id === angle.id;
                     const Icon = angle.icon;
 
@@ -114,8 +111,8 @@ function ShoeCameraAngleSelection({ selectedAngle, onAngleSelect }) {
                                 relative group p-4 rounded-2xl border-2 transition-all duration-300
                                 flex flex-col items-center text-center gap-3
                                 ${isSelected
-                                    ? 'bg-orange-500/15 border-orange-500 shadow-xl shadow-orange-500/20'
-                                    : 'bg-white/5 border-white/10 hover:border-orange-500/40 hover:bg-white/[0.07]'
+                                    ? 'bg-pink-500/15 border-pink-500 shadow-xl shadow-pink-500/20'
+                                    : 'bg-white/5 border-white/10 hover:border-pink-500/40 hover:bg-white/[0.07]'
                                 }
                             `}
                             whileHover={{ scale: 1.03 }}
@@ -123,7 +120,7 @@ function ShoeCameraAngleSelection({ selectedAngle, onAngleSelect }) {
                         >
                             {/* Recommended Badge */}
                             {angle.recommended && (
-                                <div className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold rounded-full shadow-lg">
+                                <div className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-bold rounded-full shadow-lg">
                                     ⭐
                                 </div>
                             )}
@@ -132,11 +129,11 @@ function ShoeCameraAngleSelection({ selectedAngle, onAngleSelect }) {
                             <div className={`
                                 w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300
                                 ${isSelected
-                                    ? 'bg-orange-500/30 scale-110'
-                                    : 'bg-white/10 group-hover:bg-orange-500/20 group-hover:scale-105'
+                                    ? 'bg-pink-500/30 scale-110'
+                                    : 'bg-white/10 group-hover:bg-pink-500/20 group-hover:scale-105'
                                 }
                             `}>
-                                <Icon className={`w-7 h-7 ${isSelected ? 'text-orange-400' : 'text-slate-400 group-hover:text-orange-400'}`} />
+                                <Icon className={`w-7 h-7 ${isSelected ? 'text-pink-400' : 'text-slate-400 group-hover:text-pink-400'}`} />
                             </div>
 
                             {/* Name */}
@@ -154,7 +151,7 @@ function ShoeCameraAngleSelection({ selectedAngle, onAngleSelect }) {
                                 <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="absolute top-2 left-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center shadow-lg"
+                                    className="absolute top-2 left-2 w-5 h-5 bg-pink-500 rounded-full flex items-center justify-center shadow-lg"
                                 >
                                     <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                                 </motion.div>
@@ -167,5 +164,5 @@ function ShoeCameraAngleSelection({ selectedAngle, onAngleSelect }) {
     );
 }
 
-export { CAMERA_ANGLES };
-export default ShoeCameraAngleSelection;
+export { BAG_CAMERA_ANGLES };
+export default BagCameraAngleSelection;

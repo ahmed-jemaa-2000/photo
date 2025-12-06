@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Download, Share2, Video, Loader2, Play, Sparkles, Wind, Zap, Camera } from 'lucide-react';
+import { Download, Share2, Video, Loader2, Play, Sparkles, Wind, Zap, Camera, RotateCcw, Hand, Eye, Star, Terminal, RefreshCw } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-// Animation styles for video generation
+// Animation styles for video generation - CATEGORY SPECIFIC
 const ANIMATION_STYLES = {
   clothes: [
     {
@@ -11,64 +11,128 @@ const ANIMATION_STYLES = {
       name: 'Runway Walk',
       icon: <Wind className="w-5 h-5" />,
       description: 'Professional runway walk with confident stride',
-      prompt: 'Professional fashion runway walk, model walking confidently towards camera, elegant stride, garment flowing naturally, studio lighting, high fashion editorial style, smooth camera follow'
+      prompt: 'Smooth runway walk, confident stride, subtle hip movement, fabric flowing naturally, professional lighting consistent, camera follows model smoothly, high-end fashion commercial, 4K cinematic, garment details visible throughout'
     },
     {
-      id: 'gentle_turn',
-      name: 'Gentle Turn',
-      icon: <Camera className="w-5 h-5" />,
-      description: 'Slow 360° rotation showing all angles',
-      prompt: 'Slow elegant 360-degree turn, model rotating smoothly to show garment from all angles, natural graceful movement, studio environment, perfect lighting, cinematic slow motion'
+      id: 'model_turn',
+      name: 'Model Turn',
+      icon: <RotateCcw className="w-5 h-5" />,
+      description: '360° turn showing all angles',
+      prompt: 'Graceful 360-degree turn on spot, fabric movement visible, smooth pivot, showing front, side, and back of garment, professional lighting maintained through rotation, fashion show quality'
     },
     {
-      id: 'pose_transition',
-      name: 'Pose Flow',
+      id: 'subtle_pose',
+      name: 'Subtle Move',
       icon: <Sparkles className="w-5 h-5" />,
-      description: 'Smooth transitions between poses',
-      prompt: 'Smooth transition between fashion poses, natural elegant movements, model shifting stance gracefully, garment details visible, editorial photography style, sophisticated motion'
+      description: 'Gentle pose transitions',
+      prompt: 'Minimal elegant movement, gentle weight shift, slight arm adjustment, breathing animation, maintaining fashion pose, professional model micro-movements, high-end lookbook style'
     },
     {
-      id: 'dynamic_motion',
-      name: 'Dynamic',
+      id: 'fabric_flow',
+      name: 'Fabric Flow',
       icon: <Zap className="w-5 h-5" />,
-      description: 'Energetic movement with garment flow',
-      prompt: 'Dynamic energetic movement, model moving with energy and style, garment flowing and moving naturally, vibrant fashion shoot atmosphere, dramatic lighting, high-energy editorial'
+      description: 'Highlight fabric movement',
+      prompt: 'Dramatic fabric movement, wind-blown effect, material flowing and draping, showcasing texture and flow, editorial fashion aesthetic, slow motion fabric physics, premium commercial quality'
     }
   ],
   shoes: [
     {
-      id: 'walking_steps',
-      name: 'Walking Steps',
+      id: 'walking_feet',
+      name: 'Walking Motion',
       icon: <Wind className="w-5 h-5" />,
-      description: 'Natural walking motion showcasing shoes',
-      prompt: 'Natural walking motion from low angle, legs moving forward with confident stride, shoes clearly visible in motion, dynamic footwork, street style photography, smooth camera tracking'
+      description: 'Natural walking from low angle',
+      prompt: 'Focus on feet and legs, natural walking motion from low angle, each step clearly visible, shoe flex and movement shown, clean floor reflection, professional footwear commercial, steady tracking shot'
     },
     {
-      id: 'shoe_rotate',
-      name: 'Shoe Rotation',
+      id: 'shoe_rotation',
+      name: '360° Rotation',
+      icon: <RotateCcw className="w-5 h-5" />,
+      description: 'Orbit around the shoe',
+      prompt: 'Smooth 360-degree orbit around the shoe, revealing all angles, focus on design details and craftsmanship, professional product photography in motion, studio lighting, no model visible'
+    },
+    {
+      id: 'step_detail',
+      name: 'Step Detail',
       icon: <Camera className="w-5 h-5" />,
-      description: 'Rotating to show shoe from all angles',
-      prompt: 'Smooth rotation showcasing shoes from all angles, feet pivoting elegantly, shoe details clearly visible, professional product photography, controlled lighting, cinematic presentation'
+      description: 'Close-up stepping motion',
+      prompt: 'Close-up shot of foot stepping forward, slow motion, sole flex visible, heel-to-toe motion, showcasing shoe performance and comfort, athletic commercial style'
     },
     {
-      id: 'dynamic_jump',
-      name: 'Jump Shot',
-      icon: <Zap className="w-5 h-5" />,
-      description: 'Athletic jump showcasing shoe design',
-      prompt: 'Athletic energetic jump motion, shoes captured mid-air with dynamic movement, sporty action shot style, shoe design prominently featured, high-energy photography, dramatic slow motion'
+      id: 'lacing_focus',
+      name: 'Detail Zoom',
+      icon: <Eye className="w-5 h-5" />,
+      description: 'Zoom on lacing and details',
+      prompt: 'Camera slowly zooms and pans across shoe details, focusing on lacing, stitching, material texture, tongue, and branding, macro product video style'
+    }
+  ],
+  bags: [
+    {
+      id: 'carry_walk',
+      name: 'Carry & Walk',
+      icon: <Wind className="w-5 h-5" />,
+      description: 'Model walking with bag',
+      prompt: 'Model walking naturally with bag, arm swing with bag visible, lifestyle context, bag moves realistically with body motion, fashion accessory commercial, focus on bag throughout'
     },
     {
-      id: 'lifestyle_walk',
-      name: 'Lifestyle Walk',
+      id: 'bag_360',
+      name: '360° Display',
+      icon: <RotateCcw className="w-5 h-5" />,
+      description: 'Full rotation product shot',
+      prompt: 'Smooth 360-degree rotation of bag, floating or on display stand, studio lighting, showing all sides, hardware details, interior briefly visible, luxury product commercial'
+    },
+    {
+      id: 'open_close',
+      name: 'Open & Close',
+      icon: <Hand className="w-5 h-5" />,
+      description: 'Show interior and closure',
+      prompt: 'Hands opening bag to reveal interior, showing pockets and organization, then closing with click of clasp or zipper, luxury detail shot, close-up hands product video'
+    },
+    {
+      id: 'strap_adjust',
+      name: 'Strap Style',
       icon: <Sparkles className="w-5 h-5" />,
-      description: 'Casual lifestyle walking scene',
-      prompt: 'Casual lifestyle walking scene, natural relaxed stride, shoes in authentic environment, lifestyle photography style, natural lighting, documentary feel with cinematic quality'
+      description: 'Adjusting shoulder strap',
+      prompt: 'Model adjusting bag strap on shoulder, showing strap length and comfort, lifestyle natural movement, casual confident styling, fashion accessory lifestyle video'
+    }
+  ],
+  accessories: [
+    {
+      id: 'sparkle_reveal',
+      name: 'Sparkle Reveal',
+      icon: <Star className="w-5 h-5" />,
+      description: 'Light catching on jewelry',
+      prompt: 'Slow elegant movement, light catching on jewelry surfaces, subtle sparkle effects, rotating to show facets and details, luxury commercial style, dramatic lighting, premium jewelry commercial'
+    },
+    {
+      id: 'wrist_gesture',
+      name: 'Wrist Gesture',
+      icon: <Hand className="w-5 h-5" />,
+      description: 'Natural wrist/hand movement',
+      prompt: 'Natural wrist and hand movement, watch or bracelet visible, elegant gestures, checking time or adjusting cuff, lifestyle context, premium accessory commercial'
+    },
+    {
+      id: 'zoom_detail',
+      name: 'Detail Zoom',
+      icon: <Eye className="w-5 h-5" />,
+      description: 'Macro zoom on craftsmanship',
+      prompt: 'Camera slowly zooms into product details, extreme close-up on craftsmanship, engravings, gemstones, mechanism, premium macro photography in motion'
+    },
+    {
+      id: 'floating_orbit',
+      name: 'Floating Orbit',
+      icon: <RotateCcw className="w-5 h-5" />,
+      description: 'Product floating with camera orbit',
+      prompt: 'Product floating in space with gentle rotation, camera orbiting slowly, dramatic rim lighting, luxury product video, clean dark background, jewelry commercial quality'
     }
   ]
 };
 
-const GenerationResult = ({ result, category = 'clothes' }) => {
+// Only show debug features in development
+const isDev = import.meta.env?.DEV || false;
+
+const GenerationResult = ({ result, category = 'clothes', onRegenerate }) => {
   const [copied, setCopied] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
   const [isVideoGenerating, setIsVideoGenerating] = useState(false);
   const [videoResult, setVideoResult] = useState(null);
   const [videoError, setVideoError] = useState(null);
@@ -101,7 +165,6 @@ const GenerationResult = ({ result, category = 'clothes' }) => {
 
     try {
       const apiUrl = `${API_BASE}/api/generate-video`;
-      console.log('Requesting video generation from:', apiUrl);
 
       // Build enhanced prompt
       const basePrompt = animation.prompt;
@@ -150,7 +213,7 @@ const GenerationResult = ({ result, category = 'clothes' }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
             <div className="flex gap-3 justify-center">
               <a
-                className="btn-primary flex items-center gap-2 py-2 px-4 text-sm"
+                className="bg-white text-slate-900 hover:bg-slate-100 font-bold py-2 px-4 rounded-xl transition-all flex items-center gap-2 text-sm shadow-lg shadow-black/20"
                 href={downloadHref}
                 target="_blank"
                 rel="noreferrer"
@@ -158,12 +221,22 @@ const GenerationResult = ({ result, category = 'clothes' }) => {
               >
                 <Download className="w-4 h-4" /> Save HD
               </a>
+
+              {onRegenerate && (
+                <button
+                  onClick={onRegenerate}
+                  className="bg-primary hover:bg-primary-light text-white font-bold py-2 px-4 rounded-xl transition-all flex items-center gap-2 text-sm shadow-lg shadow-primary/20"
+                >
+                  <RefreshCw className="w-4 h-4" /> Try Again
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={handleCopy}
                 className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white font-bold py-2 px-4 rounded-xl transition-all flex items-center gap-2 text-sm"
               >
-                <Share2 className="w-4 h-4" /> {copied ? 'Copied' : 'Copy link'}
+                <Share2 className="w-4 h-4" /> {copied ? 'Copied' : 'Share'}
               </button>
             </div>
           </div>
@@ -292,7 +365,48 @@ const GenerationResult = ({ result, category = 'clothes' }) => {
             </div>
           </div>
         )}
+
       </div>
+
+      {/* Debug Console - ONLY in development */}
+      {isDev && (
+        <div className="glass-panel overflow-hidden">
+          <button
+            onClick={() => setShowPrompt(!showPrompt)}
+            className="w-full flex items-center justify-between p-4 text-sm font-mono text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Terminal className="w-4 h-4" />
+              <span>Prompt Debugger (DEV ONLY)</span>
+            </div>
+            <span>{showPrompt ? 'Hide' : 'Show'}</span>
+          </button>
+
+          {showPrompt && (
+            <div className="p-4 bg-black/40 border-t border-white/5 font-mono text-xs text-slate-400 space-y-4">
+              <div>
+                <span className="text-slate-500 uppercase tracking-wider block mb-1">Final Prompt</span>
+                <p className="text-emerald-400/90 leading-relaxed break-words">{result.prompt}</p>
+              </div>
+              {result.colorHex && (
+                <div>
+                  <span className="text-slate-500 uppercase tracking-wider block mb-1">Active Color</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: result.colorHex }} />
+                    <span>{result.colorHex}</span>
+                  </div>
+                </div>
+              )}
+              {result.meta && (
+                <div>
+                  <span className="text-slate-500 uppercase tracking-wider block mb-1">Metadata</span>
+                  <pre className="overflow-x-auto">{JSON.stringify(result.meta, null, 2)}</pre>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -10,9 +10,11 @@ import {
     ShoppingBag,
     Watch,
     Footprints,
-    Wand2
+    Wand2,
+    Image
 } from 'lucide-react';
 import AnimatedButton from './common/AnimatedButton';
+import { IMAGE_STYLES } from './ImageStyleSelection';
 
 function ReviewPage({
     selectedFile,
@@ -21,6 +23,7 @@ function ReviewPage({
     selectedCameraAngle,
     selectedLighting,
     selectedBackground,
+    imageStyle,
     category,
     gender,
     bagStyle,
@@ -31,6 +34,12 @@ function ReviewPage({
     isGenerating
 }) {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    // Get photography style name from imageStyle id
+    const getStyleName = () => {
+        const style = IMAGE_STYLES.find(s => s.id === imageStyle);
+        return style?.name || 'E-commerce Clean';
+    };
 
     // Category icons
     const categoryIcons = {
@@ -222,10 +231,10 @@ function ReviewPage({
                                 <span className="font-bold text-white">{getStyleValue()}</span>
                             </div>
 
-                            {/* Background */}
+                            {/* Photography Style */}
                             <div className="flex justify-between items-center py-3 border-b border-white/10">
-                                <span className="text-slate-400 font-medium">Background</span>
-                                <span className="font-bold text-white">{selectedBackground?.name?.en || 'Studio'}</span>
+                                <span className="text-slate-400 font-medium">Photography Style</span>
+                                <span className="font-bold text-white">{getStyleName()}</span>
                             </div>
 
                             {/* Category-specific fields */}

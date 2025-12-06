@@ -572,6 +572,118 @@ const ACCESSORY_PLACEMENTS = [
     },
 ];
 
+// ============================================
+// BAG CAMERA ANGLES & LIGHTING (Production Quality)
+// ============================================
+
+const BAG_CAMERA_ANGLES = [
+    {
+        id: 'front_straight',
+        name: { en: 'Front Straight', tn: 'Vue de Face' },
+        prompt: 'Direct front view, symmetrical composition, showing full bag face, handles/straps visible, professional product photography',
+        recommended: true,
+    },
+    {
+        id: 'three_quarter',
+        name: { en: '3/4 Angle', tn: 'Vue 3/4' },
+        prompt: '3/4 angle view showing depth and dimension, revealing side profile while maintaining front visibility, showing bag structure',
+        recommended: true,
+    },
+    {
+        id: 'side_profile',
+        name: { en: 'Side Profile', tn: 'Profil' },
+        prompt: 'Side profile view showing bag depth, strap/handle attachment, zipper details, professional silhouette shot',
+    },
+    {
+        id: 'overhead',
+        name: { en: 'Overhead', tn: 'Vue de Dessus' },
+        prompt: 'Bird\'s eye overhead view, showing interior organization if open, or top closure and handle arrangement',
+    },
+    {
+        id: 'low_angle',
+        name: { en: 'Low Angle', tn: 'Contre-Plongée' },
+        prompt: 'Low angle upward view, creates premium imposing presence, shows bag structure and craftsmanship, luxury brand aesthetic',
+    },
+];
+
+const BAG_LIGHTING_OPTIONS = [
+    {
+        id: 'studio_soft',
+        name: { en: 'Studio Soft', tn: 'Studio Doux' },
+        prompt: 'Soft diffused studio lighting, even illumination, minimal shadows, professional product photography, shows material texture accurately',
+        recommended: true,
+    },
+    {
+        id: 'dramatic_side',
+        name: { en: 'Dramatic Side', tn: 'Éclairage Latéral' },
+        prompt: 'Dramatic side lighting, creates depth and dimension, highlights texture and stitching, luxury editorial style',
+    },
+    {
+        id: 'natural_window',
+        name: { en: 'Natural Window', tn: 'Lumière Naturelle' },
+        prompt: 'Natural window light, soft warm tones, lifestyle aesthetic, authentic and approachable, social media ready',
+    },
+    {
+        id: 'luxury_dark',
+        name: { en: 'Luxury Dark', tn: 'Luxe Sombre' },
+        prompt: 'Dark background with spotlight on bag, dramatic rim lighting, premium luxury brand aesthetic, high contrast',
+        recommended: true,
+    },
+];
+
+// ============================================
+// ACCESSORY SHOT TYPES & LIGHTING (Production Quality)
+// ============================================
+
+const ACCESSORY_SHOT_TYPES = [
+    {
+        id: 'macro_detail',
+        name: { en: 'Macro Detail', tn: 'Macro Détail' },
+        prompt: 'Extreme close-up macro photography, sharp focus on fine details, texture and craftsmanship clearly visible, shallow depth of field, professional jewelry photography',
+        recommended: true,
+    },
+    {
+        id: 'flat_lay',
+        name: { en: 'Flat Lay', tn: 'Vue de Dessus' },
+        prompt: 'Overhead flat lay composition, organized and clean arrangement, high angle view, minimal props, balanced spacing, elegant presentation',
+    },
+    {
+        id: 'floating',
+        name: { en: 'Floating / Levitating', tn: 'Flottant' },
+        prompt: 'Floating product photography, anti-gravity effect, suspended in mid-air, dynamic angle, magical and premium atmosphere, ethereal lighting',
+    },
+    {
+        id: 'on_model',
+        name: { en: 'On Model (Close)', tn: 'Sur Modèle' },
+        prompt: 'Shot on model close-up, showing the accessory worn naturally, focus on the product with skin texture visible, lifestyle context, shallow depth of field',
+    },
+];
+
+const ACCESSORY_LIGHTING_OPTIONS = [
+    {
+        id: 'jewelers_sparkle',
+        name: { en: 'Jeweler\'s Sparkle', tn: 'Éclat Joaillier' },
+        prompt: 'Professional jewelry lighting, hard light sources to create dispersion and sparkle in gems/metal, starburst highlights, high contrast reflection, luxury advertisement style, pristine clean background',
+        recommended: true,
+    },
+    {
+        id: 'soft_diffusion',
+        name: { en: 'Soft Diffusion', tn: 'Diffusion Douce' },
+        prompt: 'Soft diffused lighting, even illumination for texture details, minimal shadows, clean catalog style, true-to-life colors, professional product photography',
+        recommended: true,
+    },
+    {
+        id: 'dramatic_rim',
+        name: { en: 'Dramatic Rim', tn: 'Contre-jour' },
+        prompt: 'Dramatic rim lighting, dark background, edge lighting defining the shape, silhouette effect, moody and mysterious, high-end editorial style',
+    },
+    {
+        id: 'natural_sun',
+        name: { en: 'Natural Sun', tn: 'Soleil Naturel' },
+        prompt: 'Natural sunlight, dappled light effect, warm golden tones, lifestyle atmosphere, organic shadows, outdoor setting feel',
+    },
+];
+
 module.exports = {
     PRESET_PROMPTS,
     POSE_PROMPTS,
@@ -581,11 +693,15 @@ module.exports = {
     SHOE_CAMERA_ANGLES,
     SHOE_LIGHTING_STYLES,
     BACKGROUNDS,
-    // New bag category exports
+    // Bag category exports
     BAG_STYLES,
     BAG_DISPLAY_MODES,
     BAG_MODELS,
-    // New accessory category exports
+    BAG_CAMERA_ANGLES,
+    BAG_LIGHTING_OPTIONS,
+    // Accessory category exports
     ACCESSORY_TYPES,
     ACCESSORY_PLACEMENTS,
+    ACCESSORY_SHOT_TYPES,
+    ACCESSORY_LIGHTING_OPTIONS,
 };

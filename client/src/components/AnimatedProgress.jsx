@@ -6,7 +6,7 @@ import { Loader2, Sparkles } from 'lucide-react';
  */
 function AnimatedProgress({ isGenerating }) {
   const [progress, setProgress] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(60); // 1 minute in seconds
   const [currentStep, setCurrentStep] = useState(0);
 
   const steps = [
@@ -20,12 +20,12 @@ function AnimatedProgress({ isGenerating }) {
   useEffect(() => {
     if (!isGenerating) {
       setProgress(0);
-      setTimeLeft(120);
+      setTimeLeft(60);
       setCurrentStep(0);
       return;
     }
 
-    const duration = 120 * 1000; // 2 minutes in ms
+    const duration = 60 * 1000; // 1 minute in ms
     const intervalTime = 100; // Update every 100ms
     const stepsCount = duration / intervalTime;
     const increment = 100 / stepsCount;
@@ -45,7 +45,7 @@ function AnimatedProgress({ isGenerating }) {
     // Cycle text steps
     const stepInterval = setInterval(() => {
       setCurrentStep(prev => (prev + 1) % steps.length);
-    }, 24000); // Change text every 24 seconds (120/5)
+    }, 12000); // Change text every 12 seconds (60/5)
 
     return () => {
       clearInterval(timer);

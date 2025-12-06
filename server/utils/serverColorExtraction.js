@@ -167,8 +167,36 @@ async function extractColorPalette(imagePath, numColors = 5) {
         }
 
         const paletteSize = Math.max(1, Math.min(numColors, pixels.length));
-        const dominantColors = kMeansClustering(pixels, paletteSize);
+        let dominantColors = kMeansClustering(pixels, paletteSize);
         dominantColors.sort((a, b) => b.percentage - a.percentage);
+
+        // ============================================
+        // CRITICAL: Filter out likely background colors
+        // White/light gray backgrounds should not be the dominant color
+        // ============================================
+        const isLikelyBackground = (color) => {
+            const hsl = rgbToHsl(color.r, color.g, color.b);
+            // Very light (L > 90) with low saturation = white/light gray background
+            if (hsl.l > 90 && hsl.s < 15) return true;
+            // Very light (L > 85) and almost no saturation = near-white
+            if (hsl.l > 85 && hsl.s < 8) return true;
+            return false;
+        };
+
+        // If the #1 color looks like a white background, try to use the next actual product color
+        if (dominantColors.length > 1 && isLikelyBackground(dominantColors[0])) {
+            console.log('[ColorExtraction] ⚠️ Top color looks like background, checking alternatives...');
+
+            // Find first non-background color
+            const realProductColor = dominantColors.find(c => !isLikelyBackground(c));
+
+            if (realProductColor) {
+                console.log(`[ColorExtraction] ✅ Using ${realProductColor.hex} instead of background color`);
+                // Move the real product color to the top
+                dominantColors = dominantColors.filter(c => c !== realProductColor);
+                dominantColors.unshift(realProductColor);
+            }
+        }
 
         // Prefer the brightest plausible cluster when the main cluster is too dark (common for white garments under shadow)
         const withLightness = dominantColors.map(c => ({ ...c, lightness: rgbToHsl(c.r, c.g, c.b).l }));

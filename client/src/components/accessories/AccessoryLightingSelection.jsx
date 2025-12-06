@@ -3,59 +3,55 @@ import { motion } from 'framer-motion';
 import {
     Sun,
     Lightbulb,
-    Sunset,
+    Sparkles,
     Zap,
     CheckCircle2,
 } from 'lucide-react';
 
 /**
- * SIMPLIFIED Lighting Options - Only 4 Essential Choices
- * These cover 95% of use cases for product photography
+ * ACCESSORY Lighting Options - 4 Essential Choices
  */
-const LIGHTING_OPTIONS = [
+const ACCESSORY_LIGHTING_OPTIONS = [
     {
-        id: 'studio_clean',
-        name: 'Studio Clean',
-        description: 'Bright, even lighting - best for e-commerce',
+        id: 'jewelers_sparkle',
+        name: 'Jeweler\'s Sparkle',
+        description: 'Hard light for brilliance',
+        icon: Sparkles,
+        gradient: 'from-blue-100 via-white to-purple-100',
+        textDark: true,
+        prompt: 'Professional jewelry lighting, hard light sources to create dispersion and sparkle in gems/metal, starburst highlights, high contrast reflection, luxury advertisement style, pristine clean background',
+        recommended: true,
+    },
+    {
+        id: 'soft_diffusion',
+        name: 'Soft Diffusion',
+        description: 'Even light for texture',
         icon: Lightbulb,
-        gradient: 'from-slate-100 via-white to-slate-50',
+        gradient: 'from-zinc-100 via-white to-zinc-50',
         textDark: true,
-        prompt: 'Professional studio lighting, bright evenly diffused light, minimal shadows, clean commercial look, pure white or light gray background, e-commerce product photography style',
+        prompt: 'Soft diffused lighting, even illumination for texture details, minimal shadows, clean catalog style, true-to-life colors, professional product photography',
         recommended: true,
     },
     {
-        id: 'natural_soft',
-        name: 'Natural Light',
-        description: 'Soft daylight, authentic feel',
-        icon: Sun,
-        gradient: 'from-sky-100 via-blue-50 to-white',
-        textDark: true,
-        prompt: 'Soft natural daylight, gentle directional shadows, outdoor or window light feel, balanced exposure, authentic lifestyle look',
-        recommended: true,
-    },
-    {
-        id: 'golden_hour',
-        name: 'Golden Hour',
-        description: 'Warm sunset glow, premium aesthetic',
-        icon: Sunset,
-        gradient: 'from-amber-300 via-orange-200 to-yellow-100',
-        textDark: true,
-        prompt: 'Warm golden hour sunlight, sunset glow, soft long shadows, cinematic premium feel, rich warm tones, lifestyle luxury photography',
-    },
-    {
-        id: 'dramatic',
-        name: 'Dramatic',
-        description: 'Bold shadows, editorial style',
+        id: 'dramatic_rim',
+        name: 'Dramatic Rim',
+        description: 'Silhouette and edge light',
         icon: Zap,
-        gradient: 'from-slate-900 via-slate-700 to-slate-500',
+        gradient: 'from-indigo-900 via-purple-900 to-slate-900',
         textDark: false,
-        prompt: 'High contrast dramatic lighting, bold shadows and highlights, edge-lit with rim light, editorial fashion style, moody and sophisticated atmosphere',
+        prompt: 'Dramatic rim lighting, dark background, edge lighting defining the shape, silhouette effect, moody and mysterious, high-end editorial style',
+    },
+    {
+        id: 'natural_sun',
+        name: 'Natural Sun',
+        description: 'Warm outdoor feeling',
+        icon: Sun,
+        gradient: 'from-amber-100 via-orange-50 to-white',
+        textDark: true,
+        prompt: 'Natural sunlight, dappled light effect, warm golden tones, lifestyle atmosphere, organic shadows, outdoor setting feel',
     },
 ];
 
-/**
- * Animation variants
- */
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -75,41 +71,41 @@ const itemVariants = {
 };
 
 /**
- * Simplified Lighting Selection - 4 Essential Options
+ * Accessory Lighting Selection Component
  */
-function ShoeLightingSelection({ selectedLighting, onLightingSelect }) {
+function AccessoryLightingSelection({ selectedLighting, onLightingSelect }) {
     return (
         <div className="space-y-4">
             {/* Section Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
                         <Lightbulb className="w-5 h-5 text-white" />
                     </div>
                     <div>
                         <h3 className="text-lg sm:text-xl font-bold text-white">Lighting</h3>
-                        <p className="text-xs sm:text-sm text-slate-400">Set the mood and atmosphere</p>
+                        <p className="text-xs sm:text-sm text-slate-400">Enhance the materials</p>
                     </div>
                 </div>
                 {selectedLighting && (
                     <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="hidden sm:flex px-3 py-1.5 bg-amber-500/20 rounded-full items-center gap-2"
+                        className="hidden sm:flex px-3 py-1.5 bg-violet-500/20 rounded-full items-center gap-2"
                     >
-                        <span className="text-sm font-medium text-amber-400">{selectedLighting.name}</span>
+                        <span className="text-sm font-medium text-violet-400">{selectedLighting.name}</span>
                     </motion.div>
                 )}
             </div>
 
-            {/* Lighting Cards - Simple 4-option grid */}
+            {/* Lighting Cards */}
             <motion.div
                 className="grid grid-cols-2 lg:grid-cols-4 gap-3"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
             >
-                {LIGHTING_OPTIONS.map((lighting) => {
+                {ACCESSORY_LIGHTING_OPTIONS.map((lighting) => {
                     const isSelected = selectedLighting?.id === lighting.id;
                     const Icon = lighting.icon;
 
@@ -121,8 +117,8 @@ function ShoeLightingSelection({ selectedLighting, onLightingSelect }) {
                             className={`
                                 relative group overflow-hidden rounded-2xl border-2 transition-all duration-300
                                 ${isSelected
-                                    ? 'border-amber-400 shadow-xl shadow-amber-500/20'
-                                    : 'border-white/10 hover:border-amber-500/40'
+                                    ? 'border-violet-400 shadow-xl shadow-violet-500/20'
+                                    : 'border-white/10 hover:border-violet-500/40'
                                 }
                             `}
                             whileHover={{ scale: 1.03 }}
@@ -133,7 +129,7 @@ function ShoeLightingSelection({ selectedLighting, onLightingSelect }) {
 
                             {/* Recommended Badge */}
                             {lighting.recommended && (
-                                <div className="absolute -top-2 -right-2 z-20 px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold rounded-full shadow-lg">
+                                <div className="absolute -top-2 -right-2 z-20 px-1.5 py-0.5 bg-gradient-to-r from-violet-500 to-purple-500 text-white text-[10px] font-bold rounded-full shadow-lg">
                                     ⭐
                                 </div>
                             )}
@@ -165,7 +161,7 @@ function ShoeLightingSelection({ selectedLighting, onLightingSelect }) {
                                 <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="absolute top-2 left-2 z-20 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center shadow-lg"
+                                    className="absolute top-2 left-2 z-20 w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center shadow-lg"
                                 >
                                     <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                                 </motion.div>
@@ -178,5 +174,5 @@ function ShoeLightingSelection({ selectedLighting, onLightingSelect }) {
     );
 }
 
-export { LIGHTING_OPTIONS };
-export default ShoeLightingSelection;
+export { ACCESSORY_LIGHTING_OPTIONS };
+export default AccessoryLightingSelection;

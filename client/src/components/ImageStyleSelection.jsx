@@ -225,8 +225,8 @@ function ImageStyleSelection({ selectedStyle, onStyleSelect }) {
                 )}
             </div>
 
-            {/* Category Filters */}
-            <div className="flex flex-wrap gap-2">
+            {/* Category Filters - Horizontal scroll on mobile */}
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
                 {STYLE_CATEGORIES.map((cat) => {
                     const Icon = cat.icon;
                     const isActive = activeCategory === cat.id;
@@ -235,8 +235,8 @@ function ImageStyleSelection({ selectedStyle, onStyleSelect }) {
                             key={cat.id}
                             onClick={() => setActiveCategory(cat.id)}
                             className={`
-                flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
-                transition-all duration-200
+                flex items-center gap-2 px-3 py-2 sm:py-1.5 rounded-lg text-sm font-medium whitespace-nowrap
+                transition-all duration-200 flex-shrink-0 min-h-[44px]
                 ${isActive
                                     ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
                                     : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
@@ -246,7 +246,8 @@ function ImageStyleSelection({ selectedStyle, onStyleSelect }) {
                             whileTap={{ scale: 0.98 }}
                         >
                             <Icon className="w-3.5 h-3.5" />
-                            {cat.label}
+                            <span className="hidden sm:inline">{cat.label}</span>
+                            <span className="sm:hidden">{cat.label.split(' ')[0]}</span>
                         </motion.button>
                     );
                 })}

@@ -231,20 +231,45 @@ const IMAGE_STYLE_PRESETS = {
  * Quality enhancement keywords for image generation
  */
 const IMAGE_QUALITY_BOOST = [
-  'ultra high resolution',
-  '8K quality',
-  'professional DSLR photography',
+  'ultra high resolution 8K quality',
+  'professional product photography',
   'sharp focus on product details',
   'natural skin texture',
-  'authentic fabric rendering',
-  'color-accurate product representation',
+  'authentic fabric and material rendering',
   'photorealistic',
+  'shot on Phase One IQ4 150MP',
 ].join(', ');
 
 /**
- * Color fidelity guard - critical for product accuracy
+ * Build a STRONG color lock clause
+ * This is critical for color accuracy in AI generation
+ * We repeat the color information multiple ways to reinforce it
  */
-const COLOR_FIDELITY_GUARD = 'CRITICAL: Preserve EXACT product colors from the reference image. No color shifting, no hue changes, no saturation alterations. Match the original product color precisely.';
+function buildColorLockClause(colorHex, colorName, colorPalette) {
+  if (!colorHex) return '';
+
+  const parts = [];
+
+  // Layer 1: Direct color instruction at the START (AI pays most attention to beginning)
+  // OPTIMIZED: Combined multiple statements into one powerful instruction
+  parts.push(`[COLOR LOCKED: ${colorHex}] Product is ${colorName || 'this color'}. Preserve EXACTLY - no hue shift, no brightness change.`);
+
+  // Layer 2: Include palette if available (helps AI understand color context)
+  if (colorPalette && colorPalette.length > 0) {
+    const colorList = colorPalette.slice(0, 2).map(c => c.hex).join(', ');
+    parts.push(`Palette: ${colorList}.`);
+  }
+
+  return parts.join(' ');
+}
+
+/**
+ * Build negative prompt for color protection (OPTIMIZED)
+ */
+function buildColorNegativePrompt() {
+  // Reduced from 9 items to 4 most impactful ones
+  return 'no color shift, no color cast, no tint, no saturation change';
+}
 
 /**
  * Build optimized image generation prompt
@@ -256,10 +281,20 @@ const COLOR_FIDELITY_GUARD = 'CRITICAL: Preserve EXACT product colors from the r
 function buildImagePrompt(basePrompt, userPrompt, options = {}) {
   const parts = [];
 
-  // 1. Start with base prompt (product/model instructions)
+  // 1. COLOR LOCK FIRST (AI pays most attention to beginning of prompt)
+  const colorHexMatch = userPrompt?.match(/#[A-Fa-f0-9]{6}/);
+  const colorHex = colorHexMatch ? colorHexMatch[0].toUpperCase() : null;
+
+  if (colorHex) {
+    const colorLock = buildColorLockClause(colorHex, null, null);
+    parts.push(colorLock);
+    console.log(`[Image Gen] Color lock activated: ${colorHex}`);
+  }
+
+  // 2. Base prompt (product/model instructions)
   parts.push(basePrompt);
 
-  // 2. Add style preset if specified
+  // 3. Add style preset if specified
   const styleId = options.imageStyle || 'ecommerce_clean';
   const stylePreset = IMAGE_STYLE_PRESETS[styleId];
 
@@ -268,19 +303,24 @@ function buildImagePrompt(basePrompt, userPrompt, options = {}) {
     console.log(`[Image Gen] Using style preset: ${stylePreset.name}`);
   }
 
-  // 3. Add user's custom prompt
+  // 4. Add user's custom prompt
   if (userPrompt && userPrompt.trim()) {
     parts.push(userPrompt.trim());
   }
 
-  // 4. Add quality boosters
+  // 5. Quality boost (kept as is - important)
   parts.push(IMAGE_QUALITY_BOOST);
 
-  // 5. Add color fidelity guard (most important for product photos!)
-  parts.push(COLOR_FIDELITY_GUARD);
+  // 6. Combined negative prompts (color + general) - REDUCED
+  const negatives = colorHex
+    ? `Avoid: ${buildColorNegativePrompt()}, blurry, distorted proportions, watermarks.`
+    : 'Avoid: blurry, distorted proportions, watermarks.';
+  parts.push(negatives);
 
-  // 6. Add negative prompts
-  parts.push('Avoid: blurry images, color shifts, distorted proportions, extra limbs, unnatural poses, watermarks, text overlays, low quality compression artifacts.');
+  // 7. END color reminder (3rd strategic mention)
+  if (colorHex) {
+    parts.push(`Maintain product color ${colorHex} exactly.`);
+  }
 
   return {
     prompt: parts.join(' '),
@@ -340,6 +380,15 @@ async function generateImage(imagePath, userPrompt, options = {}) {
     formData.append('person_generation', options.gender);
   }
 
+  // Debug: Log what we're sending
+  console.log('[Image Gen] ===== API REQUEST DEBUG =====');
+  console.log('[Image Gen] Files attached:', formData.getBuffer ? 'FormData with files' : 'unknown');
+  console.log('[Image Gen] Model:', DEFAULT_MODEL);
+  console.log('[Image Gen] Prompt (first 500 chars):', enhancedPrompt.substring(0, 500));
+  console.log('[Image Gen] API URL:', apiClient.defaults.baseURL + '/uapi/v1/generate_image');
+  console.log('[Image Gen] API Key set:', !!API_KEY);
+  console.log('[Image Gen] ================================');
+
   console.log('Sending request to giminigen API...');
 
   let data;
@@ -353,7 +402,14 @@ async function generateImage(imagePath, userPrompt, options = {}) {
     data = response.data;
   } catch (err) {
     const apiError = err?.response?.data;
-    const message = apiError?.detail?.error_message || apiError?.error_message || err.message || 'giminigen request failed';
+    console.error('[Image Gen] ===== API ERROR DEBUG =====');
+    console.error('[Image Gen] Status Code:', err?.response?.status);
+    console.error('[Image Gen] Status Text:', err?.response?.statusText);
+    console.error('[Image Gen] Response Headers:', JSON.stringify(err?.response?.headers, null, 2));
+    console.error('[Image Gen] Error Data:', JSON.stringify(apiError, null, 2));
+    console.error('[Image Gen] Request URL:', err?.config?.url);
+    console.error('[Image Gen] ================================');
+    const message = apiError?.detail?.error_message || apiError?.error_message || apiError?.message || err.message || 'giminigen request failed';
     throw new Error(message);
   }
 
@@ -365,65 +421,154 @@ async function generateImage(imagePath, userPrompt, options = {}) {
 }
 
 // ============================================
-// VIDEO MOTION PROMPT TEMPLATES
+// VIDEO MOTION PROMPT TEMPLATES - CATEGORY SPECIFIC
 // ============================================
 
 /**
- * Professional motion prompts for different video styles
+ * Category-specific video motion presets
+ * Each category has its own optimized animation styles
  */
 const VIDEO_MOTION_PRESETS = {
-  // Fashion/Product focused
-  fashion_walk: {
-    name: 'Fashion Walk',
-    prompt: 'Smooth slow-motion runway walk, confident stride, subtle hip movement, professional lighting consistent throughout, camera follows model smoothly, high-end fashion commercial quality, 4K cinematic, shallow depth of field, no camera shake',
-  },
-  product_showcase: {
-    name: 'Product Showcase',
-    prompt: 'Gentle rotation reveal, slow orbit around product, professional studio lighting, seamless loop potential, focus maintained on product details, commercial quality, smooth camera movement, no abrupt changes',
-  },
-  lifestyle_natural: {
-    name: 'Lifestyle Natural',
-    prompt: 'Natural candid movement, subtle head turn or body shift, relaxed breathing animation, warm ambient lighting, lifestyle commercial aesthetic, smooth transitions, realistic motion blur',
-  },
-
-  // Movement types
-  subtle_sway: {
-    name: 'Subtle Sway',
-    prompt: 'Minimal elegant movement, gentle weight shift from foot to foot, slight arm adjustment, maintaining fashion pose, professional model micro-movements, high-end lookbook style',
-  },
-  confident_pose: {
-    name: 'Confident Pose',
-    prompt: 'Model transitions between confident poses, smooth weight shifts, intentional hand placements, strong eye contact with camera, editorial fashion video quality',
-  },
-
-  // Shoe-specific
-  shoe_walk: {
-    name: 'Shoe Walk',
-    prompt: 'Focus on feet and legs, natural walking motion, each step clearly visible, shoe details maintained, clean floor reflection, professional footwear commercial, steady low-angle tracking shot',
-  },
-  shoe_display: {
-    name: 'Shoe Display',
-    prompt: 'Feet movement showcase, subtle ankle rotation, weight shift highlighting shoe design, close focus on footwear, product photography in motion',
+  // ===== CLOTHES / FASHION =====
+  clothes: {
+    runway_walk: {
+      id: 'runway_walk',
+      name: 'Runway Walk',
+      description: 'Model walks like on a fashion runway',
+      prompt: 'Smooth runway walk, confident stride, subtle hip movement, fabric flowing naturally, professional lighting consistent, camera follows model smoothly, high-end fashion commercial, 4K cinematic, garment details visible throughout',
+      recommended: true,
+    },
+    model_turn: {
+      id: 'model_turn',
+      name: 'Model Turn',
+      description: '360° turn to show all angles',
+      prompt: 'Graceful 360-degree turn on spot, fabric movement visible, smooth pivot, showing front, side, and back of garment, professional lighting maintained through rotation, fashion show quality',
+      recommended: true,
+    },
+    subtle_pose: {
+      id: 'subtle_pose',
+      name: 'Subtle Movement',
+      description: 'Gentle pose transitions',
+      prompt: 'Minimal elegant movement, gentle weight shift, slight arm adjustment, breathing animation, maintaining fashion pose, professional model micro-movements, high-end lookbook style',
+    },
+    fabric_flow: {
+      id: 'fabric_flow',
+      name: 'Fabric in Motion',
+      description: 'Highlight fabric movement',
+      prompt: 'Dramatic fabric movement, wind-blown effect, material flowing and draping, showcasing texture and flow, editorial fashion aesthetic, slow motion fabric physics, premium commercial quality',
+    },
   },
 
-  // Bag-specific
-  bag_carry: {
-    name: 'Bag Carry',
-    prompt: 'Model walking with bag naturally, arm swing with bag visible, lifestyle context, bag moves realistically with body motion, fashion accessory commercial style',
+  // ===== SHOES / FOOTWEAR =====
+  shoes: {
+    walking_feet: {
+      id: 'walking_feet',
+      name: 'Walking Feet',
+      description: 'Natural walking motion close-up',
+      prompt: 'Focus on feet and legs, natural walking motion from low angle, each step clearly visible, shoe flex and movement shown, clean floor reflection, professional footwear commercial, steady tracking shot',
+      recommended: true,
+    },
+    shoe_rotation: {
+      id: 'shoe_rotation',
+      name: '360° Rotation',
+      description: 'Orbit around the shoe',
+      prompt: 'Smooth 360-degree orbit around the shoe, revealing all angles, focus on design details and craftsmanship, professional product photography in motion, studio lighting, no model visible',
+      recommended: true,
+    },
+    step_detail: {
+      id: 'step_detail',
+      name: 'Step Detail',
+      description: 'Close-up stepping motion',
+      prompt: 'Close-up shot of foot stepping forward, slow motion, sole flex visible, heel-to-toe motion, showcasing shoe performance and comfort, athletic commercial style',
+    },
+    lacing_focus: {
+      id: 'lacing_focus',
+      name: 'Lacing Focus',
+      description: 'Zoom on lacing and details',
+      prompt: 'Camera slowly zooms and pans across shoe details, focusing on lacing, stitching, material texture, tongue, and branding, macro product video style',
+    },
   },
 
-  // Dynamic
-  dynamic_turn: {
-    name: 'Dynamic Turn',
-    prompt: 'Graceful 180-degree turn, fabric movement visible, hair movement natural, smooth pivot, fashion show quality, professional lighting maintained through rotation',
+  // ===== BAGS / ACCESSORIES =====
+  bags: {
+    carry_walk: {
+      id: 'carry_walk',
+      name: 'Carry & Walk',
+      description: 'Model walking with bag',
+      prompt: 'Model walking naturally with bag, arm swing with bag visible, lifestyle context, bag moves realistically with body motion, fashion accessory commercial, focus on bag throughout',
+      recommended: true,
+    },
+    bag_360: {
+      id: 'bag_360',
+      name: '360° Display',
+      description: 'Full rotation product shot',
+      prompt: 'Smooth 360-degree rotation of bag, floating or on display stand, studio lighting, showing all sides, hardware details, interior briefly visible, luxury product commercial',
+      recommended: true,
+    },
+    open_close: {
+      id: 'open_close',
+      name: 'Open & Close',
+      description: 'Show interior and closure',
+      prompt: 'Hands opening bag to reveal interior, showing pockets and organization, then closing with click of clasp or zipper, luxury detail shot, close-up hands product video',
+    },
+    strap_adjust: {
+      id: 'strap_adjust',
+      name: 'Strap Adjustment',
+      description: 'Adjusting shoulder strap',
+      prompt: 'Model adjusting bag strap on shoulder, showing strap length and comfort, lifestyle natural movement, casual confident styling, fashion accessory lifestyle video',
+    },
   },
 
-  // Cinematic
-  cinematic_slow: {
-    name: 'Cinematic Slow-Mo',
-    prompt: 'Ultra slow motion capture, 120fps aesthetic, dramatic lighting, every detail visible, high-fashion editorial, film-grain optional, premium commercial quality',
+  // ===== ACCESSORIES (Watches, Jewelry, etc.) =====
+  accessories: {
+    sparkle_reveal: {
+      id: 'sparkle_reveal',
+      name: 'Sparkle Reveal',
+      description: 'Light catching details',
+      prompt: 'Slow elegant movement, light catching on jewelry/watch surfaces, subtle sparkle effects, rotating to show facets and details, luxury commercial style, dramatic lighting',
+      recommended: true,
+    },
+    wrist_gesture: {
+      id: 'wrist_gesture',
+      name: 'Wrist Gesture',
+      description: 'Natural wrist/hand movement',
+      prompt: 'Natural wrist and hand movement, watch or bracelet visible, elegant gestures, checking time or adjusting cuff, lifestyle context, premium accessory commercial',
+      recommended: true,
+    },
+    zoom_detail: {
+      id: 'zoom_detail',
+      name: 'Zoom Detail',
+      description: 'Macro zoom on details',
+      prompt: 'Camera slowly zooms into product details, extreme close-up on craftsmanship, engravings, gemstones, mechanism, premium macro photography in motion',
+    },
+    floating_orbit: {
+      id: 'floating_orbit',
+      name: 'Floating Orbit',
+      description: 'Product floating with camera orbit',
+      prompt: 'Product floating in space with gentle rotation, camera orbiting slowly, dramatic rim lighting, luxury product video, clean dark background, jewelry commercial quality',
+    },
   },
 };
+
+/**
+ * Get motion presets for a specific category
+ */
+function getMotionPresetsForCategory(category) {
+  const presets = VIDEO_MOTION_PRESETS[category];
+  if (!presets) {
+    return VIDEO_MOTION_PRESETS.clothes; // Fallback to clothes
+  }
+  return presets;
+}
+
+/**
+ * Get default motion preset for category
+ */
+function getDefaultMotionPreset(category) {
+  const presets = getMotionPresetsForCategory(category);
+  const recommended = Object.values(presets).find(p => p.recommended);
+  return recommended || Object.values(presets)[0];
+}
 
 /**
  * Quality enhancement keywords for video generation
@@ -442,37 +587,29 @@ const VIDEO_QUALITY_BOOST = [
 /**
  * Build optimized video generation prompt
  * @param {string} userPrompt - User's base prompt or style preference
- * @param {object} options - Additional options (category, style, etc.)
+ * @param {object} options - Additional options (category, motionStyle, etc.)
  * @returns {string} Optimized video prompt
  */
 function buildVideoPrompt(userPrompt, options = {}) {
   const parts = [];
+  const category = options.category || 'clothes';
+  const motionStyleId = options.motionStyle;
 
   // 1. Core instruction - animate the static image
   parts.push('Transform this static fashion product image into a smooth, professional video.');
 
-  // 2. Add motion style based on category or user preference
-  const category = options.category || 'clothes';
-  const motionStyle = options.motionStyle || 'subtle_sway';
+  // 2. Get motion preset based on category and selected style
+  let motionPreset;
 
-  // Select appropriate motion preset
-  let motionPreset = VIDEO_MOTION_PRESETS[motionStyle];
+  // Get category-specific presets
+  const categoryPresets = VIDEO_MOTION_PRESETS[category] || VIDEO_MOTION_PRESETS.clothes;
 
-  // Fallback to category-appropriate motion if custom style not found
-  if (!motionPreset) {
-    switch (category) {
-      case 'shoes':
-        motionPreset = VIDEO_MOTION_PRESETS.shoe_walk;
-        break;
-      case 'bags':
-        motionPreset = VIDEO_MOTION_PRESETS.bag_carry;
-        break;
-      case 'accessories':
-        motionPreset = VIDEO_MOTION_PRESETS.lifestyle_natural;
-        break;
-      default:
-        motionPreset = VIDEO_MOTION_PRESETS.subtle_sway;
-    }
+  // If a specific motion style was selected, use it
+  if (motionStyleId && categoryPresets[motionStyleId]) {
+    motionPreset = categoryPresets[motionStyleId];
+  } else {
+    // Fall back to recommended or first preset for this category
+    motionPreset = Object.values(categoryPresets).find(p => p.recommended) || Object.values(categoryPresets)[0];
   }
 
   parts.push(motionPreset.prompt);
@@ -543,4 +680,7 @@ async function generateVideoFromImage(referenceUrl, prompt, options = {}) {
 module.exports = {
   generateImage,
   generateVideoFromImage,
+  VIDEO_MOTION_PRESETS,
+  getMotionPresetsForCategory,
+  getDefaultMotionPreset,
 };

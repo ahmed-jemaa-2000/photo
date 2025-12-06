@@ -15,19 +15,25 @@ import ImageUpload from './components/ImageUpload';
 import GenerationResult from './components/GenerationResult';
 import ModelSelection from './components/ModelSelection';
 import ShoeModelSelection from './components/ShoeModelSelection';
-import ShoeCameraAngleSelection from './components/ShoeCameraAngleSelection';
-import ShoeLightingSelection from './components/ShoeLightingSelection';
-import ShoePoseSelection from './components/ShoePoseSelection';
+import ShoeCameraAngleSelection, { CAMERA_ANGLES } from './components/ShoeCameraAngleSelection';
+import ShoeLightingSelection, { LIGHTING_OPTIONS } from './components/ShoeLightingSelection';
+import ShoePoseSelection, { SHOE_POSES } from './components/ShoePoseSelection';
 import ImageStyleSelection from './components/ImageStyleSelection';
 import AnimatedProgress from './components/AnimatedProgress';
 import ReviewPage from './components/ReviewPage';
+import BodySizeSelection, { BODY_SIZES } from './components/BodySizeSelection';
 
 // New premium components
 import CategoryHub, { CATEGORIES } from './components/CategoryHub';
 import BagStyleSelection from './components/bags/BagStyleSelection';
 import BagDisplayModeSelection from './components/bags/BagDisplayModeSelection';
+import BagCameraAngleSelection, { BAG_CAMERA_ANGLES } from './components/bags/BagCameraAngleSelection';
+import BagLightingSelection, { BAG_LIGHTING_OPTIONS } from './components/bags/BagLightingSelection';
 import AccessoryTypeSelection from './components/accessories/AccessoryTypeSelection';
+import AccessoryShotTypeSelection, { ACCESSORY_SHOT_TYPES } from './components/accessories/AccessoryShotTypeSelection';
+import AccessoryLightingSelection, { ACCESSORY_LIGHTING_OPTIONS } from './components/accessories/AccessoryLightingSelection';
 import AnimatedButton from './components/common/AnimatedButton';
+import AspectRatioSelector, { ASPECT_RATIOS } from './components/AspectRatioSelector';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -166,6 +172,7 @@ function App() {
   const [gender, setGender] = useState(null);
   const [selectedBackground, setSelectedBackground] = useState(null);
   const [imageStyle, setImageStyle] = useState('ecommerce_clean');
+  const [aspectRatio, setAspectRatio] = useState(ASPECT_RATIOS[0]); // Default 1:1
   const [colorPalette, setColorPalette] = useState([]);
   const [colorHex, setColorHex] = useState(null);
   const [useColorLock, setUseColorLock] = useState(true);
@@ -173,6 +180,7 @@ function App() {
 
   // Clothes-specific
   const [selectedModel, setSelectedModel] = useState(null);
+  const [bodySize, setBodySize] = useState('medium'); // S/M/L body size visualization
   const [modelPersona, setModelPersona] = useState({
     gender: 'female', ageRange: 'adult', ethnicity: 'any',
     skinTone: 'medium', hairStyle: 'long', hairColor: 'brown', bodyType: 'average',
@@ -188,10 +196,14 @@ function App() {
   // Bags-specific
   const [bagStyle, setBagStyle] = useState(null);
   const [bagDisplayMode, setBagDisplayMode] = useState(null);
+  const [bagCameraAngle, setBagCameraAngle] = useState(null);
+  const [bagLighting, setBagLighting] = useState(null);
 
   // Accessories-specific
   const [accessoryType, setAccessoryType] = useState(null);
   const [accessorySubtype, setAccessorySubtype] = useState(null);
+  const [accessoryShotType, setAccessoryShotType] = useState(null);
+  const [accessoryLighting, setAccessoryLighting] = useState(null);
 
   // === COMPUTED VALUES ===
 
@@ -214,6 +226,76 @@ function App() {
   useEffect(() => {
     if (category) {
       setCurrentStepIndex(0); // Go to first step of new category
+    }
+  }, [category]);
+
+  // Smart defaults for clothes
+  useEffect(() => {
+    if (category === 'clothes') {
+      // Auto-set aspect ratio to 4:5 (Portrait) for clothes as it's best for full body
+      const portraitRatio = ASPECT_RATIOS.find(r => r.id === '4:5');
+      if (portraitRatio) setAspectRatio(portraitRatio);
+    }
+  }, [category]);
+
+  // Auto-select recommended defaults for shoes
+  useEffect(() => {
+    if (category === 'shoes') {
+      // Auto-set aspect ratio to 1:1 (Square) for shoes
+      const squareRatio = ASPECT_RATIOS.find(r => r.id === '1:1');
+      if (squareRatio) setAspectRatio(squareRatio);
+
+      // Pre-select recommended options for best results
+      if (!selectedShoePose) {
+        const defaultPose = SHOE_POSES.find(p => p.recommended) || SHOE_POSES[0];
+        setSelectedShoePose(defaultPose);
+      }
+      if (!selectedCameraAngle) {
+        const defaultAngle = CAMERA_ANGLES.find(a => a.recommended) || CAMERA_ANGLES[0];
+        setSelectedCameraAngle(defaultAngle);
+      }
+      if (!selectedLighting) {
+        const defaultLighting = LIGHTING_OPTIONS.find(l => l.recommended) || LIGHTING_OPTIONS[0];
+        setSelectedLighting(defaultLighting);
+      }
+    }
+  }, [category]);
+
+  // Auto-select recommended defaults for bags
+  useEffect(() => {
+    if (category === 'bags') {
+      // Auto-set aspect ratio to 1:1 (Square) for bags
+      const squareRatio = ASPECT_RATIOS.find(r => r.id === '1:1');
+      if (squareRatio) setAspectRatio(squareRatio);
+
+      // Pre-select recommended options
+      if (!bagCameraAngle) {
+        const defaultAngle = BAG_CAMERA_ANGLES.find(a => a.recommended) || BAG_CAMERA_ANGLES[0];
+        setBagCameraAngle(defaultAngle);
+      }
+      if (!bagLighting) {
+        const defaultLighting = BAG_LIGHTING_OPTIONS.find(l => l.recommended) || BAG_LIGHTING_OPTIONS[0];
+        setBagLighting(defaultLighting);
+      }
+    }
+  }, [category]);
+
+  // Auto-select recommended defaults for accessories
+  useEffect(() => {
+    if (category === 'accessories') {
+      // Auto-set aspect ratio to 1:1 (Square)
+      const squareRatio = ASPECT_RATIOS.find(r => r.id === '1:1');
+      if (squareRatio) setAspectRatio(squareRatio);
+
+      // Pre-select recommended options
+      if (!accessoryShotType) {
+        const defaultShot = ACCESSORY_SHOT_TYPES.find(t => t.recommended) || ACCESSORY_SHOT_TYPES[0];
+        setAccessoryShotType(defaultShot);
+      }
+      if (!accessoryLighting) {
+        const defaultLighting = ACCESSORY_LIGHTING_OPTIONS.find(l => l.recommended) || ACCESSORY_LIGHTING_OPTIONS[0];
+        setAccessoryLighting(defaultLighting);
+      }
     }
   }, [category]);
 
@@ -266,9 +348,14 @@ function App() {
 
     // Build category-specific prompts
     switch (category) {
-      case 'clothes':
-        personaDescription = buildPersonaDescription(modelPersona);
+      case 'clothes': {
+        // Get body size prompt from BODY_SIZES
+        const selectedBodySize = BODY_SIZES.find(s => s.id === bodySize);
+        const bodySizePrompt = selectedBodySize?.prompt || '';
+
+        personaDescription = `${buildPersonaDescription(modelPersona)} ${bodySizePrompt}`;
         break;
+      }
       case 'shoes': {
         // Build comprehensive shoe photography prompt
         const posePrompt = selectedShoePose?.prompt || 'Classic standing pose, natural leg positioning';
@@ -281,11 +368,15 @@ function App() {
         break;
       }
       case 'bags':
-        categoryPrompt = buildBagPrompt(bagStyle, bagDisplayMode);
+        const bagAnglePrompt = bagCameraAngle?.prompt || 'Straight front angle';
+        const bagLightPrompt = bagLighting?.prompt || 'Professional studio lighting';
+        categoryPrompt = `${buildBagPrompt(bagStyle, bagDisplayMode)}. ${bagAnglePrompt}. ${bagLightPrompt}`;
         personaDescription = gender === 'male' ? 'Male model' : 'Female model';
         break;
       case 'accessories':
-        categoryPrompt = buildAccessoryPrompt(accessoryType, accessorySubtype);
+        const accShotPrompt = accessoryShotType?.prompt || 'Macro detail shot';
+        const accLightPrompt = accessoryLighting?.prompt || 'Soft diffused lighting';
+        categoryPrompt = `${buildAccessoryPrompt(accessoryType, accessorySubtype)}. ${accShotPrompt}. ${accLightPrompt}`;
         personaDescription = gender === 'male' ? 'Male model' : 'Female model';
         break;
     }
@@ -327,6 +418,7 @@ function App() {
       categoryPrompt,
       backdropClause,
       paletteClause,
+      aspectRatio ? `Aspect Ratio: ${aspectRatio.ratio}` : '',
       variationCue,
       fidelityGuards[category] || '',
       colorClause,
@@ -354,10 +446,14 @@ function App() {
       case 'bags':
         if (bagStyle) formData.append('bagStyle', bagStyle.id);
         if (bagDisplayMode) formData.append('bagDisplayMode', bagDisplayMode.id);
+        if (bagCameraAngle) formData.append('bagCameraAngle', bagCameraAngle.prompt);
+        if (bagLighting) formData.append('bagLighting', bagLighting.prompt);
         break;
       case 'accessories':
         if (accessoryType) formData.append('accessoryType', accessoryType.id);
         if (accessorySubtype) formData.append('accessorySubtype', accessorySubtype.id);
+        if (accessoryShotType) formData.append('accessoryShotType', accessoryShotType.prompt);
+        if (accessoryLighting) formData.append('accessoryLighting', accessoryLighting.prompt);
         break;
     }
 
@@ -370,13 +466,20 @@ function App() {
       formData.append('imageStyle', imageStyle);
     }
 
+    // Add aspect ratio
+    if (aspectRatio) {
+      formData.append('aspectRatio', aspectRatio.ratio);
+      formData.append('width', aspectRatio.width);
+      formData.append('height', aspectRatio.height);
+    }
+
     setIsGenerating(true);
     setError(null);
     setGeneratedResult(null);
 
     try {
       const apiCall = fetch(`${API_BASE}/api/generate`, { method: 'POST', body: formData }).then(res => res.json());
-      const minWait = new Promise(resolve => setTimeout(resolve, 120000));
+      const minWait = new Promise(resolve => setTimeout(resolve, 60000));
       const [data] = await Promise.all([apiCall, minWait]);
 
       if (data.error) throw new Error(data.error);
@@ -418,10 +521,16 @@ function App() {
     setGender(null);
     setSelectedModel(null);
     setSelectedShoeModel(null);
+    setSelectedShoeModel(null);
     setBagStyle(null);
     setBagDisplayMode(null);
+    setBagCameraAngle(null);
+    setBagLighting(null);
+    setBagLighting(null);
     setAccessoryType(null);
     setAccessorySubtype(null);
+    setAccessoryShotType(null);
+    setAccessoryLighting(null);
     setSelectedBackground(null);
     setError(null);
   };
@@ -556,6 +665,14 @@ function App() {
               onModelSelect={setSelectedModel}
               gender={gender}
             />
+
+            {/* Body Size Selection for Fit Visualization */}
+            <div className="mt-10 pt-10 border-t border-white/10">
+              <BodySizeSelection
+                selectedSize={bodySize}
+                onSizeSelect={setBodySize}
+              />
+            </div>
           </motion.div>
         );
 
@@ -622,6 +739,18 @@ function App() {
                 onModeSelect={setBagDisplayMode}
               />
             )}
+
+            {/* New Bag Camera & Lighting Options */}
+            <div className="grid md:grid-cols-2 gap-8">
+              <BagCameraAngleSelection
+                selectedAngle={bagCameraAngle}
+                onAngleSelect={setBagCameraAngle}
+              />
+              <BagLightingSelection
+                selectedLighting={bagLighting}
+                onLightingSelect={setBagLighting}
+              />
+            </div>
           </motion.div>
         );
 
@@ -640,6 +769,18 @@ function App() {
               onTypeSelect={setAccessoryType}
               onSubtypeSelect={setAccessorySubtype}
             />
+
+            {/* New Accessory Shot & Lighting Options */}
+            <div className="grid md:grid-cols-2 gap-8">
+              <AccessoryShotTypeSelection
+                selectedShotType={accessoryShotType}
+                onShotTypeSelect={setAccessoryShotType}
+              />
+              <AccessoryLightingSelection
+                selectedLighting={accessoryLighting}
+                onLightingSelect={setAccessoryLighting}
+              />
+            </div>
           </motion.div>
         );
 
@@ -657,6 +798,14 @@ function App() {
                 Photography <span className="text-gradient">Style</span>
               </h2>
               <p className="text-slate-400">Choose the perfect aesthetic for your product shot</p>
+            </div>
+
+            {/* Aspect Ratio Selector */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8">
+              <AspectRatioSelector
+                selectedRatio={aspectRatio}
+                onRatioSelect={setAspectRatio}
+              />
             </div>
 
             {/* Photography Style Selection - includes background in each style */}
@@ -682,6 +831,7 @@ function App() {
               selectedCameraAngle={selectedCameraAngle}
               selectedLighting={selectedLighting}
               selectedBackground={selectedBackground}
+              imageStyle={imageStyle}
               category={category}
               gender={gender}
               bagStyle={bagStyle}
@@ -726,9 +876,9 @@ function App() {
       {/* Full Screen Progress Overlay */}
       <AnimatedProgress isGenerating={isGenerating} />
 
-      <div className="container mx-auto px-4 py-8 min-h-screen flex flex-col">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 min-h-screen flex flex-col safe-top">
         {/* Header */}
-        <header className="flex items-center justify-between mb-8 lg:mb-12">
+        <header className="flex items-center justify-between mb-6 sm:mb-8 lg:mb-12 gap-2">
           <div className="flex items-center gap-3">
             <motion.div
               className="w-11 h-11 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20"
@@ -765,7 +915,7 @@ function App() {
                     {index < currentStepIndex ? <CheckCircle2 className="w-5 h-5" /> : index + 1}
                   </motion.div>
                   {index < steps.length - 1 && (
-                    <div className={`w-8 h-1 mx-1.5 rounded-full ${index < currentStepIndex ? 'bg-primary/30' : 'bg-white/5'}`} />
+                    <div className={`w-4 sm:w-8 h-0.5 sm:h-1 mx-1 sm:mx-1.5 rounded-full ${index < currentStepIndex ? 'bg-primary/30' : 'bg-white/5'}`} />
                   )}
                 </div>
               ))}
@@ -803,7 +953,11 @@ function App() {
                     Create Another
                   </AnimatedButton>
                 </div>
-                <GenerationResult result={generatedResult} category={category} />
+                <GenerationResult
+                  result={generatedResult}
+                  category={category}
+                  onRegenerate={handleGenerate}
+                />
               </motion.div>
             ) : (
               renderStepContent()
@@ -822,12 +976,12 @@ function App() {
           )}
         </main>
 
-        {/* Navigation Footer */}
+        {/* Navigation Footer - Fixed on mobile */}
         {!generatedResult && currentStep !== 'category' && (
           <motion.footer
-            className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            className="fixed bottom-0 left-0 right-0 sm:relative sm:mt-8 pt-4 sm:pt-6 px-4 sm:px-0 pb-4 sm:pb-0 bg-dark-deep/95 sm:bg-transparent backdrop-blur-xl sm:backdrop-blur-none border-t border-white/10 sm:border-white/5 flex items-center justify-between gap-3 z-50 safe-bottom"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
           >
             <AnimatedButton
               onClick={prevStep}

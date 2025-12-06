@@ -9,53 +9,48 @@ import {
 } from 'lucide-react';
 
 /**
- * SIMPLIFIED Lighting Options - Only 4 Essential Choices
- * These cover 95% of use cases for product photography
+ * BAG Lighting Options - 4 Essential Choices
  */
-const LIGHTING_OPTIONS = [
+const BAG_LIGHTING_OPTIONS = [
     {
-        id: 'studio_clean',
-        name: 'Studio Clean',
-        description: 'Bright, even lighting - best for e-commerce',
+        id: 'studio_soft',
+        name: 'Studio Soft',
+        description: 'Even lighting, best for details',
         icon: Lightbulb,
         gradient: 'from-slate-100 via-white to-slate-50',
         textDark: true,
-        prompt: 'Professional studio lighting, bright evenly diffused light, minimal shadows, clean commercial look, pure white or light gray background, e-commerce product photography style',
+        prompt: 'Professional studio lighting, softbox diffusion, minimizing harsh reflections on leather/material, even illumination, clean white background, high-end catalog style',
         recommended: true,
     },
     {
-        id: 'natural_soft',
-        name: 'Natural Light',
-        description: 'Soft daylight, authentic feel',
+        id: 'natural_window',
+        name: 'Natural Window',
+        description: 'Soft daylight, lifestyle feel',
         icon: Sun,
         gradient: 'from-sky-100 via-blue-50 to-white',
         textDark: true,
-        prompt: 'Soft natural daylight, gentle directional shadows, outdoor or window light feel, balanced exposure, authentic lifestyle look',
-        recommended: true,
+        prompt: 'Soft natural window light coming from side, gentle shadows, organic look, lifestyle setting, neutral tones, authentic daylight atmosphere',
     },
     {
-        id: 'golden_hour',
-        name: 'Golden Hour',
-        description: 'Warm sunset glow, premium aesthetic',
+        id: 'warm_boutique',
+        name: 'Warm Boutique',
+        description: 'Luxury showroom glow',
         icon: Sunset,
-        gradient: 'from-amber-300 via-orange-200 to-yellow-100',
+        gradient: 'from-rose-100 via-amber-50 to-orange-50',
         textDark: true,
-        prompt: 'Warm golden hour sunlight, sunset glow, soft long shadows, cinematic premium feel, rich warm tones, lifestyle luxury photography',
+        prompt: 'Warm boutique lighting, soft golden glow, luxury showroom atmosphere, accent lighting to highlight hardware and texture, premium feel',
     },
     {
-        id: 'dramatic',
-        name: 'Dramatic',
-        description: 'Bold shadows, editorial style',
+        id: 'moody',
+        name: 'Moody',
+        description: 'High contrast, dramatic',
         icon: Zap,
-        gradient: 'from-slate-900 via-slate-700 to-slate-500',
+        gradient: 'from-slate-900 via-slate-700 to-slate-600',
         textDark: false,
-        prompt: 'High contrast dramatic lighting, bold shadows and highlights, edge-lit with rim light, editorial fashion style, moody and sophisticated atmosphere',
+        prompt: 'Dramatic cinematic lighting, high contrast, shadows and highlights, moody atmosphere, dark background, spotlight on the bag, artistic fashion style',
     },
 ];
 
-/**
- * Animation variants
- */
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -75,9 +70,9 @@ const itemVariants = {
 };
 
 /**
- * Simplified Lighting Selection - 4 Essential Options
+ * Bag Lighting Selection Component
  */
-function ShoeLightingSelection({ selectedLighting, onLightingSelect }) {
+function BagLightingSelection({ selectedLighting, onLightingSelect }) {
     return (
         <div className="space-y-4">
             {/* Section Header */}
@@ -88,7 +83,7 @@ function ShoeLightingSelection({ selectedLighting, onLightingSelect }) {
                     </div>
                     <div>
                         <h3 className="text-lg sm:text-xl font-bold text-white">Lighting</h3>
-                        <p className="text-xs sm:text-sm text-slate-400">Set the mood and atmosphere</p>
+                        <p className="text-xs sm:text-sm text-slate-400">Set the mood</p>
                     </div>
                 </div>
                 {selectedLighting && (
@@ -102,14 +97,14 @@ function ShoeLightingSelection({ selectedLighting, onLightingSelect }) {
                 )}
             </div>
 
-            {/* Lighting Cards - Simple 4-option grid */}
+            {/* Lighting Cards */}
             <motion.div
                 className="grid grid-cols-2 lg:grid-cols-4 gap-3"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
             >
-                {LIGHTING_OPTIONS.map((lighting) => {
+                {BAG_LIGHTING_OPTIONS.map((lighting) => {
                     const isSelected = selectedLighting?.id === lighting.id;
                     const Icon = lighting.icon;
 
@@ -178,5 +173,5 @@ function ShoeLightingSelection({ selectedLighting, onLightingSelect }) {
     );
 }
 
-export { LIGHTING_OPTIONS };
-export default ShoeLightingSelection;
+export { BAG_LIGHTING_OPTIONS };
+export default BagLightingSelection;

@@ -100,33 +100,75 @@ class PromptBuilder {
       const semanticName = this._getSemanticColorName(dominantColor.name);
       const hex = dominantColor.hex;
 
+      // Get product type label based on category
+      const productLabel = this._getProductLabel();
+
       // Adjust aggressiveness based on confidence
       if (this.colorConfidence === 'high') {
-        parts.push(`CRITICAL: The garment is ${semanticName} (${hex}). Match this exact color with precision. No hue shifts, no recoloring.`);
+        parts.push(`CRITICAL: The ${productLabel} is ${semanticName} (${hex}). Match this exact color with precision. No hue shifts, no recoloring.`);
       } else if (this.colorConfidence === 'medium') {
-        parts.push(`CRITICAL: The garment is primarily ${semanticName} (${hex}). Use this as the dominant color, maintaining accuracy.`);
+        parts.push(`CRITICAL: The ${productLabel} is primarily ${semanticName} (${hex}). Use this as the dominant color, maintaining accuracy.`);
       } else {
-        parts.push(`IMPORTANT: The garment features ${semanticName} tones (${hex}). Interpret naturally while respecting the overall palette.`);
+        parts.push(`IMPORTANT: The ${productLabel} features ${semanticName} tones (${hex}). Interpret naturally while respecting the overall palette.`);
       }
     }
 
-    // Design preservation rules
-    parts.push(
-      'CRITICAL: Preserve the exact garment design - logos, text, patterns, prints, embroidery, and all visual details must remain identical. Do not add, remove, or modify any design elements.'
-    );
+    // Design preservation rules - category aware
+    const preservationRule = this._getDesignPreservationRule();
+    parts.push(preservationRule);
 
     // Category-specific critical requirements
-    if (this.category === 'shoes') {
-      parts.push(
-        'CRITICAL: This is footwear. Maintain exact shoe type, sole design, upper construction, lacing/closure system, and heel type. Focus on shoe details with appropriate low-angle or profile view.'
-      );
-    } else {
-      parts.push(
-        'CRITICAL: Maintain exact garment silhouette, fit, length, fabric texture, and drape. The garment type and construction must stay identical.'
-      );
+    switch (this.category) {
+      case 'shoes':
+        parts.push(
+          'CRITICAL: This is footwear. Maintain exact shoe type, sole design, upper construction, lacing/closure system, and heel type. Focus on shoe details with appropriate low-angle or profile view.'
+        );
+        break;
+      case 'bags':
+        parts.push(
+          'CRITICAL: This is a bag/handbag. Maintain exact bag shape, hardware (zippers, clasps, buckles), strap design, material texture (leather, canvas, etc.), stitching patterns, and all branding elements. Show the bag as the hero product.'
+        );
+        break;
+      case 'accessories':
+        parts.push(
+          'CRITICAL: This is an accessory (jewelry, watch, eyewear, or similar). Maintain exact product design, material finish (metal, gem, glass), craftsmanship details, engravings, and branding. Capture sparkle and reflections accurately.'
+        );
+        break;
+      default: // clothes
+        parts.push(
+          'CRITICAL: Maintain exact garment silhouette, fit, length, fabric texture, and drape. The garment type and construction must stay identical.'
+        );
     }
 
     return parts.join(' ');
+  }
+
+  /**
+   * Get product label based on category for natural language
+   */
+  _getProductLabel() {
+    switch (this.category) {
+      case 'shoes': return 'footwear';
+      case 'bags': return 'bag';
+      case 'accessories': return 'accessory';
+      default: return 'garment';
+    }
+  }
+
+  /**
+   * Get design preservation rule based on category
+   */
+  _getDesignPreservationRule() {
+    switch (this.category) {
+      case 'shoes':
+        return 'CRITICAL: Preserve the exact shoe design - logos, branding, sole pattern, lace style, and all visual details must remain identical. Do not add, remove, or modify any design elements.';
+      case 'bags':
+        return 'CRITICAL: Preserve the exact bag design - logos, hardware, patterns, material texture, and all visual details must remain identical. Do not add, remove, or modify any design elements.';
+      case 'accessories':
+        return 'CRITICAL: Preserve the exact accessory design - engravings, gemstones, metal finish, branding, and all visual details must remain identical. Do not add, remove, or modify any design elements.';
+      default:
+        return 'CRITICAL: Preserve the exact garment design - logos, text, patterns, prints, embroidery, and all visual details must remain identical. Do not add, remove, or modify any design elements.';
+    }
   }
 
   /**
@@ -142,14 +184,26 @@ class PromptBuilder {
     }
 
     // Category-specific pose/angle guidance
-    if (this.category === 'shoes') {
-      parts.push(
-        'Camera angle: Low angle 30-45 degrees from ground, or profile view to showcase shoe design. Model feet positioned to display both sole and upper. Natural standing or walking position.'
-      );
-    } else {
-      parts.push(
-        'Full-body or 3/4 length shot with garment fully visible. Natural standing pose with relaxed weight shift, arms at sides or naturally positioned. Camera at eye level or slightly below.'
-      );
+    switch (this.category) {
+      case 'shoes':
+        parts.push(
+          'Camera angle: Low angle 30-45 degrees from ground, or profile view to showcase shoe design. Model feet positioned to display both sole and upper. Natural standing or walking position.'
+        );
+        break;
+      case 'bags':
+        parts.push(
+          'Product-focused composition with bag as hero element. Camera at product level or slightly above. Show bag structure, hardware details, stitching quality, and material texture. Professional fashion accessory photography with clean background or lifestyle context.'
+        );
+        break;
+      case 'accessories':
+        parts.push(
+          'Macro or close-up detail focus showcasing craftsmanship and materials. Shallow depth of field to emphasize product. Professional jewelry/watch photography lighting. Capture sparkle, reflections, and fine details. Product should be the clear focal point.'
+        );
+        break;
+      default: // clothes
+        parts.push(
+          'Full-body or 3/4 length shot with garment fully visible. Natural standing pose with relaxed weight shift, arms at sides or naturally positioned. Camera at eye level or slightly below.'
+        );
     }
 
     return parts.join(' ');
@@ -221,10 +275,18 @@ class PromptBuilder {
     ];
 
     // Category-specific negatives
-    if (this.category === 'shoes') {
-      negatives.push('No floating shoes, no disembodied feet, no unnatural shoe deformations');
-    } else {
-      negatives.push('No wardrobe malfunctions, no garment transparency issues, no inappropriate fit');
+    switch (this.category) {
+      case 'shoes':
+        negatives.push('No floating shoes, no disembodied feet, no unnatural shoe deformations');
+        break;
+      case 'bags':
+        negatives.push('No floating bags, no distorted hardware, no warped straps, no unnatural bag shape, no missing zippers or clasps');
+        break;
+      case 'accessories':
+        negatives.push('No floating jewelry, no distorted gems, no unnatural metal reflections, no missing product details, no blurred engravings');
+        break;
+      default:
+        negatives.push('No wardrobe malfunctions, no garment transparency issues, no inappropriate fit');
     }
 
     return `Negative prompt: ${negatives.join('; ')}.`;

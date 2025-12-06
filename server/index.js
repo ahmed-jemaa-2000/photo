@@ -2,6 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const morgan = require('morgan');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const db = require('./db/database');
@@ -14,6 +18,41 @@ db.connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isDev = process.env.NODE_ENV !== 'production';
+
+// ============================================
+// SECURITY & PERFORMANCE MIDDLEWARE
+// ============================================
+
+// Helmet: Security headers (CSP, HSTS, etc.)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow serving assets
+}));
+
+// Compression: Gzip responses (50-70% smaller)
+app.use(compression());
+
+// Request logging: Morgan (only in development or with LOG_REQUESTS=true)
+if (isDev || process.env.LOG_REQUESTS === 'true') {
+  app.use(morgan('dev'));
+}
+
+// Rate limiting: Prevent DDoS and abuse
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // Max 30 requests per minute per IP
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const generateLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute  
+  max: 5, // Max 5 generation requests per minute
+  message: { error: 'Generation rate limit exceeded. Please wait a moment.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // CORS: allow only configured origins (or all if none set)
 const corsOriginsRaw = (process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || '')
@@ -29,7 +68,7 @@ const isOriginAllowed = (origin) => {
   return corsOrigins.includes(origin);
 };
 
-// Middleware
+// CORS Middleware
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowed = isOriginAllowed(origin);
@@ -48,20 +87,43 @@ app.use((req, res, next) => {
 
   next();
 });
-app.use(express.json());
+
+app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static('uploads'));
+
+// Apply rate limiting to API routes
+app.use('/api', apiLimiter);
 
 // Serve static assets for models, legs, and backgrounds
 app.use('/api/assets/models', express.static(path.join(__dirname, 'assets/models')));
 app.use('/api/assets/legs', express.static(path.join(__dirname, 'assets/legs')));
 app.use('/api/assets/backgrounds', express.static(path.join(__dirname, 'assets/background')));
 
-// Health check
+// Health check (no rate limit)
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Configure Multer for file uploads
+// ============================================
+// FILE UPLOAD CONFIGURATION
+// ============================================
+
+// Allowed file types
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const fileFilter = (req, file, cb) => {
+  if (ALLOWED_TYPES.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error(`Invalid file type. Allowed: ${ALLOWED_TYPES.join(', ')}`), false);
+  }
+};
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadDir = 'uploads/';
@@ -75,7 +137,14 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: MAX_FILE_SIZE,
+    files: 2 // Max 2 files (image + modelReference)
+  }
+});
 
 // Routes
 // Config endpoint - Share botConfig data with web client
@@ -84,8 +153,8 @@ app.get('/api/config', (req, res) => {
     const {
       MODELS, SHOE_MODELS, BACKGROUNDS, POSE_PROMPTS, SHOE_POSE_PROMPTS,
       SHOE_CAMERA_ANGLES, SHOE_LIGHTING_STYLES,
-      BAG_STYLES, BAG_DISPLAY_MODES, BAG_MODELS,
-      ACCESSORY_TYPES, ACCESSORY_PLACEMENTS
+      BAG_STYLES, BAG_DISPLAY_MODES, BAG_MODELS, BAG_CAMERA_ANGLES, BAG_LIGHTING_OPTIONS,
+      ACCESSORY_TYPES, ACCESSORY_PLACEMENTS, ACCESSORY_SHOT_TYPES, ACCESSORY_LIGHTING_OPTIONS
     } = require('./config/botConfig');
 
     // Transform model paths to web URLs
@@ -117,21 +186,26 @@ app.get('/api/config', (req, res) => {
     }));
 
     res.json({
-      // Existing configs
+      // Clothes configs
       models: modelsWithUrls,
-      shoeModels: shoeModelsWithUrls,
-      backgrounds: backgroundsWithUrls,
       posePrompts: POSE_PROMPTS,
+      backgrounds: backgroundsWithUrls,
+      // Shoes configs
+      shoeModels: shoeModelsWithUrls,
       shoePosePrompts: SHOE_POSE_PROMPTS,
       shoeCameraAngles: SHOE_CAMERA_ANGLES,
       shoeLightingStyles: SHOE_LIGHTING_STYLES,
-      // New bag configs
+      // Bags configs (enhanced)
       bagStyles: BAG_STYLES,
       bagDisplayModes: BAG_DISPLAY_MODES,
       bagModels: bagModelsWithUrls,
-      // New accessory configs
+      bagCameraAngles: BAG_CAMERA_ANGLES,
+      bagLightingOptions: BAG_LIGHTING_OPTIONS,
+      // Accessories configs (enhanced)
       accessoryTypes: ACCESSORY_TYPES,
       accessoryPlacements: ACCESSORY_PLACEMENTS,
+      accessoryShotTypes: ACCESSORY_SHOT_TYPES,
+      accessoryLightingOptions: ACCESSORY_LIGHTING_OPTIONS,
     });
   } catch (error) {
     console.error('Error loading config:', error);
@@ -139,7 +213,8 @@ app.get('/api/config', (req, res) => {
   }
 });
 
-app.post('/api/generate', upload.fields([
+// Apply stricter rate limit to generation endpoints
+app.post('/api/generate', generateLimiter, upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'modelReference', maxCount: 1 }
 ]), async (req, res) => {

@@ -204,4 +204,184 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  /* ===================================
+     MOBILE-FIRST UTILITIES
+     =================================== */
+
+  /* Touch-friendly minimum sizes (44px Apple HIG) */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .touch-target-lg {
+    min-height: 52px;
+    min-width: 52px;
+  }
+
+  /* Mobile-friendly text sizes */
+  .text-mobile-xs {
+    font-size: 0.75rem;
+  }
+
+  .text-mobile-sm {
+    font-size: 0.875rem;
+  }
+
+  .text-mobile-base {
+    font-size: 1rem;
+  }
+
+  .text-mobile-lg {
+    font-size: 1.125rem;
+  }
+
+  .text-mobile-xl {
+    font-size: 1.25rem;
+  }
+
+  .text-mobile-2xl {
+    font-size: 1.5rem;
+  }
+
+  /* Mobile padding */
+  .px-mobile {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .py-mobile {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .p-mobile {
+    padding: 0.75rem 1rem;
+  }
+
+  /* Mobile-friendly gaps */
+  .gap-mobile {
+    gap: 0.75rem;
+  }
+
+  .gap-mobile-lg {
+    gap: 1rem;
+  }
+
+  /* Horizontal scroll container for mobile */
+  .scroll-x-mobile {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scroll-x-mobile::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scroll-x-mobile>* {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+
+  /* Bottom fixed bar for mobile CTAs */
+  .mobile-bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    background: rgba(3, 7, 18, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Mobile card touch feedback */
+  .card-touch {
+    @apply transition-transform duration-150;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .card-touch:active {
+    @apply scale-[0.98];
+  }
+
+  /* Full-width mobile button */
+  .btn-mobile-full {
+    width: 100%;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 0.75rem;
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* ===================================
+   RESPONSIVE BREAKPOINT OVERRIDES
+   =================================== */
+
+/* Mobile-first grid adjustments */
+@media (max-width: 640px) {
+
+  /* Category cards - 2 columns on mobile */
+  .category-card {
+    @apply p-4 rounded-2xl gap-3;
+  }
+
+  .category-card .text-4xl {
+    font-size: 2rem;
+  }
+
+  /* Step indicators - smaller on mobile */
+  .step-indicator {
+    @apply w-8 h-8 text-xs;
+  }
+
+  /* Model cards - 2 per row */
+  .model-card {
+    @apply rounded-xl;
+  }
+
+  /* Input fields - larger touch targets */
+  .input-field {
+    @apply py-4 text-base;
+  }
+
+  /* Section titles */
+  .section-title {
+    @apply text-xl;
+  }
+
+  .section-subtitle {
+    @apply text-sm;
+  }
+
+  /* Glass panels - less padding on mobile */
+  .glass-panel {
+    @apply p-4 rounded-xl;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .category-card {
+    @apply p-6 gap-4;
+  }
+}
+
+/* Bottom safe area for mobile navigation */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-bottom-bar {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
 }
