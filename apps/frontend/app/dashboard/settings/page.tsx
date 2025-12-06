@@ -416,7 +416,7 @@ export default function SettingsPage() {
               setFormData({
                 ...formData,
                 template: preset.template,
-                themeId: preset.themeId,
+                themeId: preset.themeId as ShopThemeId,
                 heroStyle: preset.heroStyle,
                 cardStyle: preset.cardStyle,
                 primaryColor: preset.primaryColor,
