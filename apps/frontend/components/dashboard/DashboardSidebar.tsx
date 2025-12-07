@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { User } from '@busi/types';
 import { useMobileMenu } from '@/lib/MobileMenuContext';
 import { X } from 'lucide-react';
@@ -14,6 +15,12 @@ interface DashboardSidebarProps {
 export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { isOpen, close } = useMobileMenu();
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch - wait for client-side mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isActive = (path: string) => {
     return pathname === path || pathname?.startsWith(`${path}/`);
@@ -58,7 +65,7 @@ export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps
           min-h-[calc(100vh-64px)] max-h-[calc(100vh-64px)]
           flex flex-col 
           shadow-[2px_0_20px_-10px_rgba(0,0,0,0.05)]
-          transform transition-transform duration-300 ease-in-out
+          transform ${mounted ? 'transition-transform duration-300 ease-in-out' : ''}
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           overflow-y-auto
         `}
