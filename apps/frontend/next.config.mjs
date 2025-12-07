@@ -17,6 +17,7 @@ const nextConfig = {
     ],
   },
   transpilePackages: ['@busi/types'],
+  productionBrowserSourceMaps: false,
 };
 
 export default nextConfig;

@@ -51,11 +51,10 @@ export default function StepBasicInfo({ categories }: StepBasicInfoProps) {
           id="name"
           type="text"
           {...register('name')}
-          className={`w-full rounded-lg border px-4 py-2.5 text-base transition-colors focus:outline-none focus:ring-2 ${
-            errors.name
+          className={`w-full rounded-lg border px-4 py-2.5 text-base transition-colors focus:outline-none focus:ring-2 ${errors.name
               ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
               : 'border-gray-300 focus:border-primary focus:ring-primary/20'
-          }`}
+            }`}
           placeholder="e.g., Premium Cotton T-Shirt"
         />
         {errors.name && (
@@ -109,11 +108,10 @@ export default function StepBasicInfo({ categories }: StepBasicInfoProps) {
               type="number"
               step="0.01"
               {...register('price', { valueAsNumber: true })}
-              className={`w-full rounded-lg border px-4 py-2.5 pr-12 transition-colors focus:outline-none focus:ring-2 ${
-                errors.price
+              className={`w-full rounded-lg border px-4 py-2.5 pr-12 transition-colors focus:outline-none focus:ring-2 ${errors.price
                   ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
                   : 'border-gray-300 focus:border-primary focus:ring-primary/20'
-              }`}
+                }`}
               placeholder="0.00"
             />
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-sm text-gray-500">
@@ -179,11 +177,10 @@ export default function StepBasicInfo({ categories }: StepBasicInfoProps) {
         <select
           id="category"
           {...register('category', { valueAsNumber: true })}
-          className={`w-full rounded-lg border px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 ${
-            errors.category
+          className={`w-full rounded-lg border px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 ${errors.category
               ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
               : 'border-gray-300 focus:border-primary focus:ring-primary/20'
-          }`}
+            }`}
         >
           <option value={0}>Select a category...</option>
           {categories.map((cat) => (
@@ -222,7 +219,6 @@ export default function StepBasicInfo({ categories }: StepBasicInfoProps) {
                 type="button"
                 onClick={() => {
                   // TODO: Implement category creation
-                  console.log('Create category:', newCategoryName);
                   setShowCategoryForm(false);
                   setNewCategoryName('');
                 }}
