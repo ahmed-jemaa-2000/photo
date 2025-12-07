@@ -17,7 +17,7 @@ export default function ProductGrid({ products, shop }: ProductGridProps) {
         title="No products available"
         description="Check back soon for new arrivals and exciting products."
         icon={
-          <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg className="w-16 h-16 sm:w-24 sm:h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
           </svg>
         }
@@ -26,15 +26,17 @@ export default function ProductGrid({ products, shop }: ProductGridProps) {
   }
 
   return (
-    <div id="products" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+    <div id="products" className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
       {products.map((product, index) => (
         <motion.div
           key={product.id}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.5, delay: index * 0.1 }}
-          whileHover={{ y: -8 }}
+          viewport={{ once: true, margin: "-30px" }}
+          transition={{
+            duration: 0.4,
+            delay: Math.min(index * 0.05, 0.3) // Cap delay for faster perceived load
+          }}
           className="group"
         >
           <ProductCard product={product} shop={shop} />
@@ -43,3 +45,4 @@ export default function ProductGrid({ products, shop }: ProductGridProps) {
     </div>
   );
 }
+
