@@ -376,8 +376,39 @@ app.post('/api/generate', generateLimiter, upload.fields([
       credits: creditInfo,
     });
   } catch (error) {
-    console.error('Error generating image:', error?.response?.data || error.message);
-    res.status(500).json({ error: error?.message || 'Failed to generate image' });
+    // Structured error logging with context
+    const errorContext = {
+      timestamp: new Date().toISOString(),
+      requestId: req.headers['x-request-id'] || `gen-${Date.now()}`,
+      userId: req.user?.id || 'unknown',
+      userEmail: req.user?.email || 'unknown',
+      category,
+      modelId: modelId || null,
+      imageStyle: imageStyle || 'ecommerce_clean',
+      errorMessage: error.message,
+      errorStack: isDev ? error.stack : undefined,
+      responseData: error?.response?.data || null,
+    };
+
+    console.error('[GENERATION_ERROR]', JSON.stringify(errorContext, null, 2));
+
+    // Provide user-friendly error messages
+    let clientMessage = 'Failed to generate image. Please try again.';
+    if (error.message?.includes('rate limit')) {
+      clientMessage = 'AI service rate limit reached. Please wait a minute and try again.';
+    } else if (error.message?.includes('timeout') || error.message?.includes('ETIMEDOUT')) {
+      clientMessage = 'Generation took too long. Please try with a simpler prompt or smaller image.';
+    } else if (error.message?.includes('invalid') || error.message?.includes('Invalid')) {
+      clientMessage = 'Invalid input provided. Please check your image and settings.';
+    } else if (error.message?.includes('credit')) {
+      clientMessage = error.message; // Pass through credit-related errors
+    }
+
+    res.status(500).json({
+      error: clientMessage,
+      code: 'GENERATION_FAILED',
+      requestId: errorContext.requestId, // For support reference
+    });
   } finally {
     // Clean up uploaded files
     if (imagePath && fs.existsSync(imagePath)) {

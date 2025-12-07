@@ -516,13 +516,11 @@ function App() {
         credentials: 'include', // Include cookies for cross-origin auth
       };
 
-      // Send auth token in Authorization header (preferred method)
+      // Send auth token in Authorization header
       if (authToken) {
         fetchOptions.headers = {
           'Authorization': `Bearer ${authToken}`,
         };
-        // Also add to formData as fallback
-        formData.append('authToken', authToken);
       }
 
       const apiCall = fetch(`${API_BASE}/api/generate`, fetchOptions).then(res => res.json());

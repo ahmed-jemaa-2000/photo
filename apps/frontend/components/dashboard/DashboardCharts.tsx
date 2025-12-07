@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import type { Order } from '@busi/types';
 
@@ -136,34 +137,70 @@ function OrderStatusChart({ orders }: { orders: Order[] }) {
  * Simple bar chart showing sales for the last 7 days
  */
 function SalesChart({ orders }: { orders: Order[] }) {
-    // Get last 7 days
-    const days: { date: Date; label: string; total: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
+    // Use state to track if we're on the client (avoids hydration mismatch)
+    const [isClient, setIsClient] = useState(false);
 
-        days.push({
-            date,
-            label: date.toLocaleDateString('en-US', { weekday: 'short' }),
-            total: 0,
-        });
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    // Calculate days data only on client to avoid hydration issues with Date
+    const { days, maxTotal } = useMemo(() => {
+        if (!isClient) {
+            return { days: [], maxTotal: 1 };
+        }
+
+        const daysArr: { date: Date; label: string; total: number }[] = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+
+            daysArr.push({
+                date,
+                label: date.toLocaleDateString('en-US', { weekday: 'short' }),
+                total: 0,
+            });
+        }
+
+        // Calculate totals per day
+        orders
+            .filter(o => ['confirmed', 'shipped', 'delivered', 'completed'].includes(o.status))
+            .forEach(order => {
+                const orderDate = new Date(order.createdAt);
+                orderDate.setHours(0, 0, 0, 0);
+
+                const dayEntry = daysArr.find(d => d.date.getTime() === orderDate.getTime());
+                if (dayEntry && order.items) {
+                    dayEntry.total += order.items.reduce((sum, item) => sum + item.totalPrice, 0);
+                }
+            });
+
+        return {
+            days: daysArr,
+            maxTotal: Math.max(...daysArr.map(d => d.total), 1)
+        };
+    }, [isClient, orders]);
+
+    // Show loading skeleton during SSR/initial hydration
+    if (!isClient) {
+        return (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
+                </div>
+                <div className="flex items-end justify-between gap-2 h-40">
+                    {[...Array(7)].map((_, i) => (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                            <div className="w-full h-24 bg-gray-100 rounded-t-lg animate-pulse" />
+                            <div className="h-3 w-8 bg-gray-100 rounded animate-pulse" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     }
-
-    // Calculate totals per day
-    orders
-        .filter(o => ['confirmed', 'shipped', 'delivered', 'completed'].includes(o.status))
-        .forEach(order => {
-            const orderDate = new Date(order.createdAt);
-            orderDate.setHours(0, 0, 0, 0);
-
-            const dayEntry = days.find(d => d.date.getTime() === orderDate.getTime());
-            if (dayEntry && order.items) {
-                dayEntry.total += order.items.reduce((sum, item) => sum + item.totalPrice, 0);
-            }
-        });
-
-    const maxTotal = Math.max(...days.map(d => d.total), 1);
 
     return (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
