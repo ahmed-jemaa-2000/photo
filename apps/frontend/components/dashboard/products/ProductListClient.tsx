@@ -233,24 +233,22 @@ export default function ProductListClient({
                   {/* Status Badges */}
                   <div className="flex flex-wrap items-center gap-2 md:justify-end">
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        product.isActive
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${product.isActive
                           ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-gray-100 text-gray-700'
-                      }`}
+                        }`}
                     >
                       {product.isActive ? '✓ Active' : 'Inactive'}
                     </span>
 
                     {stockStatus && (
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          stockStatus === 'healthy'
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${stockStatus === 'healthy'
                             ? 'bg-blue-100 text-blue-700'
                             : stockStatus === 'low'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
                       >
                         {stockStatus === 'healthy' && '📦 '}
                         {stockStatus === 'low' && '⚠️ '}
@@ -262,7 +260,11 @@ export default function ProductListClient({
 
                   {/* Actions */}
                   <div className="flex items-center justify-end">
-                    <ProductListActions productId={product.id} />
+                    <ProductListActions
+                      productId={product.id}
+                      productName={product.name}
+                      productImage={mainImage ? getStrapiMediaUrl(mainImage.url) : undefined}
+                    />
                   </div>
                 </motion.div>
               );

@@ -272,7 +272,7 @@ function ReviewPage({
                                                 You need at least 1 credit to generate photos.
                                             </p>
                                             <a
-                                                href={`${import.meta.env.VITE_DASHBOARD_URL || 'http://localhost:3000'}/dashboard`}
+                                                href={`${import.meta.env.VITE_DASHBOARD_URL || (import.meta.env.PROD ? 'https://dashboard.brandili.shop' : 'http://localhost:3000')}/dashboard`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"

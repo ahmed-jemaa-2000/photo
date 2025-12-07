@@ -239,49 +239,24 @@ app.get('/api/config', (req, res) => {
 });
 
 // Apply stricter rate limit to generation endpoints
-app.post('/api/generate', generateLimiter, upload.fields([
+// enforce authentication and credits
+app.post('/api/generate', generateLimiter, creditService.requireAuth, creditService.requireCredits('photo'), upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'modelReference', maxCount: 1 }
 ]), async (req, res) => {
   const imagePath = req.files?.image?.[0]?.path;
   const modelReferencePath = req.files?.modelReference?.[0]?.path;
 
-  // Track if user is authenticated (for credit deduction)
-  let userAuthenticated = false;
-  let creditCheckResult = null;
+  // User is guaranteed to be authenticated and have credits due to middleware
+  const userAuthenticated = true;
+  const authToken = req.authToken;
 
   try {
     if (!imagePath) {
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
-    // Check credits if user is authenticated
-    // Token can come from: 1) cookie, 2) Authorization header, or 3) FormData body (for cross-origin dev)
-    let authToken = req.authToken || req.body?.authToken;
-    console.log('[Credits] Auth token received:', authToken ? 'YES' : 'NO');
-
-    if (authToken) {
-      const { valid, user } = await creditService.validateToken(authToken);
-      console.log('[Credits] Token valid:', valid, 'User:', user?.id || 'N/A');
-      if (valid) {
-        userAuthenticated = true;
-        creditCheckResult = await creditService.checkCredits(authToken, 'photo');
-        console.log('[Credits] Check result:', creditCheckResult);
-
-        if (!creditCheckResult.allowed) {
-          // Clean up files before returning
-          if (imagePath && fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
-          if (modelReferencePath && fs.existsSync(modelReferencePath)) fs.unlinkSync(modelReferencePath);
-
-          return res.status(402).json({
-            error: 'Insufficient credits',
-            code: 'INSUFFICIENT_CREDITS',
-            balance: creditCheckResult.balance,
-            required: creditCheckResult.cost,
-          });
-        }
-      }
-    }
+    // Credits already checked by middleware
 
     // Validate file magic bytes
     try {

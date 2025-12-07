@@ -180,6 +180,7 @@ function App() {
   const [colorHex, setColorHex] = useState(null);
   const [useColorLock, setUseColorLock] = useState(true);
   const [negative, setNegative] = useState('no extra accessories, no text, no logos change, no second person');
+  const [productId, setProductId] = useState(null);
 
   // Clothes-specific
   const [selectedModel, setSelectedModel] = useState(null);
@@ -301,6 +302,41 @@ function App() {
       }
     }
   }, [category]);
+
+  // === DEEP LINKING SUPPORT ===
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const imageUrl = params.get('image');
+    const pId = params.get('productId');
+
+    if (pId) {
+      setProductId(pId);
+    }
+
+    if (imageUrl) {
+      setIsGenerating(true); // Show loading state while fetching
+      fetch(imageUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const fileName = imageUrl.split('/').pop() || 'product-image.jpg';
+          const file = new File([blob], fileName, { type: blob.type });
+          setSelectedFile(file);
+          // If we have an image, we can infer category or ask user. 
+          // For now, let's leave category null so user picks it, but file is ready.
+          // Or if 'category' param exists, set it.
+          const catParam = params.get('category');
+          if (catParam) {
+            setCategory(catParam);
+            setCurrentStepIndex(1); // Go to Upload/Next step
+          }
+        })
+        .catch(err => {
+          console.error("Failed to load deep linked image", err);
+          setError("Failed to load product image from dashboard.");
+        })
+        .finally(() => setIsGenerating(false));
+    }
+  }, []);
 
   // === HANDLERS ===
 
@@ -474,6 +510,11 @@ function App() {
       formData.append('aspectRatio', aspectRatio.ratio);
       formData.append('width', aspectRatio.width);
       formData.append('height', aspectRatio.height);
+      formData.append('height', aspectRatio.height);
+    }
+
+    if (productId) {
+      formData.append('productId', productId);
     }
 
     setIsGenerating(true);
@@ -985,10 +1026,10 @@ function App() {
               <motion.div
                 key={idx}
                 className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentStepIndex
-                    ? 'w-6 bg-primary'
-                    : idx < currentStepIndex
-                      ? 'w-2.5 bg-primary/50'
-                      : 'w-2 bg-white/20'
+                  ? 'w-6 bg-primary'
+                  : idx < currentStepIndex
+                    ? 'w-2.5 bg-primary/50'
+                    : 'w-2 bg-white/20'
                   }`}
                 animate={{ scale: idx === currentStepIndex ? [1, 1.1, 1] : 1 }}
                 transition={{ duration: 1, repeat: idx === currentStepIndex ? Infinity : 0 }}

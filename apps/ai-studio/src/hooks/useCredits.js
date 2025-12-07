@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 
 // AI API base URL (port 3001 for credits endpoint)
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-// Dashboard URL (port 3000 for auth check)
-const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || 'http://localhost:3000';
+// Dashboard URL (port 3000 for auth check) - uses subdomain in production
+const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL ||
+    (import.meta.env.PROD ? 'https://dashboard.brandili.shop' : 'http://localhost:3000');
 
 /**
  * Hook to fetch and manage user credits
