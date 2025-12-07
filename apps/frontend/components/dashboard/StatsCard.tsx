@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { DollarSign, ShoppingBag, Package, Clock, TrendingUp, TrendingDown } from 'lucide-react';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { DollarSign, ShoppingBag, Package, Clock, TrendingUp, TrendingDown, LucideIcon } from 'lucide-react';
 import { AnimatedNumber } from '@/components/ui/AnimatedCounter';
 
 interface StatsCardProps {
@@ -16,7 +16,7 @@ interface StatsCardProps {
   subtitle?: string;
 }
 
-const iconMap: Record<string, React.ElementType> = {
+const iconMap: Record<string, LucideIcon> = {
   '💰': DollarSign,
   '🛍️': ShoppingBag,
   '📦': Package,
@@ -31,36 +31,48 @@ export default function StatsCard({
   trend,
   subtitle,
 }: StatsCardProps) {
+  // 3D Tilt Effect
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const rotateX = useTransform(y, [-100, 100], [10, -10]);
+  const rotateY = useTransform(x, [-100, 100], [-10, 10]);
+
   const colorStyles = {
     blue: {
       bg: 'bg-gradient-to-br from-blue-500 to-blue-600',
       light: 'bg-blue-50',
       text: 'text-blue-600',
       glow: 'shadow-blue-500/20',
+      border: 'border-blue-100',
     },
     green: {
       bg: 'bg-gradient-to-br from-emerald-500 to-green-600',
       light: 'bg-green-50',
       text: 'text-green-600',
       glow: 'shadow-green-500/20',
+      border: 'border-green-100',
     },
     purple: {
       bg: 'bg-gradient-to-br from-purple-500 to-indigo-600',
       light: 'bg-purple-50',
       text: 'text-purple-600',
       glow: 'shadow-purple-500/20',
+      border: 'border-purple-100',
     },
     orange: {
       bg: 'bg-gradient-to-br from-amber-500 to-orange-600',
       light: 'bg-orange-50',
       text: 'text-orange-600',
       glow: 'shadow-orange-500/20',
+      border: 'border-orange-100',
     },
     default: {
       bg: 'bg-gradient-to-br from-gray-500 to-gray-600',
       light: 'bg-gray-50',
       text: 'text-gray-600',
       glow: 'shadow-gray-500/20',
+      border: 'border-gray-100',
     },
   };
 
@@ -91,18 +103,30 @@ export default function StatsCard({
 
   return (
     <motion.div
+      style={{ x, y, rotateX, rotateY, z: 100 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.3 }}
-      className={`relative overflow-hidden bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg ${styles.glow} transition-all duration-300`}
+      transition={{ duration: 0.5 }}
+      whileHover={{ scale: 1.02 }}
+      onMouseMove={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        x.set(e.clientX - centerX);
+        y.set(e.clientY - centerY);
+      }}
+      onMouseLeave={() => {
+        x.set(0);
+        y.set(0);
+      }}
+      className={`relative overflow-hidden bg-white/80 backdrop-blur-md rounded-3xl border ${styles.border} p-6 shadow-xl ${styles.glow} transition-shadow duration-300 perspective-1000`}
     >
       {/* Background decoration */}
-      <div className={`absolute -top-10 -right-10 w-32 h-32 ${styles.light} rounded-full opacity-50`} />
+      <div className={`absolute -top-12 -right-12 w-40 h-40 ${styles.light} rounded-full opacity-50 blur-2xl`} />
 
-      <div className="relative">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`p-3 rounded-xl ${styles.bg} text-white shadow-lg ${styles.glow}`}>
+      <div className="relative z-10">
+        <div className="flex items-start justify-between mb-6">
+          <div className={`p-3.5 rounded-2xl ${styles.bg} text-white shadow-lg shadow-black/5 ring-4 ring-white/50`}>
             {IconComponent ? (
               <IconComponent className="w-6 h-6" />
             ) : (
@@ -110,14 +134,14 @@ export default function StatsCard({
             )}
           </div>
           {trend && (
-            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${trend.isPositive
-              ? 'bg-green-50 text-green-600'
-              : 'bg-red-50 text-red-600'
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${trend.isPositive
+                ? 'bg-green-100 text-green-700'
+                : 'bg-red-100 text-red-700'
               }`}>
               {trend.isPositive ? (
-                <TrendingUp className="w-3 h-3" />
+                <TrendingUp className="w-3.5 h-3.5" />
               ) : (
-                <TrendingDown className="w-3 h-3" />
+                <TrendingDown className="w-3.5 h-3.5" />
               )}
               <span>{trend.isPositive ? '+' : ''}{trend.value}%</span>
             </div>
@@ -125,19 +149,23 @@ export default function StatsCard({
         </div>
 
         <div>
-          <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 tracking-tight">
-            {canAnimate ? (
-              <>
-                <AnimatedNumber value={numericValue} duration={1.5} />
-                {suffix}
-              </>
-            ) : (
-              value
-            )}
-          </p>
+          <p className="text-sm font-semibold text-gray-500 mb-1 tracking-wide">{title}</p>
+          <div className="flex items-baseline gap-1">
+            <h3 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+              {canAnimate ? (
+                <AnimatedNumber value={numericValue} duration={2} />
+              ) : (
+                value
+              )}
+            </h3>
+            <span className="text-lg font-medium text-gray-500">{suffix}</span>
+          </div>
+
           {subtitle && (
-            <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
+            <p className="text-xs font-medium text-gray-400 mt-2 flex items-center gap-1">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+              {subtitle}
+            </p>
           )}
         </div>
       </div>

@@ -1,11 +1,7 @@
 import { getAuthToken, getUserShopId } from '@/lib/auth-server';
 import { getProductsByShop, getOrdersByShop, getCategoriesByShop, getShopById } from '@/lib/strapi';
-import StatsCard from '@/components/dashboard/StatsCard';
-import QuickActionCard from '@/components/dashboard/QuickActionCard';
-import RecentOrders from '@/components/dashboard/RecentOrders';
-import StorefrontCard from '@/components/dashboard/StorefrontCard';
-import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import { AlertTriangle } from 'lucide-react';
+import DashboardHomeClient from './DashboardHomeClient';
 
 export default async function DashboardHome() {
   const token = await getAuthToken();
@@ -72,145 +68,15 @@ export default async function DashboardHome() {
   const todayOrders = orders.filter(o => new Date(o.createdAt).toDateString() === today);
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-primary mb-1">Dashboard</p>
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">Welcome back! 👋</h1>
-          <p className="text-gray-500">
-            Here's what's happening with <span className="font-semibold text-gray-700">{shop.name}</span> today.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-sm text-gray-500 bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <StatsCard
-          title="Total Revenue"
-          value={`${totalRevenue.toFixed(0)} TND`}
-          icon="💰"
-          color="green"
-          subtitle="From confirmed orders"
-        />
-        <StatsCard
-          title="Total Orders"
-          value={orders.length}
-          icon="🛍️"
-          color="blue"
-          subtitle={`${todayOrders.length} today`}
-        />
-        <StatsCard
-          title="Active Products"
-          value={activeProducts.length}
-          icon="📦"
-          color="purple"
-          subtitle={`of ${products.length} total`}
-        />
-        <StatsCard
-          title="Pending Orders"
-          value={pendingOrders.length}
-          icon="⏳"
-          color="orange"
-          subtitle="Awaiting confirmation"
-        />
-      </div>
-
-      {/* Analytics Charts */}
-      {orders.length > 0 && (
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Analytics</h2>
-          <DashboardCharts orders={orders} />
-        </div>
-      )}
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-        {/* Left Column - Recent Orders */}
-        <div className="lg:col-span-2 space-y-6">
-          <RecentOrders orders={orders} />
-
-          {/* Quick Actions */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <QuickActionCard
-                href="/dashboard/products/create"
-                title="Add Product"
-                description="Create a new product listing"
-                icon="➕"
-                color="blue"
-              />
-              <QuickActionCard
-                href="/dashboard/categories"
-                title="Categories"
-                description="Organize your products"
-                icon="🏷️"
-                color="purple"
-              />
-              <QuickActionCard
-                href="/dashboard/settings"
-                title="Settings"
-                description="Store preferences"
-                icon="⚙️"
-                color="default"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Sidebar */}
-        <div className="space-y-6">
-          <StorefrontCard shop={shop} />
-
-          {/* Shop Progress */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-bold text-gray-900 mb-4">Shop Status</h3>
-            <div className="space-y-5">
-              {/* Products Progress */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-600">Products</span>
-                  <span className="text-sm font-semibold text-gray-900">{activeProducts.length}/{products.length}</span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div
-                    className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${products.length > 0 ? (activeProducts.length / products.length) * 100 : 0}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  {products.length - activeProducts.length} draft{products.length - activeProducts.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-
-              {/* Categories */}
-              <div className="flex items-center justify-between py-3 border-t border-gray-50">
-                <span className="text-sm text-gray-600">Categories</span>
-                <span className="text-sm font-semibold text-gray-900">{categories.length}</span>
-              </div>
-
-              {/* Order Completion Rate */}
-              <div className="flex items-center justify-between py-3 border-t border-gray-50">
-                <span className="text-sm text-gray-600">Order Success Rate</span>
-                <span className="text-sm font-semibold text-green-600">
-                  {orders.length > 0
-                    ? `${Math.round((orders.filter(o => ['delivered', 'completed'].includes(o.status)).length / orders.length) * 100)}%`
-                    : 'N/A'
-                  }
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <DashboardHomeClient
+      shop={shop}
+      orders={orders}
+      products={products}
+      categories={categories}
+      totalRevenue={totalRevenue}
+      todayOrdersCount={todayOrders.length}
+      activeProductsCount={activeProducts.length}
+      pendingOrdersCount={pendingOrders.length}
+    />
   );
 }
