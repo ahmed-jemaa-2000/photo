@@ -193,8 +193,8 @@ function SalesChart({ orders }: { orders: Order[] }) {
                                 {/* Bar */}
                                 <motion.div
                                     className={`absolute bottom-0 w-full rounded-t-lg ${isToday
-                                            ? 'bg-gradient-to-t from-purple-600 to-indigo-500'
-                                            : 'bg-gradient-to-t from-gray-300 to-gray-200'
+                                        ? 'bg-gradient-to-t from-purple-600 to-indigo-500'
+                                        : 'bg-gradient-to-t from-gray-300 to-gray-200'
                                         }`}
                                     initial={{ height: 0 }}
                                     animate={{ height: `${Math.max(height, 4)}%` }}
@@ -225,10 +225,29 @@ function TopProductsChart({ orders }: { orders: Order[] }) {
         .filter(o => !['cancelled'].includes(o.status))
         .forEach(order => {
             order.items?.forEach(item => {
-                // Safely extract product name from relation
-                const productName = typeof item.product === 'object' && item.product
-                    ? (item.product as any).name || 'Unknown Product'
-                    : `Product #${item.product}`;
+                // Safely extract product name from various possible formats
+                // Strapi can return: { product: { name: "..." } } or { product: { data: { attributes: { name: "..." } } } }
+                // or just a product ID
+                let productName = 'Unknown Product';
+
+                if (item.product) {
+                    if (typeof item.product === 'object') {
+                        // Direct object with name property
+                        if ((item.product as any).name) {
+                            productName = (item.product as any).name;
+                        }
+                        // Strapi nested data format: { data: { attributes: { name: "..." } } }
+                        else if ((item.product as any).data?.attributes?.name) {
+                            productName = (item.product as any).data.attributes.name;
+                        }
+                        // Just has an id but no name
+                        else if ((item.product as any).id) {
+                            productName = `Product #${(item.product as any).id}`;
+                        }
+                    } else if (typeof item.product === 'number') {
+                        productName = `Product #${item.product}`;
+                    }
+                }
 
                 if (!productSales[productName]) {
                     productSales[productName] = { name: productName, count: 0, revenue: 0 };
