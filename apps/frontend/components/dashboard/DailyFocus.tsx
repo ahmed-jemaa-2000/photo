@@ -8,10 +8,11 @@ import type { Order } from '@busi/types';
 
 interface DailyFocusProps {
     orders: Order[];
-    userName: string;
+    userName?: string;
+    shopName?: string;
 }
 
-export default function DailyFocus({ orders, userName }: DailyFocusProps) {
+export default function DailyFocus({ orders, userName = 'User', shopName }: DailyFocusProps) {
     const [mounted, setMounted] = useState(false);
     const [greeting, setGreeting] = useState('');
     const [timeIcon, setTimeIcon] = useState<any>(Sun);
@@ -34,10 +35,9 @@ export default function DailyFocus({ orders, userName }: DailyFocusProps) {
 
     // Determine focus Item
     const pendingOrders = orders.filter(o => o.status === 'pending');
-    const todayOrders = orders.filter(o => {
-        const today = new Date().toDateString();
-        return new Date(o.createdAt).toDateString() === today;
-    });
+
+    // Use shop name if available, otherwise username
+    const displayName = shopName || userName.split(' ')[0];
 
     const Icon = timeIcon;
 
@@ -64,14 +64,8 @@ export default function DailyFocus({ orders, userName }: DailyFocusProps) {
                     </div>
 
                     <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                        {greeting}, {userName.split(' ')[0]}!
+                        {greeting}, {displayName}!
                     </h1>
-
-                    <p className="text-indigo-100/90 text-lg max-w-xl">
-                        {pendingOrders.length > 0
-                            ? `You have ${pendingOrders.length} pending orders waiting for your confirmation.`
-                            : `You've received ${todayOrders.length} orders today. Great work!`}
-                    </p>
                 </div>
 
                 {/* Action Button */}

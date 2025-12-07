@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { DollarSign, ShoppingBag, Package, Clock, TrendingUp, TrendingDown, LucideIcon } from 'lucide-react';
 import { AnimatedNumber } from '@/components/ui/AnimatedCounter';
 
@@ -31,13 +31,6 @@ export default function StatsCard({
   trend,
   subtitle,
 }: StatsCardProps) {
-  // 3D Tilt Effect
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const rotateX = useTransform(y, [-100, 100], [10, -10]);
-  const rotateY = useTransform(x, [-100, 100], [-10, 10]);
-
   const colorStyles = {
     blue: {
       bg: 'bg-gradient-to-br from-blue-500 to-blue-600',
@@ -103,23 +96,11 @@ export default function StatsCard({
 
   return (
     <motion.div
-      style={{ x, y, rotateX, rotateY, z: 100 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      whileHover={{ scale: 1.02 }}
-      onMouseMove={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        x.set(e.clientX - centerX);
-        y.set(e.clientY - centerY);
-      }}
-      onMouseLeave={() => {
-        x.set(0);
-        y.set(0);
-      }}
-      className={`relative overflow-hidden bg-white/80 backdrop-blur-md rounded-3xl border ${styles.border} p-6 shadow-xl ${styles.glow} transition-shadow duration-300 perspective-1000`}
+      whileHover={{ y: -5 }}
+      className={`relative overflow-hidden bg-white/80 backdrop-blur-md rounded-3xl border ${styles.border} p-6 shadow-xl ${styles.glow} transition-all duration-300`}
     >
       {/* Background decoration */}
       <div className={`absolute -top-12 -right-12 w-40 h-40 ${styles.light} rounded-full opacity-50 blur-2xl`} />
@@ -135,8 +116,8 @@ export default function StatsCard({
           </div>
           {trend && (
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${trend.isPositive
-                ? 'bg-green-100 text-green-700'
-                : 'bg-red-100 text-red-700'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-red-100 text-red-700'
               }`}>
               {trend.isPositive ? (
                 <TrendingUp className="w-3.5 h-3.5" />

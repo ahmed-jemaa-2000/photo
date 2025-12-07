@@ -55,7 +55,7 @@ export default function DashboardHomeClient({
         >
             {/* Daily Focus Banner (replaces standard header) */}
             <motion.div variants={itemVariants}>
-                <DailyFocus orders={orders} userName="Ahmed" />
+                <DailyFocus orders={orders} shopName={shop.name} />
             </motion.div>
 
             {/* Stats Grid */}
