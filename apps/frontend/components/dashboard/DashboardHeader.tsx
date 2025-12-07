@@ -15,7 +15,11 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/dashboard/login');
+    // Force hard refresh to clear Next.js Router Cache and server-side state
+    // router.push() doesn't work because it uses client-side navigation
+    // which keeps cached server component data
+    router.refresh();
+    window.location.href = '/dashboard/login';
   };
 
   return (
