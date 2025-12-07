@@ -239,11 +239,17 @@ app.get('/api/config', (req, res) => {
 });
 
 // Apply stricter rate limit to generation endpoints
-// enforce authentication and credits
-app.post('/api/generate', generateLimiter, creditService.requireAuth, creditService.requireCredits('photo'), upload.fields([
+// Note: upload.fields must come before requireAuth for multipart form token extraction
+app.post('/api/generate', generateLimiter, upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'modelReference', maxCount: 1 }
-]), async (req, res) => {
+]), (req, res, next) => {
+  // Check for auth token in body (for multipart forms where header wasn't set)
+  if (!req.authToken && req.body?.authToken) {
+    req.authToken = req.body.authToken;
+  }
+  next();
+}, creditService.requireAuth, creditService.requireCredits('photo'), async (req, res) => {
   const imagePath = req.files?.image?.[0]?.path;
   const modelReferencePath = req.files?.modelReference?.[0]?.path;
 

@@ -513,9 +513,15 @@ function App() {
       const fetchOptions = {
         method: 'POST',
         body: formData,
+        credentials: 'include', // Include cookies for cross-origin auth
       };
+
+      // Send auth token in Authorization header (preferred method)
       if (authToken) {
-        // Can't set headers with FormData body in some browsers, so we add token to formData
+        fetchOptions.headers = {
+          'Authorization': `Bearer ${authToken}`,
+        };
+        // Also add to formData as fallback
         formData.append('authToken', authToken);
       }
 
