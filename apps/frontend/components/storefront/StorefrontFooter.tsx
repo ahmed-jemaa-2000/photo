@@ -14,10 +14,10 @@ export default function StorefrontFooter({ shop, categories = [] }: StorefrontFo
   return (
     <footer className="gradient-mesh text-gray-300 mt-auto relative overflow-hidden">
       {/* Main Footer Content */}
-      <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
-          {/* Column 1: About */}
-          <div className="space-y-4">
+      <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8 sm:py-12 md:py-16">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 md:gap-12">
+          {/* Column 1: About - Full width on mobile */}
+          <div className="col-span-2 sm:col-span-2 lg:col-span-1 space-y-3 sm:space-y-4">
             <div className="flex items-center space-x-3">
               {shop.logo && (
                 <div className="relative overflow-hidden rounded-lg">
@@ -166,7 +166,7 @@ export default function StorefrontFooter({ shop, categories = [] }: StorefrontFo
       {/* Bottom Bar */}
       <div className="relative z-10 border-t border-white/10">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:space-y-0">
             <p className="text-sm text-gray-500 text-center md:text-left">
               © {new Date().getFullYear()} {shop.name}. All rights reserved.
             </p>

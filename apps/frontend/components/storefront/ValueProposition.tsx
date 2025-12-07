@@ -15,8 +15,8 @@ export default function ValueProposition() {
     <Section background="white" spacing="lg">
       <Container>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Image Side - Premium Gradient Design */}
-          <div className="relative aspect-square lg:aspect-[4/5] rounded-3xl overflow-hidden animate-fade-in">
+          {/* Image Side - Premium Gradient Design - More compact on mobile */}
+          <div className="relative aspect-[16/10] sm:aspect-square lg:aspect-[4/5] rounded-2xl sm:rounded-3xl overflow-hidden">
             {/* Gradient Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
 
@@ -53,7 +53,7 @@ export default function ValueProposition() {
               <span className="inline-block text-sm font-semibold tracking-wider uppercase text-primary mb-3">
                 Why Choose Us
               </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 leading-tight">
                 Why Shop <span className="text-gradient-premium">With Us?</span>
               </h2>
               <p className="text-lg text-gray-600 leading-relaxed">

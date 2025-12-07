@@ -27,7 +27,7 @@ export default function ProductCard({ product, shop }: ProductCardProps) {
 
   return (
     <Link href={`/product/${product.slug}`} className="block">
-      <div className="group bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100">
+      <div className="group bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 tap-feedback">
         {/* Product Image */}
         <div className="relative aspect-[3/4] overflow-hidden bg-gray-50">
           {mainImage ? (
@@ -66,12 +66,12 @@ export default function ProductCard({ product, shop }: ProductCardProps) {
             )}
           </div>
 
-          {/* Wishlist Button - Top Right */}
+          {/* Wishlist Button - Top Right with enhanced touch target */}
           <button
             onClick={handleWishlistClick}
-            className={`absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full transition-all duration-200 ${isWishlisted
-                ? 'bg-red-500 text-white shadow-md'
-                : 'bg-white/90 text-gray-500 hover:text-red-500 shadow-sm'
+            className={`absolute top-2 right-2 sm:top-3 sm:right-3 p-2 rounded-full transition-all duration-200 touch-target-44 flex items-center justify-center ${isWishlisted
+              ? 'bg-red-500 text-white shadow-md'
+              : 'bg-white/90 text-gray-500 hover:text-red-500 shadow-sm'
               }`}
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >

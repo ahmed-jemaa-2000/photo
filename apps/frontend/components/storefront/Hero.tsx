@@ -15,15 +15,15 @@ export default function Hero({ shop, featuredProducts }: HeroProps) {
   };
 
   return (
-    <section className="relative min-h-[60vh] sm:min-h-[75vh] lg:min-h-[85vh] flex items-center justify-center overflow-hidden storefront-page">
+    <section className="relative min-h-[50vh] sm:min-h-[65vh] lg:min-h-[85vh] flex items-center justify-center overflow-hidden storefront-page">
       {/* Premium Background - Simplified for mobile performance */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black" />
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200&auto=format&fit=crop')] bg-cover bg-center opacity-20" />
 
-        {/* Floating Orbs - Reduced size on mobile */}
-        <div className="absolute top-1/4 left-1/4 w-[200px] sm:w-[350px] h-[200px] sm:h-[350px] rounded-full blur-[80px] sm:blur-[120px] animate-float opacity-40 sm:opacity-50 storefront-brand-bg" />
-        <div className="absolute bottom-1/3 right-1/4 w-[150px] sm:w-[300px] h-[150px] sm:h-[300px] rounded-full blur-[60px] sm:blur-[100px] animate-float-slow opacity-30 sm:opacity-40 storefront-secondary-bg" />
+        {/* Floating Orbs - Reduced size and blur on mobile for performance */}
+        <div className="absolute top-1/4 left-1/4 w-[150px] sm:w-[250px] lg:w-[350px] h-[150px] sm:h-[250px] lg:h-[350px] rounded-full blur-[60px] sm:blur-[100px] lg:blur-[120px] animate-float opacity-30 sm:opacity-40 lg:opacity-50 storefront-brand-bg" />
+        <div className="absolute bottom-1/3 right-1/4 w-[120px] sm:w-[200px] lg:w-[300px] h-[120px] sm:h-[200px] lg:h-[300px] rounded-full blur-[50px] sm:blur-[80px] lg:blur-[100px] animate-float-slow opacity-25 sm:opacity-30 lg:opacity-40 storefront-secondary-bg" />
       </div>
 
       {/* Content */}

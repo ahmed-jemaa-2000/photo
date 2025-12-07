@@ -36,8 +36,8 @@ export default function CategoryNav({ categories }: CategoryNavProps) {
           <div className="h-px flex-1 bg-gradient-to-r from-gray-200 via-gray-100 to-transparent ml-4" />
         </div>
 
-        {/* Category Pills */}
-        <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+        {/* Category Pills - with scroll snap */}
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 scroll-snap-x -mx-1 px-1">
           {allCategories.map((category, index) => {
             const active = isActive(category.path);
             return (
@@ -50,8 +50,8 @@ export default function CategoryNav({ categories }: CategoryNavProps) {
                 <Link
                   href={category.path}
                   className={`
-                    relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full 
-                    text-sm font-medium whitespace-nowrap transition-all duration-300
+                    relative inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-2.5 rounded-full 
+                    text-sm font-medium whitespace-nowrap transition-all duration-300 scroll-snap-start
                     ${active
                       ? 'bg-gradient-to-r from-primary to-purple-600 text-white shadow-lg shadow-primary/25'
                       : 'bg-white text-gray-700 border border-gray-200 hover:border-primary/50 hover:text-primary hover:shadow-md'

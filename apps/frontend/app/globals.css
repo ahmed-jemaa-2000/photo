@@ -1369,3 +1369,180 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* ============================================
+   MOBILE-FIRST RESPONSIVE UTILITIES
+   ============================================ */
+
+/* Touch Feedback - Provides tactile response on tap */
+.tap-feedback {
+  transition: transform 0.15s ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tap-feedback:active {
+  transform: scale(0.98);
+}
+
+/* Enhanced Touch Target for Mobile */
+.touch-target-44 {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.touch-target-48 {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Scroll Snap Utilities */
+.scroll-snap-x {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-snap-x::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-snap-start {
+  scroll-snap-align: start;
+}
+
+.scroll-snap-center {
+  scroll-snap-align: center;
+}
+
+/* Safe Area Padding for Notched Devices */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+.safe-area-all {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Mobile-Optimized Card Styles */
+.card-mobile {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: transform 0.15s ease-out, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-mobile:active {
+  transform: scale(0.98);
+}
+
+@media (min-width: 640px) {
+  .card-mobile {
+    border-radius: 1rem;
+  }
+
+  .card-mobile:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-mobile:active {
+    transform: translateY(-2px);
+  }
+}
+
+/* Reduced Motion - Performance optimization for mobile */
+@media (prefers-reduced-motion: reduce) {
+
+  .tap-feedback,
+  .card-mobile,
+  .animate-float,
+  .animate-float-slow {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Mobile Typography Scaling */
+.text-responsive-xs {
+  font-size: clamp(0.625rem, 2vw, 0.75rem);
+}
+
+.text-responsive-sm {
+  font-size: clamp(0.75rem, 2.5vw, 0.875rem);
+}
+
+.text-responsive-base {
+  font-size: clamp(0.875rem, 3vw, 1rem);
+}
+
+.text-responsive-lg {
+  font-size: clamp(1rem, 3.5vw, 1.125rem);
+}
+
+.text-responsive-xl {
+  font-size: clamp(1.125rem, 4vw, 1.25rem);
+}
+
+.text-responsive-2xl {
+  font-size: clamp(1.25rem, 5vw, 1.5rem);
+}
+
+.text-responsive-3xl {
+  font-size: clamp(1.5rem, 6vw, 1.875rem);
+}
+
+.text-responsive-4xl {
+  font-size: clamp(1.875rem, 7vw, 2.25rem);
+}
+
+/* Mobile Grid Gap Utilities */
+.gap-mobile-tight {
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .gap-mobile-tight {
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .gap-mobile-tight {
+    gap: 1.5rem;
+  }
+}
+
+/* Hide on Mobile, Show on Desktop */
+.mobile-hidden {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .mobile-hidden {
+    display: block;
+  }
+}
+
+/* Show on Mobile, Hide on Desktop */
+.mobile-only {
+  display: block;
+}
+
+@media (min-width: 640px) {
+  .mobile-only {
+    display: none;
+  }
+}

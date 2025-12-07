@@ -26,16 +26,16 @@ export default function ProductGrid({ products, shop }: ProductGridProps) {
   }
 
   return (
-    <div id="products" className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+    <div id="products" className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
       {products.map((product, index) => (
         <motion.div
           key={product.id}
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-30px" }}
+          viewport={{ once: true, margin: "-20px" }}
           transition={{
-            duration: 0.4,
-            delay: Math.min(index * 0.05, 0.3) // Cap delay for faster perceived load
+            duration: 0.3,
+            delay: Math.min(index * 0.03, 0.15) // Faster stagger for quicker perceived load
           }}
           className="group"
         >
