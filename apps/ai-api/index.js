@@ -23,6 +23,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const isDev = process.env.NODE_ENV !== 'production';
 
+// Trust proxy for production (nginx reverse proxy)
+// This tells Express to trust X-Forwarded-For headers from nginx
+if (!isDev) {
+  app.set('trust proxy', 1);
+}
+
 // ============================================
 // SECURITY & PERFORMANCE MIDDLEWARE
 // ============================================
