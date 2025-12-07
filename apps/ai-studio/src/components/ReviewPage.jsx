@@ -6,12 +6,13 @@ import {
     Camera,
     Shirt,
     User,
-    MapPin,
+    Image,
     ShoppingBag,
     Watch,
     Footprints,
     Wand2,
-    Image
+    AlertTriangle,
+    ExternalLink
 } from 'lucide-react';
 import AnimatedButton from './common/AnimatedButton';
 import { IMAGE_STYLES } from './ImageStyleSelection';
@@ -20,8 +21,6 @@ function ReviewPage({
     selectedFile,
     selectedModel,
     selectedShoeModel,
-    selectedCameraAngle,
-    selectedLighting,
     selectedBackground,
     imageStyle,
     category,
@@ -31,15 +30,17 @@ function ReviewPage({
     accessoryType,
     accessorySubtype,
     onGenerate,
-    isGenerating
+    isGenerating,
+    credits // NEW: credits object with balance
 }) {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-    // Get photography style name from imageStyle id
-    const getStyleName = () => {
-        const style = IMAGE_STYLES.find(s => s.id === imageStyle);
-        return style?.name || 'E-commerce Clean';
+    // Get photography style from imageStyle id
+    const getPhotoStyle = () => {
+        return IMAGE_STYLES.find(s => s.id === imageStyle) || IMAGE_STYLES[0];
     };
+
+    const photoStyle = getPhotoStyle();
 
     // Category icons
     const categoryIcons = {
@@ -172,29 +173,25 @@ function ReviewPage({
                             <p className="text-center font-medium text-white text-sm">{getStyleLabel()}</p>
                         </motion.div>
 
-                        {/* Background Card */}
+                        {/* Photo Style Card - FIXED: Now shows selected style instead of "Studio" */}
                         <motion.div
                             className="glass-card p-3 rounded-2xl"
                             whileHover={{ scale: 1.02 }}
                         >
-                            <div className="aspect-[3/4] rounded-xl overflow-hidden bg-white/5 relative mb-3">
-                                {selectedBackground ? (
-                                    <img
-                                        src={`${apiUrl}${selectedBackground.previewUrl}`}
-                                        alt={selectedBackground.name?.en || 'Background'}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            e.target.src = `https://placehold.co/400x600.png?text=${encodeURIComponent(selectedBackground.name?.en || 'Studio')}`;
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-2 bg-gradient-to-br from-slate-800 to-slate-900">
-                                        <MapPin className="w-12 h-12" />
-                                        <span className="text-xs">Studio</span>
+                            <div className={`aspect-[3/4] rounded-xl overflow-hidden relative mb-3 bg-gradient-to-br ${photoStyle.gradient}`}>
+                                <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${photoStyle.textDark ? 'bg-black/10' : 'bg-white/20'}`}>
+                                        <photoStyle.icon className={`w-8 h-8 ${photoStyle.textDark ? 'text-slate-800' : 'text-white'}`} />
                                     </div>
-                                )}
+                                    <span className={`text-lg font-bold ${photoStyle.textDark ? 'text-slate-800' : 'text-white'}`}>
+                                        {photoStyle.name}
+                                    </span>
+                                    <span className={`text-xs px-3 text-center ${photoStyle.textDark ? 'text-slate-600' : 'text-white/70'}`}>
+                                        {photoStyle.description}
+                                    </span>
+                                </div>
                             </div>
-                            <p className="text-center font-medium text-white text-sm">Background</p>
+                            <p className="text-center font-medium text-white text-sm">Photo Style</p>
                         </motion.div>
                     </div>
                 </div>
@@ -233,25 +230,14 @@ function ReviewPage({
 
                             {/* Photography Style */}
                             <div className="flex justify-between items-center py-3 border-b border-white/10">
-                                <span className="text-slate-400 font-medium">Photography Style</span>
-                                <span className="font-bold text-white">{getStyleName()}</span>
+                                <span className="text-slate-400 font-medium">Photo Style</span>
+                                <span className="font-bold text-white flex items-center gap-2">
+                                    <span>{photoStyle.emoji}</span>
+                                    {photoStyle.name}
+                                </span>
                             </div>
 
-                            {/* Category-specific fields */}
-                            {category === 'shoes' && selectedCameraAngle && (
-                                <div className="flex justify-between items-center py-3 border-b border-white/10">
-                                    <span className="text-slate-400 font-medium">Camera</span>
-                                    <span className="font-bold text-white">{selectedCameraAngle.name?.en}</span>
-                                </div>
-                            )}
-
-                            {category === 'shoes' && selectedLighting && (
-                                <div className="flex justify-between items-center py-3 border-b border-white/10">
-                                    <span className="text-slate-400 font-medium">Lighting</span>
-                                    <span className="font-bold text-white">{selectedLighting.name?.en}</span>
-                                </div>
-                            )}
-
+                            {/* Bags display mode if applicable */}
                             {category === 'bags' && bagDisplayMode && (
                                 <div className="flex justify-between items-center py-3 border-b border-white/10">
                                     <span className="text-slate-400 font-medium">Display</span>
@@ -271,16 +257,48 @@ function ReviewPage({
                                 </div>
                             </div>
 
+                            {/* No Credits Warning */}
+                            {credits !== null && credits?.balance < 1 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl"
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-red-400">Out of Credits</p>
+                                            <p className="text-sm text-red-300/70 mt-1">
+                                                You need at least 1 credit to generate photos.
+                                            </p>
+                                            <a
+                                                href={`${import.meta.env.VITE_DASHBOARD_URL || 'http://localhost:3000'}/dashboard`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
+                                            >
+                                                Go to Dashboard
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                            </a>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+
                             <AnimatedButton
                                 onClick={onGenerate}
-                                disabled={isGenerating}
+                                disabled={isGenerating || (credits !== null && credits?.balance < 1)}
                                 variant={category}
                                 size="lg"
                                 fullWidth
                                 glow
                                 icon={Wand2}
                             >
-                                {isGenerating ? 'Creating Magic...' : 'Generate Photo'}
+                                {isGenerating
+                                    ? 'Creating Magic...'
+                                    : (credits !== null && credits?.balance < 1)
+                                        ? 'No Credits Available'
+                                        : 'Generate Photo'}
                             </AnimatedButton>
                         </div>
                     </motion.div>

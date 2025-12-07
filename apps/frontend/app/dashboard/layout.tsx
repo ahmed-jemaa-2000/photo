@@ -3,6 +3,7 @@ import { getCurrentUser, getAuthToken, getUserShopId } from '@/lib/auth-server';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import PageTransition from '@/components/ui/PageTransition';
+import { MobileMenuProvider } from '@/lib/MobileMenuContext';
 
 export default async function DashboardLayout({
   children,
@@ -20,18 +21,20 @@ export default async function DashboardLayout({
   const shopId = token ? await getUserShopId(token) : null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader user={user} />
-      <div className="flex">
-        <DashboardSidebar user={user} shopId={shopId} />
-        <main className="flex-1 p-8">
-          <div className="max-w-7xl mx-auto">
-            <PageTransition>
-              {children}
-            </PageTransition>
-          </div>
-        </main>
+    <MobileMenuProvider>
+      <div className="min-h-screen bg-gray-50">
+        <DashboardHeader user={user} />
+        <div className="flex">
+          <DashboardSidebar user={user} shopId={shopId} />
+          <main className="flex-1 p-4 md:p-6 lg:p-8 w-full min-w-0">
+            <div className="max-w-7xl mx-auto">
+              <PageTransition>
+                {children}
+              </PageTransition>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </MobileMenuProvider>
   );
 }

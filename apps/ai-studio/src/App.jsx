@@ -17,8 +17,6 @@ import ImageUpload from './components/ImageUpload';
 import GenerationResult from './components/GenerationResult';
 import ModelSelection from './components/ModelSelection';
 import ShoeModelSelection from './components/ShoeModelSelection';
-import ShoeCameraAngleSelection, { CAMERA_ANGLES } from './components/ShoeCameraAngleSelection';
-import ShoeLightingSelection, { LIGHTING_OPTIONS } from './components/ShoeLightingSelection';
 import ShoePoseSelection, { SHOE_POSES } from './components/ShoePoseSelection';
 import ImageStyleSelection from './components/ImageStyleSelection';
 import ReviewPage from './components/ReviewPage';
@@ -38,7 +36,10 @@ import AspectRatioSelector, { ASPECT_RATIOS } from './components/AspectRatioSele
 
 // Enhanced UX components
 import GenerationProgressOverlay from './components/GenerationProgressOverlay';
+import SuccessCelebration from './components/SuccessCelebration';
+import WelcomeOnboarding from './components/WelcomeOnboarding';
 import { useSwipeNavigation } from './hooks/useSwipeNavigation';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import CreditBadge from './components/CreditBadge';
 import { useCredits } from './hooks/useCredits';
 import { useProductFromUrl } from './hooks/useProductFromUrl';
@@ -192,6 +193,7 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // Common Settings
   const [gender, setGender] = useState(null);
@@ -215,8 +217,6 @@ function App() {
   // Shoes-specific
   const [selectedShoeModel, setSelectedShoeModel] = useState(null);
   const [selectedShoePose, setSelectedShoePose] = useState(null);
-  const [selectedCameraAngle, setSelectedCameraAngle] = useState(null);
-  const [selectedLighting, setSelectedLighting] = useState(null);
 
   // Bags-specific
   const [bagStyle, setBagStyle] = useState(null);
@@ -287,18 +287,10 @@ function App() {
       const squareRatio = ASPECT_RATIOS.find(r => r.id === '1:1');
       if (squareRatio) setAspectRatio(squareRatio);
 
-      // Pre-select recommended options for best results
+      // Pre-select recommended pose for best results
       if (!selectedShoePose) {
         const defaultPose = SHOE_POSES.find(p => p.recommended) || SHOE_POSES[0];
         setSelectedShoePose(defaultPose);
-      }
-      if (!selectedCameraAngle) {
-        const defaultAngle = CAMERA_ANGLES.find(a => a.recommended) || CAMERA_ANGLES[0];
-        setSelectedCameraAngle(defaultAngle);
-      }
-      if (!selectedLighting) {
-        const defaultLighting = LIGHTING_OPTIONS.find(l => l.recommended) || LIGHTING_OPTIONS[0];
-        setSelectedLighting(defaultLighting);
       }
     }
   }, [category]);
@@ -399,14 +391,12 @@ function App() {
         break;
       }
       case 'shoes': {
-        // Build comprehensive shoe photography prompt
+        // Simplified shoe photography prompt - professional defaults
         const posePrompt = selectedShoePose?.prompt || 'Classic standing pose, natural leg positioning';
-        const anglePrompt = selectedCameraAngle?.prompt || '3/4 hero shot angle';
-        const lightingPrompt = selectedLighting?.prompt || 'Professional studio lighting';
         const modelDesc = buildShoePersonaDescription(selectedShoeModel);
 
         personaDescription = modelDesc;
-        categoryPrompt = `${posePrompt}. ${anglePrompt}. ${lightingPrompt}`;
+        categoryPrompt = `${posePrompt}. Professional 3/4 hero angle. Studio lighting with soft shadows`;
         break;
       }
       case 'bags':
@@ -482,8 +472,7 @@ function App() {
         break;
       case 'shoes':
         if (selectedShoeModel) formData.append('shoeModelId', selectedShoeModel.id);
-        if (selectedCameraAngle) formData.append('shoeCameraAngle', selectedCameraAngle.prompt);
-        if (selectedLighting) formData.append('shoeLighting', selectedLighting.prompt);
+        if (selectedShoePose) formData.append('shoePose', selectedShoePose.prompt);
         break;
       case 'bags':
         if (bagStyle) formData.append('bagStyle', bagStyle.id);
@@ -545,6 +534,9 @@ function App() {
         category,
         colorHex: useColorLock ? activeColor : null,
       });
+
+      // Trigger success celebration
+      setShowCelebration(true);
 
       // Update credits if returned
       if (data.credits?.remaining !== undefined) {
@@ -625,6 +617,33 @@ function App() {
       }
     },
     threshold: 60,
+  });
+
+  // === KEYBOARD SHORTCUTS ===
+  useKeyboardShortcuts({
+    onEscape: () => {
+      if (generatedResult) {
+        resetWizard();
+      } else if (showSaveModal) {
+        setShowSaveModal(false);
+      }
+    },
+    onEnter: () => {
+      if (!generatedResult && canProceed() && currentStep !== 'review') {
+        nextStep();
+      }
+    },
+    onArrowLeft: () => {
+      if (!generatedResult && currentStepIndex > 0) {
+        prevStep();
+      }
+    },
+    onArrowRight: () => {
+      if (!generatedResult && canProceed() && currentStepIndex < totalSteps - 1) {
+        nextStep();
+      }
+    },
+    enabled: !isGenerating,
   });
 
   // === ORIGINAL IMAGE URL FOR COMPARISON ===
@@ -781,9 +800,9 @@ function App() {
           >
             <div className="text-center mb-6">
               <h2 className="text-3xl font-bold mb-2">
-                Craft Your <span className="text-gradient">Perfect Shot</span>
+                Choose Your <span className="text-gradient">Style</span>
               </h2>
-              <p className="text-slate-400">Choose pose, angle, and lighting for professional footwear photography</p>
+              <p className="text-slate-400">Select pose and leg style for your footwear photography</p>
             </div>
             <div className="space-y-10">
               {/* 1. Model Pose - How they wear the shoes */}
@@ -792,19 +811,7 @@ function App() {
                 onPoseSelect={setSelectedShoePose}
               />
 
-              {/* 2. Camera Angle - How we frame the shot */}
-              <ShoeCameraAngleSelection
-                selectedAngle={selectedCameraAngle}
-                onAngleSelect={setSelectedCameraAngle}
-              />
-
-              {/* 3. Lighting & Mood - The atmosphere */}
-              <ShoeLightingSelection
-                selectedLighting={selectedLighting}
-                onLightingSelect={setSelectedLighting}
-              />
-
-              {/* 4. Leg Style (optional reference) */}
+              {/* 2. Leg Style (optional reference) */}
               <ShoeModelSelection
                 selectedShoeModel={selectedShoeModel}
                 onShoeModelSelect={setSelectedShoeModel}
@@ -833,18 +840,6 @@ function App() {
                 onModeSelect={setBagDisplayMode}
               />
             )}
-
-            {/* New Bag Camera & Lighting Options */}
-            <div className="grid md:grid-cols-2 gap-8">
-              <BagCameraAngleSelection
-                selectedAngle={bagCameraAngle}
-                onAngleSelect={setBagCameraAngle}
-              />
-              <BagLightingSelection
-                selectedLighting={bagLighting}
-                onLightingSelect={setBagLighting}
-              />
-            </div>
           </motion.div>
         );
 
@@ -863,18 +858,6 @@ function App() {
               onTypeSelect={setAccessoryType}
               onSubtypeSelect={setAccessorySubtype}
             />
-
-            {/* New Accessory Shot & Lighting Options */}
-            <div className="grid md:grid-cols-2 gap-8">
-              <AccessoryShotTypeSelection
-                selectedShotType={accessoryShotType}
-                onShotTypeSelect={setAccessoryShotType}
-              />
-              <AccessoryLightingSelection
-                selectedLighting={accessoryLighting}
-                onLightingSelect={setAccessoryLighting}
-              />
-            </div>
           </motion.div>
         );
 
@@ -922,8 +905,6 @@ function App() {
               selectedFile={selectedFile}
               selectedModel={selectedModel}
               selectedShoeModel={selectedShoeModel}
-              selectedCameraAngle={selectedCameraAngle}
-              selectedLighting={selectedLighting}
               selectedBackground={selectedBackground}
               imageStyle={imageStyle}
               category={category}
@@ -934,6 +915,7 @@ function App() {
               accessorySubtype={accessorySubtype}
               onGenerate={handleGenerate}
               isGenerating={isGenerating}
+              credits={credits}
             />
           </motion.div>
         );
@@ -979,6 +961,15 @@ function App() {
 
       {/* Low Credits Toast - Shows once per session when credits are low */}
       <LowCreditsToast balance={credits?.balance} threshold={3} />
+
+      {/* Success Celebration - Confetti on generation complete */}
+      <SuccessCelebration
+        show={showCelebration}
+        onComplete={() => setShowCelebration(false)}
+      />
+
+      {/* Welcome Onboarding - Shows only for first-time users */}
+      <WelcomeOnboarding />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 min-h-screen flex flex-col safe-top">
         {/* Header */}
