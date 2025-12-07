@@ -11,16 +11,16 @@ interface HeroProps {
 
 export default function Hero({ shop, featuredProducts }: HeroProps) {
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gray-900">
+    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden storefront-page">
       {/* Premium Background */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black" />
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-30 mix-blend-overlay" />
 
-        {/* Animated Floating Orbs */}
-        <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-primary/40 rounded-full blur-[120px] animate-float opacity-60" />
-        <div className="absolute bottom-1/3 right-1/4 w-[350px] h-[350px] bg-purple-500/30 rounded-full blur-[100px] animate-float-slow opacity-50" />
-        <div className="absolute top-1/2 right-1/3 w-[250px] h-[250px] bg-pink-500/20 rounded-full blur-[80px] animate-float opacity-40" style={{ animationDelay: '1s' }} />
+        {/* Animated Floating Orbs - using theme colors via CSS variables */}
+        <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] rounded-full blur-[120px] animate-float opacity-60 storefront-brand-bg" />
+        <div className="absolute bottom-1/3 right-1/4 w-[350px] h-[350px] rounded-full blur-[100px] animate-float-slow opacity-50 storefront-secondary-bg" />
+        <div className="absolute top-1/2 right-1/3 w-[250px] h-[250px] rounded-full blur-[80px] animate-float opacity-40 storefront-accent-bg" style={{ animationDelay: '1s' }} />
 
         {/* Decorative Grid Pattern */}
         <div

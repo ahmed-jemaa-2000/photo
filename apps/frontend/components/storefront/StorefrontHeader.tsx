@@ -26,8 +26,8 @@ export default function StorefrontHeader({ shop }: StorefrontHeaderProps) {
     <>
       <header
         className={`border-b sticky top-0 z-50 transition-all duration-300 ${isScrolled
-            ? 'header-scrolled border-transparent'
-            : 'bg-white border-gray-200 shadow-sm'
+          ? 'header-scrolled border-transparent'
+          : 'bg-white border-gray-200 shadow-sm'
           }`}
       >
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
@@ -46,8 +46,7 @@ export default function StorefrontHeader({ shop }: StorefrontHeaderProps) {
                 </div>
               )}
               <span
-                className="text-xl md:text-2xl font-bold transition-colors duration-300"
-                style={{ color: shop.primaryColor }}
+                className="text-xl md:text-2xl font-bold transition-colors duration-300 storefront-brand-text"
               >
                 {shop.name}
               </span>
@@ -165,7 +164,7 @@ export default function StorefrontHeader({ shop }: StorefrontHeaderProps) {
                 className="object-contain"
               />
             )}
-            <span className="text-lg font-bold" style={{ color: shop.primaryColor }}>
+            <span className="text-lg font-bold storefront-brand-text">
               {shop.name}
             </span>
           </div>

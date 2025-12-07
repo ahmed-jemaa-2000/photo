@@ -17,10 +17,8 @@ export default function ProductCard({ product, shop }: ProductCardProps) {
   const { cardStyle } = shop;
   const mainImage = product.images && product.images[0];
 
-  const cardClasses = `group bg-white overflow-hidden transition-all duration-500 hover:shadow-2xl card-lift-premium ${cardStyle === 'rounded' ? 'rounded-2xl' :
-    cardStyle === 'square' ? 'rounded-none' :
-      'rounded-xl'
-    } shadow-lg`;
+  // Use theme-aware storefront-card class for theme-based styling
+  const cardClasses = `group storefront-card overflow-hidden transition-all duration-500 hover:shadow-2xl card-lift-premium`;
 
   const discountPercentage = product.oldPrice && product.oldPrice > product.price
     ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
@@ -74,8 +72,8 @@ export default function ProductCard({ product, shop }: ProductCardProps) {
               <button
                 onClick={handleWishlistClick}
                 className={`p-2 rounded-full backdrop-blur-md transition-all duration-300 heart-pop ${isWishlisted
-                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-                    : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
+                  ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                  : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
                   }`}
                 aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
               >
