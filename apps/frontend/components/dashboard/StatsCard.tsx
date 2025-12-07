@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { DollarSign, ShoppingBag, Package, Clock, TrendingUp, TrendingDown } from 'lucide-react';
+import { AnimatedNumber } from '@/components/ui/AnimatedCounter';
 
 interface StatsCardProps {
   title: string;
@@ -66,6 +67,28 @@ export default function StatsCard({
   const styles = colorStyles[color];
   const IconComponent = iconMap[icon];
 
+  // Extract numeric value for animation
+  const getNumericValue = (val: string | number): number => {
+    if (typeof val === 'number') return val;
+    // Extract number from strings like "1234 TND" or "$1,234"
+    const match = val.match(/[\d,]+/);
+    if (match) {
+      return parseInt(match[0].replace(/,/g, ''), 10);
+    }
+    return 0;
+  };
+
+  const getSuffix = (val: string | number): string => {
+    if (typeof val === 'number') return '';
+    // Extract suffix from strings like "1234 TND"
+    const match = val.match(/[\d,]+\s*(.*)$/);
+    return match ? ` ${match[1]}` : '';
+  };
+
+  const numericValue = getNumericValue(value);
+  const suffix = getSuffix(value);
+  const canAnimate = numericValue > 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -88,8 +111,8 @@ export default function StatsCard({
           </div>
           {trend && (
             <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${trend.isPositive
-                ? 'bg-green-50 text-green-600'
-                : 'bg-red-50 text-red-600'
+              ? 'bg-green-50 text-green-600'
+              : 'bg-red-50 text-red-600'
               }`}>
               {trend.isPositive ? (
                 <TrendingUp className="w-3 h-3" />
@@ -103,7 +126,16 @@ export default function StatsCard({
 
         <div>
           <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 tracking-tight">{value}</p>
+          <p className="text-3xl font-bold text-gray-900 tracking-tight">
+            {canAnimate ? (
+              <>
+                <AnimatedNumber value={numericValue} duration={1.5} />
+                {suffix}
+              </>
+            ) : (
+              value
+            )}
+          </p>
           {subtitle && (
             <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
           )}
@@ -112,3 +144,4 @@ export default function StatsCard({
     </motion.div>
   );
 }
+

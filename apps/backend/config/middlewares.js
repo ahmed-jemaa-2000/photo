@@ -36,11 +36,14 @@ module.exports = ({ env }) => [
         ? [
           'https://brandili.shop',
           'https://dashboard.brandili.shop',
+          'https://studio.brandili.shop',
+          'http://localhost:3002', // Allow local studio connecting to prod for testing
           /^https:\/\/.*\.brandili\.shop$/,
         ]
         : [
           'http://localhost:3000',
           'http://localhost:1337',
+          'http://localhost:3002',
           'http://dashboard.brandini.test:3000',
           /^http:\/\/.*\.brandini\.test:3000$/,
         ],
