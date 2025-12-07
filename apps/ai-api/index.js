@@ -377,16 +377,17 @@ app.post('/api/generate', generateLimiter, upload.fields([
     });
   } catch (error) {
     // Structured error logging with context
+    // Note: Some variables may not be defined if error happened before body parsing
     const errorContext = {
       timestamp: new Date().toISOString(),
       requestId: req.headers['x-request-id'] || `gen-${Date.now()}`,
       userId: req.user?.id || 'unknown',
       userEmail: req.user?.email || 'unknown',
-      category,
-      modelId: modelId || null,
-      imageStyle: imageStyle || 'ecommerce_clean',
-      errorMessage: error.message,
-      errorStack: isDev ? error.stack : undefined,
+      category: req.body?.category || 'unknown',
+      modelId: req.body?.modelId || null,
+      imageStyle: req.body?.imageStyle || 'unknown',
+      errorMessage: error?.message || 'Unknown error',
+      errorStack: isDev ? error?.stack : undefined,
       responseData: error?.response?.data || null,
     };
 
