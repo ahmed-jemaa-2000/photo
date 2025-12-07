@@ -94,18 +94,19 @@ export async function middleware(request: NextRequest) {
   }
 
   // MAIN DOMAIN ROUTING (brandili.shop or brandini.test)
+  // Serve landing page at root via rewrite
   if (
     hostname === 'brandili.shop' ||
     hostname === 'brandini.test' ||
     hostname === 'localhost' ||
     hostname.startsWith('localhost:')
   ) {
-    // Redirect main domain root to dashboard
+    // Rewrite root to landing page
     if (pathname === '/' || pathname === '') {
-      const dashboardUrl = new URL('/dashboard', request.url);
-      return NextResponse.redirect(dashboardUrl);
+      return NextResponse.rewrite(new URL('/landing', request.url));
     }
 
+    // Dashboard and other routes continue normally
     return NextResponse.next();
   }
 
