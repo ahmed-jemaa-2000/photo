@@ -334,34 +334,95 @@ async function generateImage(imagePath, userPrompt, options = {}) {
   }
 
   const formData = new FormData();
+
+  // IMPORTANT: API only accepts ONE image file. Send only the product image.
   formData.append('files', fs.createReadStream(imagePath));
 
-  let basePrompt = 'Create a high-fidelity fashion product photo: a real human model wearing the exact same garment from the reference image. Preserve all logos, text, details, and EXACT garment color with no hue/brightness shifts.';
+  // Build the base prompt based on category and model description
+  let basePrompt = '';
+  const modelDescription = options.modelDescription || '';
+  const shoeModelDescription = options.shoeModelDescription || '';
 
-  // Handle shoe category with leg reference
-  if (options.category === 'shoes' && options.modelReferencePath && fs.existsSync(options.modelReferencePath)) {
-    console.log('Using shoe/leg model reference image:', options.modelReferencePath);
-    formData.append('files', fs.createReadStream(options.modelReferencePath));
+  // Handle SHOES category
+  if (options.category === 'shoes') {
+    let shoePromptParts = [
+      'Create a high-fidelity professional product photo of these shoes worn by a real person.',
+      'The shoes in the reference image must be preserved EXACTLY - same color, design, logos, text, and all details.',
+    ];
 
-    let shoePromptParts = ['Create a high-fidelity product photo of the shoes from the first image. Use the second image as reference for leg/feet type and outfit style.'];
+    // Add shoe model (leg/outfit) description if provided
+    if (shoeModelDescription) {
+      shoePromptParts.push(`The model should have: ${shoeModelDescription}.`);
+      console.log('[Image Gen] Using shoe model description:', shoeModelDescription);
+    } else {
+      shoePromptParts.push('Show the shoes on natural-looking human legs with appropriate casual attire.');
+    }
 
+    // Add camera angle instruction
     if (options.shoeCameraAngle) {
       shoePromptParts.push(options.shoeCameraAngle);
     }
 
+    // Add lighting instruction
     if (options.shoeLighting) {
       shoePromptParts.push(options.shoeLighting);
     }
 
-    shoePromptParts.push('Focus on shoe details while maintaining natural leg positioning. Preserve all logos, text, and details from the shoes. LOCK shoe color and design exactly to the first image.');
-
+    shoePromptParts.push('Focus sharply on shoe details. LOCK shoe color and design exactly to the reference image.');
     basePrompt = shoePromptParts.join(' ');
   }
-  // Handle regular clothes category with full model reference
-  else if (options.modelReferencePath && fs.existsSync(options.modelReferencePath)) {
-    console.log('Using model reference image:', options.modelReferencePath);
-    formData.append('files', fs.createReadStream(options.modelReferencePath));
-    basePrompt = 'Create a high-fidelity fashion product photo using the first image as the exact garment reference and the second image as the model reference. The model in the output should resemble the person in the second image. Preserve all logos, text, and details from the garment. LOCK garment color and graphics exactly to the first image.';
+  // Handle BAGS category
+  else if (options.category === 'bags') {
+    let bagPromptParts = [
+      'Create a high-fidelity professional product photo of this bag.',
+      'The bag in the reference image must be preserved EXACTLY - same color, material, hardware, logos, and all details.',
+    ];
+
+    if (modelDescription) {
+      bagPromptParts.push(`Show the bag styled with a model who has: ${modelDescription}.`);
+      console.log('[Image Gen] Using bag model description:', modelDescription);
+    }
+
+    basePrompt = bagPromptParts.join(' ');
+  }
+  // Handle ACCESSORIES category
+  else if (options.category === 'accessories') {
+    let accessoryPromptParts = [
+      'Create a high-fidelity professional product photo of this accessory.',
+      'The accessory in the reference image must be preserved EXACTLY - same color, material, design, and all details.',
+    ];
+
+    if (modelDescription) {
+      accessoryPromptParts.push(`Show the accessory on a model who has: ${modelDescription}.`);
+      console.log('[Image Gen] Using accessory model description:', modelDescription);
+    }
+
+    basePrompt = accessoryPromptParts.join(' ');
+  }
+  // Handle CLOTHES category (default)
+  else {
+    let clothesPromptParts = [
+      'Create a high-fidelity fashion product photo: a real human model wearing the EXACT same garment from the reference image.',
+      'Preserve all logos, text, patterns, graphics, and details. LOCK the EXACT garment color with no hue or brightness shifts.',
+    ];
+
+    // Add model persona description if provided
+    if (modelDescription) {
+      clothesPromptParts.push(`The model should be: ${modelDescription}.`);
+      console.log('[Image Gen] Using model description:', modelDescription);
+    } else if (options.modelPersona) {
+      // Fallback to modelPersona object if available
+      const persona = options.modelPersona;
+      const personaDesc = [];
+      if (persona.gender) personaDesc.push(persona.gender);
+      if (persona.ethnicity) personaDesc.push(`${persona.ethnicity} ethnicity`);
+      if (persona.style) personaDesc.push(`${persona.style} style`);
+      if (personaDesc.length > 0) {
+        clothesPromptParts.push(`The model should be: ${personaDesc.join(', ')}.`);
+      }
+    }
+
+    basePrompt = clothesPromptParts.join(' ');
   }
 
   // Build enhanced prompt with style presets
@@ -369,20 +430,42 @@ async function generateImage(imagePath, userPrompt, options = {}) {
 
   console.log('[Image Gen] Enhanced prompt length:', enhancedPrompt.length);
   console.log('[Image Gen] Aspect ratio:', aspectRatio);
+  console.log('[Image Gen] Category:', options.category || 'clothes');
 
   formData.append('prompt', enhancedPrompt);
   formData.append('model', DEFAULT_MODEL);
   formData.append('aspect_ratio', aspectRatio);
 
+  // Add style parameter based on imageStyle preset
+  // Map our internal style presets to API-supported style values
+  const styleMap = {
+    'ecommerce_clean': 'Stock Photo',
+    'ecommerce_soft': 'Stock Photo',
+    'editorial_vogue': 'Portrait Fashion',
+    'editorial_minimal': 'Photorealistic',
+    'lifestyle_urban': 'Dynamic',
+    'lifestyle_outdoor': 'Photorealistic',
+    'lifestyle_cafe': 'Photorealistic',
+    'luxury_campaign': 'Portrait Cinematic',
+    'luxury_dark': 'Portrait Cinematic',
+    'instagram_aesthetic': 'Fashion',
+    'tiktok_dynamic': 'Dynamic',
+    'artistic_film': 'Creative',
+  };
+  const apiStyle = styleMap[options.imageStyle] || 'Photorealistic';
+  formData.append('style', apiStyle);
+  console.log('[Image Gen] API Style:', apiStyle);
+
+  // Add person_generation parameter for gender guidance
   if (options.modelPersona?.gender) {
     formData.append('person_generation', options.modelPersona.gender);
   } else if (options.gender) {
     formData.append('person_generation', options.gender);
   }
 
-  // Debug: Log what we're sending
+  // Debug logging
   console.log('[Image Gen] ===== API REQUEST DEBUG =====');
-  console.log('[Image Gen] Files attached:', formData.getBuffer ? 'FormData with files' : 'unknown');
+  console.log('[Image Gen] Single file attached (API limit: 1)');
   console.log('[Image Gen] Model:', DEFAULT_MODEL);
   console.log('[Image Gen] Prompt (first 500 chars):', enhancedPrompt.substring(0, 500));
   console.log('[Image Gen] API URL:', apiClient.defaults.baseURL + '/uapi/v1/generate_image');

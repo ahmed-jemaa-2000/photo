@@ -310,32 +310,39 @@ app.post('/api/generate', generateLimiter, upload.fields([
       }
     }
 
-    // Resolve model reference path from modelId or shoeModelId if provided
-    let resolvedModelPath = modelReferencePath;
+    // Resolve model DESCRIPTION from modelId or shoeModelId (API only accepts 1 image, so we use text descriptions)
+    let modelDescription = '';
+    let shoeModelDescription = '';
 
-    // Handle shoe category with shoe model selection
-    if (category === 'shoes' && shoeModelId && !resolvedModelPath) {
+    // Handle shoe category - get shoe model description
+    if (category === 'shoes' && shoeModelId) {
       const { SHOE_MODELS } = require('./config/botConfig');
       const selectedShoeModel = SHOE_MODELS.find(m => m.id === shoeModelId);
-      if (selectedShoeModel && fs.existsSync(selectedShoeModel.path)) {
-        resolvedModelPath = selectedShoeModel.path;
-        console.log('Using shoe model reference:', selectedShoeModel.name.en, '(' + resolvedModelPath + ')');
+      if (selectedShoeModel) {
+        shoeModelDescription = selectedShoeModel.description;
+        console.log('Using shoe model description:', selectedShoeModel.name.en);
       }
     }
-    // Handle regular clothes category with full model selection
-    else if (modelId && !resolvedModelPath) {
-      const { MODELS } = require('./config/botConfig');
-      const selectedModel = MODELS.find(m => m.id === modelId);
-      if (selectedModel && fs.existsSync(selectedModel.path)) {
-        resolvedModelPath = selectedModel.path;
-        console.log('Using model reference:', selectedModel.name.en, '(' + resolvedModelPath + ')');
+    // Handle clothes/bags/accessories category - get model description
+    else if (modelId) {
+      const { MODELS, BAG_MODELS } = require('./config/botConfig');
+      // Check regular models first
+      let selectedModel = MODELS.find(m => m.id === modelId);
+      // Then check bag models
+      if (!selectedModel) {
+        selectedModel = BAG_MODELS.find(m => m.id === modelId);
+      }
+      if (selectedModel) {
+        modelDescription = selectedModel.description;
+        console.log('Using model description:', selectedModel.name.en);
       }
     }
 
     const result = await geminiService.generateImage(imagePath, prompt, {
       gender: gender || parsedPersona?.gender || undefined,
       modelPersona: parsedPersona,
-      modelReferencePath: resolvedModelPath,
+      modelDescription,
+      shoeModelDescription,
       category,
       shoeCameraAngle,
       shoeLighting,

@@ -1,6 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import StatsCard from '@/components/dashboard/StatsCard';
 import QuickActionCard from '@/components/dashboard/QuickActionCard';
 import RecentOrders from '@/components/dashboard/RecentOrders';
@@ -8,6 +9,7 @@ import StorefrontCard from '@/components/dashboard/StorefrontCard';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import DailyFocus from '@/components/dashboard/DailyFocus';
 import { Shop, Product, Order, Category } from '@busi/types';
+import { ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
 
 interface DashboardHomeClientProps {
     shop: Shop;
@@ -31,6 +33,22 @@ export default function DashboardHomeClient({
     pendingOrdersCount,
 }: DashboardHomeClientProps) {
 
+    // Collapsible state with localStorage persistence
+    const [analyticsExpanded, setAnalyticsExpanded] = useState(true);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('dashboard_analytics_expanded');
+        if (saved !== null) {
+            setAnalyticsExpanded(saved === 'true');
+        }
+    }, []);
+
+    const toggleAnalytics = () => {
+        const newState = !analyticsExpanded;
+        setAnalyticsExpanded(newState);
+        localStorage.setItem('dashboard_analytics_expanded', String(newState));
+    };
+
     const containerVariants = {
         hidden: { opacity: 0 },
         show: {
@@ -51,17 +69,17 @@ export default function DashboardHomeClient({
             initial="hidden"
             animate="show"
             variants={containerVariants}
-            className="space-y-8"
+            className="space-y-6"
         >
             {/* Daily Focus Banner (replaces standard header) */}
             <motion.div variants={itemVariants}>
                 <DailyFocus orders={orders} shopName={shop.name} />
             </motion.div>
 
-            {/* Stats Grid */}
+            {/* Stats Grid - Compact row */}
             <motion.div
                 variants={itemVariants}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
+                className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4"
             >
                 <StatsCard
                     title="Total Revenue"
@@ -95,11 +113,49 @@ export default function DashboardHomeClient({
                 />
             </motion.div>
 
-            {/* Analytics Charts */}
+            {/* Collapsible Analytics Section */}
             {orders.length > 0 && (
                 <motion.div variants={itemVariants}>
-                    <h2 className="text-xl font-bold text-gray-900 mb-4 px-1">Analytics Overview</h2>
-                    <DashboardCharts orders={orders} />
+                    {/* Section Header with Toggle */}
+                    <button
+                        onClick={toggleAnalytics}
+                        className="w-full flex items-center justify-between px-4 py-3 mb-3 bg-white rounded-2xl border border-gray-100 hover:border-gray-200 transition-colors group"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                                <BarChart3 className="w-5 h-5 text-white" />
+                            </div>
+                            <div className="text-left">
+                                <h2 className="text-lg font-bold text-gray-900">Analytics Overview</h2>
+                                <p className="text-sm text-gray-500">Sales, orders & top products</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                                {analyticsExpanded ? 'Collapse' : 'Expand'}
+                            </span>
+                            {analyticsExpanded ? (
+                                <ChevronUp className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                            ) : (
+                                <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                            )}
+                        </div>
+                    </button>
+
+                    {/* Collapsible Content */}
+                    <AnimatePresence>
+                        {analyticsExpanded && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                className="overflow-hidden"
+                            >
+                                <DashboardCharts orders={orders} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </motion.div>
             )}
 

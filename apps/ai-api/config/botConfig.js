@@ -45,7 +45,7 @@ const MODELS = [
         gender: 'female',
         ethnicity: 'tunisian',
         style: { en: 'Modern Chic', tn: 'Chic Moderne' },
-        description: 'Tunisian woman named Asma, olive skin, long dark hair, modern chic fashion style, confident and friendly smile, North African features.',
+        description: 'Young Tunisian woman in her mid-20s with warm olive skin, long flowing dark brown hair styled in soft waves, expressive dark eyes with natural makeup, elegant cheekbones, modern chic fashion aesthetic, confident yet approachable smile, professional model posture, Mediterranean North African beauty, studio-quality appearance',
         previewUrl: 'https://placehold.co/400x600.png?text=Asma',
         path: path.join(__dirname, '../assets/models/girl-asma.png')
     },
@@ -55,7 +55,7 @@ const MODELS = [
         gender: 'female',
         ethnicity: 'tunisian',
         style: { en: 'Casual/Street', tn: 'Casual' },
-        description: 'Young Tunisian woman named Eya, casual street style, energetic vibe, natural makeup, curly hair, North African features.',
+        description: 'Young Tunisian woman in her early 20s with caramel-toned olive skin, voluminous curly dark hair, bright expressive eyes, natural minimal makeup look, youthful energetic vibe, casual street style confidence, infectious genuine smile, athletic build, Gen-Z fashion influencer aesthetic, North African features',
         previewUrl: 'https://placehold.co/400x600.png?text=Eya',
         path: path.join(__dirname, '../assets/models/girl-eya.png')
     },
@@ -65,7 +65,7 @@ const MODELS = [
         gender: 'female',
         ethnicity: 'tunisian',
         style: { en: 'Elegant/Formal', tn: 'Soirée' },
-        description: 'Tunisian woman named Safa, elegant evening look, sophisticated hairstyle, soft lighting, refined North African beauty.',
+        description: 'Sophisticated Tunisian woman in her late 20s with radiant golden-olive skin, sleek dark hair in an elegant updo or smooth style, refined makeup with defined eyes and subtle lip color, graceful neck and posture, high-fashion editorial beauty, luxury brand model aesthetic, poised and composed expression, formal evening elegance',
         previewUrl: 'https://placehold.co/400x600.png?text=Safa',
         path: path.join(__dirname, '../assets/models/girl-safa.png')
     },
@@ -75,7 +75,7 @@ const MODELS = [
         gender: 'female',
         ethnicity: 'tunisian',
         style: { en: 'Traditional', tn: 'Traditionnel' },
-        description: 'Tunisian woman named Sarra, wearing modern-traditional fusion, warm smile, authentic North African features.',
+        description: 'Beautiful Tunisian woman in her mid-20s with rich olive skin, dark wavy hair styled naturally, warm brown eyes, gentle and welcoming smile, modest yet fashionable presence, blending traditional and modern aesthetics, authentic Mediterranean beauty, natural makeup enhancing features, graceful and approachable demeanor',
         previewUrl: 'https://placehold.co/400x600.png?text=Sarra',
         path: path.join(__dirname, '../assets/models/girl-sarra.png')
     },
@@ -85,7 +85,7 @@ const MODELS = [
         gender: 'female',
         ethnicity: 'tunisian',
         style: { en: 'Business', tn: 'Business' },
-        description: 'Tunisian woman named Sirine, professional business attire, sharp focus, confident pose, modern Tunis lifestyle.',
+        description: 'Professional Tunisian woman in her late 20s with flawless olive complexion, polished straight dark hair in a professional style, sharp intelligent eyes, confident power pose, corporate executive aesthetic, tailored and sophisticated look, strong jawline, minimal elegant makeup, commanding yet approachable presence, modern businesswoman',
         previewUrl: 'https://placehold.co/400x600.png?text=Sirine',
         path: path.join(__dirname, '../assets/models/girl-sirine.png')
     },
@@ -97,7 +97,7 @@ const MODELS = [
         gender: 'male',
         ethnicity: 'tunisian',
         style: { en: 'Casual', tn: 'Casual' },
-        description: 'Tunisian man named Ahmed, short dark hair, casual t-shirt and jeans look, friendly demeanor, North African features.',
+        description: 'Handsome Tunisian man in his mid-20s with warm olive skin, short well-groomed dark hair, friendly brown eyes, natural stubble, relaxed casual style, approachable genuine smile, athletic average build, everyday guy next door aesthetic, Mediterranean North African features, natural confident posture',
         previewUrl: 'https://placehold.co/400x600.png?text=Ahmed',
         path: path.join(__dirname, '../assets/models/man-ahmed.png')
     },
@@ -107,7 +107,7 @@ const MODELS = [
         gender: 'male',
         ethnicity: 'tunisian',
         style: { en: 'Streetwear', tn: 'Streetwear' },
-        description: 'Young Tunisian man named Ayoub, trendy streetwear fashion, cool attitude, modern haircut, urban vibe.',
+        description: 'Stylish young Tunisian man in his early 20s with light olive skin, trendy modern fade haircut, edgy confident expression, strong eyebrows, clean-shaven, urban streetwear fashion influencer aesthetic, athletic slim build, cool effortless attitude, contemporary Gen-Z style, North African features with modern edge',
         previewUrl: 'https://placehold.co/400x600.png?text=Ayoub',
         path: path.join(__dirname, '../assets/models/man-ayoub.png')
     },
@@ -117,7 +117,7 @@ const MODELS = [
         gender: 'male',
         ethnicity: 'tunisian',
         style: { en: 'Sporty', tn: 'Sport' },
-        description: 'Tunisian man named Fares, athletic build, sporty outfit, energetic pose, outdoorsy look.',
+        description: 'Athletic Tunisian man in his mid-20s with sun-kissed olive skin, short sporty dark hair, determined focused expression, muscular toned build, dynamic energetic pose, activewear model aesthetic, healthy glowing complexion, outdoor adventure lifestyle look, confident athletic stance, North African features',
         previewUrl: 'https://placehold.co/400x600.png?text=Fares',
         path: path.join(__dirname, '../assets/models/man-fares.png')
     },
@@ -127,7 +127,7 @@ const MODELS = [
         gender: 'male',
         ethnicity: 'tunisian',
         style: { en: 'Classic', tn: 'Classique' },
-        description: 'Tunisian man named Hassen, classic style, well-groomed, mature and sophisticated appearance.',
+        description: 'Distinguished Tunisian man in his early 30s with rich olive complexion, neatly styled dark hair with classic cut, well-groomed short beard or stubble, mature refined expression, timeless classic menswear aesthetic, aristocratic posture, sophisticated and cultured appearance, Mediterranean gentleman style, professional catalog model quality',
         previewUrl: 'https://placehold.co/400x600.png?text=Hassen',
         path: path.join(__dirname, '../assets/models/man-hassen.png')
     },
@@ -137,7 +137,7 @@ const MODELS = [
         gender: 'male',
         ethnicity: 'tunisian',
         style: { en: 'Smart Casual', tn: 'Smart Casual' },
-        description: 'Tunisian man named Khalil, smart casual attire, glasses, intelligent look, modern professional.',
+        description: 'Intelligent Tunisian man in his late 20s with warm olive skin, neat dark hair, wearing stylish glasses, thoughtful intellectual expression, smart casual business aesthetic, creative professional look, slim build, modern tech entrepreneur vibe, approachable yet refined, North African features with cosmopolitan polish',
         previewUrl: 'https://placehold.co/400x600.png?text=Khalil',
         path: path.join(__dirname, '../assets/models/man-khalil.png')
     },
@@ -147,7 +147,7 @@ const MODELS = [
         gender: 'male',
         ethnicity: 'tunisian',
         style: { en: 'Formal', tn: 'Costume' },
-        description: 'Tunisian man named Mounir, formal suit, sharp features, serious and commanding presence.',
+        description: 'Commanding Tunisian man in his early 30s with flawless olive complexion, perfectly styled dark hair, sharp angular features, intense powerful gaze, impeccable formal suit aesthetic, strong broad shoulders, executive presence, luxury menswear campaign quality, authoritative yet charismatic, high-fashion editorial model appearance',
         previewUrl: 'https://placehold.co/400x600.png?text=Mounir',
         path: path.join(__dirname, '../assets/models/man-mounir.png')
     }
@@ -160,7 +160,7 @@ const SHOE_MODELS = [
         name: { en: 'Black Jeans', tn: 'Jeans Kahla' },
         gender: 'female',
         outfitStyle: 'casual',
-        description: 'Female legs wearing fitted black denim jeans',
+        description: 'Slim feminine legs with smooth olive skin, wearing fitted black stretch denim skinny jeans with a slight ankle crop, showing elegant ankles, professional fashion photography pose, casual chic aesthetic',
         previewUrl: '/api/assets/legs/female-black-jeans.png',
         path: path.join(__dirname, '../assets/legs/female-black-jeans.png')
     },
@@ -169,7 +169,7 @@ const SHOE_MODELS = [
         name: { en: 'Blue Jeans', tn: 'Jeans Azra9' },
         gender: 'female',
         outfitStyle: 'casual',
-        description: 'Female legs wearing classic blue denim jeans',
+        description: 'Feminine legs with natural skin tone, wearing classic medium-wash blue denim jeans with slight distressing, relaxed fit, authentic everyday casual style, natural standing pose',
         previewUrl: '/api/assets/legs/female-blue-jeans.png',
         path: path.join(__dirname, '../assets/legs/female-blue-jeans.png')
     },
@@ -178,7 +178,7 @@ const SHOE_MODELS = [
         name: { en: 'White Pants', tn: 'Sarwal Abyad' },
         gender: 'female',
         outfitStyle: 'casual',
-        description: 'Female legs wearing white casual pants',
+        description: 'Elegant feminine legs with smooth skin, wearing crisp white straight-leg cotton pants, clean sophisticated summer look, bright airy aesthetic, professional catalog photography',
         previewUrl: '/api/assets/legs/female-white-pants.png',
         path: path.join(__dirname, '../assets/legs/female-white-pants.png')
     },
@@ -187,7 +187,7 @@ const SHOE_MODELS = [
         name: { en: 'Beige Pants', tn: 'Sarwal Beige' },
         gender: 'female',
         outfitStyle: 'casual',
-        description: 'Female legs wearing beige khaki pants',
+        description: 'Feminine legs with natural olive skin, wearing tailored beige chino pants, smart casual aesthetic, neutral earth tones, versatile everyday style',
         previewUrl: '/api/assets/legs/female-beige-pants.png',
         path: path.join(__dirname, '../assets/legs/female-beige-pants.png')
     },
@@ -196,7 +196,7 @@ const SHOE_MODELS = [
         name: { en: 'Black Leggings', tn: 'Leggings Kahla' },
         gender: 'female',
         outfitStyle: 'sporty',
-        description: 'Female legs wearing black athletic leggings',
+        description: 'Athletic feminine legs with toned muscles, wearing sleek black performance leggings, sporty activewear aesthetic, dynamic athleisure style, fitness model quality',
         previewUrl: '/api/assets/legs/female-black-leggings.png',
         path: path.join(__dirname, '../assets/legs/female-black-leggings.png')
     },
@@ -205,7 +205,7 @@ const SHOE_MODELS = [
         name: { en: 'Dark Skinny Jeans', tn: 'Skinny Jeans Dahkra' },
         gender: 'female',
         outfitStyle: 'casual',
-        description: 'Female legs wearing dark wash skinny jeans',
+        description: 'Slim feminine legs with smooth skin, wearing dark charcoal wash skinny jeans with subtle stretch, edgy modern casual style, fashion-forward denim look',
         previewUrl: '/api/assets/legs/female-dark-skinny-jeans.png',
         path: path.join(__dirname, '../assets/legs/female-dark-skinny-jeans.png')
     },
@@ -216,7 +216,7 @@ const SHOE_MODELS = [
         name: { en: 'Black Jeans', tn: 'Jeans Kahla' },
         gender: 'male',
         outfitStyle: 'casual',
-        description: 'Male legs wearing black denim jeans',
+        description: 'Masculine legs with natural skin tone, wearing slim-fit black denim jeans, clean modern casual style, versatile everyday menswear aesthetic',
         previewUrl: '/api/assets/legs/male-black-jeans.png',
         path: path.join(__dirname, '../assets/legs/male-black-jeans.png')
     },
@@ -225,7 +225,7 @@ const SHOE_MODELS = [
         name: { en: 'Blue Jeans', tn: 'Jeans Azra9' },
         gender: 'male',
         outfitStyle: 'casual',
-        description: 'Male legs wearing classic blue denim jeans',
+        description: 'Masculine legs, wearing classic straight-leg medium blue denim jeans, authentic casual menswear, timeless American style',
         previewUrl: '/api/assets/legs/male-blue-jeans.png',
         path: path.join(__dirname, '../assets/legs/male-blue-jeans.png')
     },
@@ -234,7 +234,7 @@ const SHOE_MODELS = [
         name: { en: 'Gray Joggers', tn: 'Joggers Rmadi' },
         gender: 'male',
         outfitStyle: 'sporty',
-        description: 'Male legs wearing gray athletic jogger pants',
+        description: 'Athletic masculine legs, wearing heather gray cotton jogger sweatpants with elastic cuffs, sporty athleisure aesthetic, comfortable casual sportswear',
         previewUrl: '/api/assets/legs/male-gray-joggers.png',
         path: path.join(__dirname, '../assets/legs/male-gray-joggers.png')
     },
@@ -243,7 +243,7 @@ const SHOE_MODELS = [
         name: { en: 'Black Sport Pants', tn: 'Sarwal Sport Kahla' },
         gender: 'male',
         outfitStyle: 'sporty',
-        description: 'Male legs wearing black athletic sport pants',
+        description: 'Athletic masculine legs with toned muscles, wearing black performance track pants with side stripe, dynamic sportswear aesthetic, fitness model appearance',
         previewUrl: '/api/assets/legs/male-black-sport-pants.png',
         path: path.join(__dirname, '../assets/legs/male-black-sport-pants.png')
     },
@@ -252,7 +252,7 @@ const SHOE_MODELS = [
         name: { en: 'Beige Chinos', tn: 'Chinos Beige' },
         gender: 'male',
         outfitStyle: 'smart-casual',
-        description: 'Male legs wearing beige khaki chino pants',
+        description: 'Masculine legs, wearing tailored beige khaki chino pants, smart casual preppy aesthetic, polished yet relaxed menswear style',
         previewUrl: '/api/assets/legs/male-beige-chinos.png',
         path: path.join(__dirname, '../assets/legs/male-beige-chinos.png')
     },
@@ -261,7 +261,7 @@ const SHOE_MODELS = [
         name: { en: 'Dark Gray Pants', tn: 'Sarwal Rmadi Dahkar' },
         gender: 'male',
         outfitStyle: 'casual',
-        description: 'Male legs wearing dark gray casual pants',
+        description: 'Masculine legs, wearing charcoal dark gray casual trousers, modern minimalist urban style, sophisticated everyday menswear',
         previewUrl: '/api/assets/legs/male-dark-gray-pants.png',
         path: path.join(__dirname, '../assets/legs/male-dark-gray-pants.png')
     }

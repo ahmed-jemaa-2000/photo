@@ -3,107 +3,122 @@
 import Section from '@/components/ui/Section';
 import Container from '@/components/ui/Container';
 import { motion } from 'framer-motion';
-import { Truck, ShieldCheck, RotateCcw, Headphones } from 'lucide-react';
+import { Truck, ShieldCheck, RotateCcw, Headphones, Sparkles, Zap } from 'lucide-react';
 
 export default function FeaturesSection() {
   const features = [
     {
       icon: Truck,
-      title: 'Free Shipping',
-      description: 'Free delivery on orders over 100 TND',
-      iconColor: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-      borderColor: 'border-blue-200'
+      title: 'Express Delivery',
+      description: 'Free shipping on orders over 100 TND',
+      highlight: '2-3 Days',
     },
     {
       icon: ShieldCheck,
-      title: 'Quality Guaranteed',
-      description: 'Premium materials and craftsmanship',
-      iconColor: 'text-emerald-600',
-      bgColor: 'bg-emerald-100',
-      borderColor: 'border-emerald-200'
+      title: 'Authenticity Guaranteed',
+      description: 'Premium materials & craftsmanship',
+      highlight: '100% Original',
     },
     {
       icon: RotateCcw,
-      title: 'Easy Returns',
-      description: '30-day hassle-free return policy',
-      iconColor: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-      borderColor: 'border-purple-200'
+      title: 'Hassle-Free Returns',
+      description: 'No questions asked policy',
+      highlight: '30 Days',
     },
     {
       icon: Headphones,
-      title: '24/7 Support',
-      description: 'Always here to help you',
-      iconColor: 'text-amber-600',
-      bgColor: 'bg-amber-100',
-      borderColor: 'border-amber-200'
-    }
+      title: 'Concierge Support',
+      description: 'Personal shopping assistance',
+      highlight: '24/7 Available',
+    },
   ];
 
   return (
     <Section background="white" spacing="lg">
       <Container>
-        {/* Section Header */}
+        {/* Luxury Feature Strip */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12"
+          transition={{ duration: 0.6 }}
+          className="relative"
         >
-          <span className="inline-block px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-primary bg-primary/10 rounded-full mb-4">
-            Why Choose Us
-          </span>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-            Shop with Confidence
-          </h2>
-        </motion.div>
+          {/* Background Decoration */}
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 rounded-3xl" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent rounded-3xl" />
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {features.map((feature, index) => (
+          {/* Content */}
+          <div className="relative px-6 py-8 md:py-12">
+            {/* Small Header Badge */}
+            <div className="flex items-center justify-center gap-2 mb-8">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-semibold tracking-[0.2em] uppercase text-white/60">
+                The Brandili Promise
+              </span>
+              <Sparkles className="w-4 h-4 text-amber-400" />
+            </div>
+
+            {/* Features Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="group text-center"
+                >
+                  {/* Icon Container */}
+                  <div className="relative inline-flex mb-4">
+                    <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center group-hover:border-primary/50 group-hover:bg-white/20 transition-all duration-300">
+                      <feature.icon
+                        className="w-6 h-6 md:w-7 md:h-7 text-white group-hover:text-primary transition-colors duration-300"
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Highlight Badge */}
+                  <div className="inline-block px-3 py-1 rounded-full bg-gradient-to-r from-primary/20 to-purple-500/20 border border-primary/30 mb-2">
+                    <span className="text-xs font-bold text-primary">
+                      {feature.highlight}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-sm md:text-base font-semibold text-white mb-1">
+                    {feature.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-xs md:text-sm text-white/50 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Bottom CTA */}
             <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -5 }}
-              className="group"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="mt-8 pt-6 border-t border-white/10 flex items-center justify-center gap-2 text-white/40"
             >
-              <div className={`
-                relative h-full p-6 rounded-2xl bg-white border ${feature.borderColor}
-                shadow-sm hover:shadow-lg transition-all duration-300
-                flex flex-col items-center text-center
-              `}>
-                {/* Icon */}
-                <div className={`
-                  w-14 h-14 rounded-xl ${feature.bgColor} ${feature.iconColor}
-                  flex items-center justify-center mb-4
-                  group-hover:scale-110 transition-transform duration-300
-                `}>
-                  <feature.icon className="w-7 h-7" strokeWidth={1.5} />
-                </div>
-
-                {/* Content */}
-                <h3 className="text-base font-bold text-gray-900 mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  {feature.description}
-                </p>
-
-                {/* Decorative corner */}
-                <div className={`
-                  absolute top-0 right-0 w-16 h-16 ${feature.bgColor} opacity-30
-                  rounded-bl-[40px] rounded-tr-2xl -z-10
-                `} />
-              </div>
+              <Zap className="w-4 h-4" />
+              <span className="text-xs tracking-wide">
+                Experience shopping excellence
+              </span>
             </motion.div>
-          ))}
-        </div>
+          </div>
+        </motion.div>
       </Container>
     </Section>
   );
 }
+
