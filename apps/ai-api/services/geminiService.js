@@ -9,7 +9,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 // Support both legacy env names (giminigen_*) and corrected ones (GEMINIGEN_*)
 const API_KEY = process.env.giminigen_API_KEY || process.env.GEMINIGEN_API_KEY;
 const BASE_URL = process.env.giminigen_BASE_URL || process.env.GEMINIGEN_BASE_URL || 'https://api.geminigen.ai';
-const DEFAULT_MODEL = process.env.giminigen_MODEL || 'imagen-4-fast';
+const DEFAULT_MODEL = process.env.giminigen_MODEL || 'imagen-pro';
 const POLL_INTERVAL_MS = 5000;
 const POLL_LIMIT = 60;
 const VIDEO_MODEL = process.env.giminigen_VIDEO_MODEL || 'veo-3.1-fast';
