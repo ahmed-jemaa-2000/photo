@@ -310,6 +310,18 @@ app.post('/api/generate', generateLimiter, upload.fields([
       }
     }
 
+    // ===== DEBUG LOGGING FOR PM2 =====
+    console.log('\n========================================');
+    console.log('[Generate API] NEW REQUEST RECEIVED');
+    console.log('========================================');
+    console.log('[Generate API] Category:', category);
+    console.log('[Generate API] Image uploaded:', !!imagePath);
+    console.log('[Generate API] Model ID received:', modelId || '(none)');
+    console.log('[Generate API] Shoe Model ID received:', shoeModelId || '(none)');
+    console.log('[Generate API] Gender:', gender);
+    console.log('[Generate API] Image Style:', imageStyle);
+    console.log('----------------------------------------');
+
     // Resolve model DESCRIPTION from modelId or shoeModelId (API only accepts 1 image, so we use text descriptions)
     let modelDescription = '';
     let shoeModelDescription = '';
@@ -320,7 +332,10 @@ app.post('/api/generate', generateLimiter, upload.fields([
       const selectedShoeModel = SHOE_MODELS.find(m => m.id === shoeModelId);
       if (selectedShoeModel) {
         shoeModelDescription = selectedShoeModel.description;
-        console.log('Using shoe model description:', selectedShoeModel.name.en);
+        console.log('[Generate API] ✅ Found shoe model:', selectedShoeModel.name.en);
+        console.log('[Generate API] 📝 Description:', shoeModelDescription.substring(0, 100) + '...');
+      } else {
+        console.log('[Generate API] ⚠️ Shoe model not found for ID:', shoeModelId);
       }
     }
     // Handle clothes/bags/accessories category - get model description
@@ -334,9 +349,23 @@ app.post('/api/generate', generateLimiter, upload.fields([
       }
       if (selectedModel) {
         modelDescription = selectedModel.description;
-        console.log('Using model description:', selectedModel.name.en);
+        console.log('[Generate API] ✅ Found model:', selectedModel.name.en);
+        console.log('[Generate API] 📝 Description:', modelDescription.substring(0, 100) + '...');
+      } else {
+        console.log('[Generate API] ⚠️ Model not found for ID:', modelId);
       }
+    } else {
+      console.log('[Generate API] ℹ️ No model ID provided - using default prompts');
     }
+
+    console.log('[Generate API] 🚀 Calling geminiService.generateImage...');
+    console.log('[Generate API] Options:', JSON.stringify({
+      category,
+      hasModelDescription: !!modelDescription,
+      hasShoeModelDescription: !!shoeModelDescription,
+      imageStyle: imageStyle || 'ecommerce_clean',
+    }));
+    console.log('========================================\n');
 
     const result = await geminiService.generateImage(imagePath, prompt, {
       gender: gender || parsedPersona?.gender || undefined,
