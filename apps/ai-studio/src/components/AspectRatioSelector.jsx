@@ -26,14 +26,15 @@ const ASPECT_RATIOS = [
         width: 1024,
         height: 1820,
     },
-    id: '3:4',
-    name: 'Portrait',
-    description: 'Website / Print',
-    icon: RectangleVertical,
-    ratio: '3:4',
-    width: 1024,
-    height: 1365,
-    recommended: true,
+    {
+        id: '3:4',
+        name: 'Portrait',
+        description: 'Website / Print',
+        icon: RectangleVertical,
+        ratio: '3:4',
+        width: 1024,
+        height: 1365,
+        recommended: true,
     },
 ];
 
