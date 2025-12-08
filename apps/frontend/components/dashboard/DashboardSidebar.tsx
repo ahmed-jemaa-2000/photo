@@ -2,14 +2,32 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { User } from '@busi/types';
 import { useMobileMenu } from '@/lib/MobileMenuContext';
-import { X } from 'lucide-react';
+import {
+  X,
+  LayoutDashboard,
+  Package,
+  ShoppingBag,
+  Truck,
+  Tags,
+  Coins,
+  Settings,
+  Image,
+  Sparkles,
+  ExternalLink
+} from 'lucide-react';
 
 interface DashboardSidebarProps {
   user: User;
   shopId: number | null;
+}
+
+interface NavItem {
+  name: string;
+  href: string;
+  icon: ReactNode;
 }
 
 export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps) {
@@ -17,7 +35,6 @@ export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps
   const { isOpen, close } = useMobileMenu();
   const [mounted, setMounted] = useState(false);
 
-  // Prevent hydration mismatch - wait for client-side mount
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -26,14 +43,14 @@ export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps
     return pathname === path || pathname?.startsWith(`${path}/`);
   };
 
-  const navItems = [
-    { name: 'Overview', href: '/dashboard', icon: '📊' },
-    { name: 'Products', href: '/dashboard/products', icon: '📦' },
-    { name: 'Orders', href: '/dashboard/orders', icon: '🛍️' },
-    { name: 'Delivery', href: '/dashboard/delivery', icon: '🚚' },
-    { name: 'Categories', href: '/dashboard/categories', icon: '🏷️' },
-    { name: 'Credits', href: '/dashboard/credits', icon: '💰' },
-    { name: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
+  const navItems: NavItem[] = [
+    { name: 'Overview', href: '/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { name: 'Products', href: '/dashboard/products', icon: <Package className="w-5 h-5" /> },
+    { name: 'Orders', href: '/dashboard/orders', icon: <ShoppingBag className="w-5 h-5" /> },
+    { name: 'Delivery', href: '/dashboard/delivery', icon: <Truck className="w-5 h-5" /> },
+    { name: 'Categories', href: '/dashboard/categories', icon: <Tags className="w-5 h-5" /> },
+    { name: 'Credits', href: '/dashboard/credits', icon: <Coins className="w-5 h-5" /> },
+    { name: 'Settings', href: '/dashboard/settings', icon: <Settings className="w-5 h-5" /> },
   ];
 
   const aiStudioUrl = process.env.NODE_ENV === 'production'
@@ -41,7 +58,6 @@ export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps
     : 'http://localhost:3002';
 
   const handleNavClick = () => {
-    // Close sidebar on mobile after clicking a nav item
     close();
   };
 
@@ -83,24 +99,32 @@ export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps
         </div>
 
         <div className="p-4 flex-1">
-          <nav className="space-y-1.5">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={handleNavClick}
-                className={`flex items-center px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-300 group ${isActive(item.href) && item.href !== '/dashboard' || (item.href === '/dashboard' && pathname === '/dashboard')
-                  ? 'bg-primary text-white shadow-lg shadow-primary/25 translate-x-1'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-1'
-                  }`}
-              >
-                <span className={`mr-3 text-lg transition-transform duration-300 ${isActive(item.href) ? 'scale-110' : 'group-hover:scale-110'}`}>{item.icon}</span>
-                {item.name}
-              </Link>
-            ))}
+          <nav className="space-y-1">
+            {navItems.map((item) => {
+              const active = item.href === '/dashboard'
+                ? pathname === '/dashboard'
+                : isActive(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={handleNavClick}
+                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group ${active
+                      ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                >
+                  <span className={`mr-3 transition-transform duration-200 ${active ? '' : 'group-hover:scale-110'}`}>
+                    {item.icon}
+                  </span>
+                  {item.name}
+                </Link>
+              );
+            })}
           </nav>
 
-          {/* AI Studio Link - External */}
+          {/* AI Tools Section */}
           <div className="mt-6 pt-4 border-t border-gray-100">
             <p className="px-4 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">AI Tools</p>
 
@@ -108,12 +132,12 @@ export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps
             <Link
               href="/dashboard/ai-gallery"
               onClick={handleNavClick}
-              className={`flex items-center px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-300 group mb-1.5 ${isActive('/dashboard/ai-gallery')
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/25 translate-x-1'
-                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-1'
+              className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group mb-1.5 ${isActive('/dashboard/ai-gallery')
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/25'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
             >
-              <span className={`mr-3 text-lg transition-transform duration-300 ${isActive('/dashboard/ai-gallery') ? 'scale-110' : 'group-hover:scale-110'}`}>🖼️</span>
+              <Image className={`w-5 h-5 mr-3 transition-transform duration-200 ${!isActive('/dashboard/ai-gallery') ? 'group-hover:scale-110' : ''}`} />
               AI Gallery
             </Link>
 
@@ -122,20 +146,19 @@ export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps
               href={aiStudioUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-300 group bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 hover:from-purple-100 hover:to-pink-100 hover:translate-x-1 border border-purple-100"
+              className="flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 hover:from-purple-100 hover:to-pink-100 border border-purple-100"
             >
-              <span className="mr-3 text-lg transition-transform duration-300 group-hover:scale-110">✨</span>
+              <Sparkles className="w-5 h-5 mr-3 transition-transform duration-200 group-hover:scale-110" />
               AI Photo Studio
-              <svg className="ml-auto w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
+              <ExternalLink className="ml-auto w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
             </a>
           </div>
         </div>
 
+        {/* User Profile */}
         <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center p-3.5 rounded-xl bg-gray-50/50 border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer group">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-bold shadow-md group-hover:scale-105 transition-transform duration-300">
+          <div className="flex items-center p-3 rounded-xl bg-gray-50/50 border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer group">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-bold shadow-md group-hover:scale-105 transition-transform duration-200">
               {user.username.charAt(0).toUpperCase()}
             </div>
             <div className="ml-3 overflow-hidden">
@@ -148,3 +171,4 @@ export default function DashboardSidebar({ user, shopId }: DashboardSidebarProps
     </>
   );
 }
+
