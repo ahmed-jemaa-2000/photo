@@ -463,6 +463,16 @@ async function generateImage(imagePath, userPrompt, options = {}) {
     formData.append('person_generation', options.gender);
   }
 
+  // Build curl command for debugging with API admin
+  const curlCommand = `curl -X POST "${BASE_URL}/uapi/v1/generate_image" \\
+  -H "x-api-key: ${API_KEY?.substring(0, 8)}...REDACTED" \\
+  -F "files=@${imagePath}" \\
+  -F "prompt=${enhancedPrompt.replace(/"/g, '\\"').substring(0, 300)}..." \\
+  -F "model=${DEFAULT_MODEL}" \\
+  -F "aspect_ratio=${aspectRatio}" \\
+  -F "style=${apiStyle}" \\
+  ${options.gender ? `-F "person_generation=${options.gender}"` : ''}`;
+
   // Debug logging
   console.log('[Image Gen] ===== API REQUEST DEBUG =====');
   console.log('[Image Gen] Single file attached (API limit: 1)');
@@ -470,6 +480,9 @@ async function generateImage(imagePath, userPrompt, options = {}) {
   console.log('[Image Gen] Prompt (first 500 chars):', enhancedPrompt.substring(0, 500));
   console.log('[Image Gen] API URL:', apiClient.defaults.baseURL + '/uapi/v1/generate_image');
   console.log('[Image Gen] API Key set:', !!API_KEY);
+  console.log('[Image Gen] ================================');
+  console.log('[Image Gen] CURL COMMAND FOR DEBUG:');
+  console.log(curlCommand);
   console.log('[Image Gen] ================================');
 
   console.log('Sending request to giminigen API...');
