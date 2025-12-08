@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
@@ -9,17 +9,20 @@ import {
   Wand2,
   RotateCcw,
   ArrowLeft,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 
-// Existing components
+// Code-split large components for faster initial load
+const GenerationResult = lazy(() => import('./components/GenerationResult'));
+const ReviewPage = lazy(() => import('./components/ReviewPage'));
+const ModelSelection = lazy(() => import('./components/ModelSelection'));
+
+// Existing components (small enough to load immediately)
 import ImageUpload from './components/ImageUpload';
-import GenerationResult from './components/GenerationResult';
-import ModelSelection from './components/ModelSelection';
 import ShoeModelSelection from './components/ShoeModelSelection';
 import ShoePoseSelection, { SHOE_POSES } from './components/ShoePoseSelection';
 import ImageStyleSelection from './components/ImageStyleSelection';
-import ReviewPage from './components/ReviewPage';
 import BodySizeSelection, { BODY_SIZES } from './components/BodySizeSelection';
 
 // New premium components
@@ -45,6 +48,8 @@ import { useCredits } from './hooks/useCredits';
 import { useProductFromUrl } from './hooks/useProductFromUrl';
 import SaveToProductModal from './components/SaveToProductModal';
 import LowCreditsToast from './components/LowCreditsToast';
+import ColorOverrideSelector from './components/ColorOverrideSelector';
+import SuspenseFallback from './components/SuspenseFallback';
 
 // Config and helpers
 import {
@@ -57,6 +62,7 @@ import {
   buildBagPrompt,
   buildAccessoryPrompt,
 } from './config/appConfig';
+import { fetchWithRetry } from './utils/apiUtils';
 
 // Environment URLs
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -99,6 +105,7 @@ function App() {
   const [aspectRatio, setAspectRatio] = useState(ASPECT_RATIOS[0]); // Default 1:1
   const [colorPalette, setColorPalette] = useState([]);
   const [colorHex, setColorHex] = useState(null);
+  const [manualColorOverride, setManualColorOverride] = useState(null); // For user color override
   const [useColorLock, setUseColorLock] = useState(true);
   const [negative, setNegative] = useState('no extra accessories, no text, no logos change, no second person');
 
@@ -260,6 +267,20 @@ function App() {
       setColorHex(palette);
       setColorPalette([]);
     }
+    // Reset manual override when new image is uploaded
+    setManualColorOverride(null);
+  };
+
+  // Handle user confirming the detected color is correct
+  const handleColorConfirm = (color) => {
+    setManualColorOverride(null); // Use detected color
+    console.log('[App] Color confirmed by user:', color?.hex);
+  };
+
+  // Handle user overriding the color
+  const handleColorOverride = (overrideColor) => {
+    setManualColorOverride(overrideColor);
+    console.log('[App] Color manually overridden to:', overrideColor);
   };
 
   const handleCategorySelect = (cat) => {
@@ -401,6 +422,22 @@ function App() {
       formData.append('height', aspectRatio.height);
     }
 
+    // Add color data for AI color accuracy
+    const activeColorHex = manualColorOverride?.hex || colorHex;
+    const activeColorName = manualColorOverride?.name || colorPalette[0]?.name;
+    if (activeColorHex) {
+      formData.append('colorHex', activeColorHex);
+    }
+    if (activeColorName) {
+      formData.append('colorName', activeColorName);
+    }
+    if (manualColorOverride?.isManualOverride) {
+      formData.append('manualColorHex', manualColorOverride.hex);
+    }
+    if (colorPalette && colorPalette.length > 0) {
+      formData.append('colorPalette', JSON.stringify(colorPalette.slice(0, 3)));
+    }
+
     setIsGenerating(true);
     setError(null);
     setGeneratedResult(null);
@@ -420,7 +457,12 @@ function App() {
         };
       }
 
-      const apiCall = fetch(`${API_BASE}/api/generate`, fetchOptions).then(res => res.json());
+      // Use retry logic for network resilience
+      const apiCall = fetchWithRetry(`${API_BASE}/api/generate`, fetchOptions, {
+        maxRetries: 3,
+        baseDelay: 2000,
+        retryOn: [500, 502, 503, 504, 429],
+      }).then(res => res.json());
       const minWait = new Promise(resolve => setTimeout(resolve, 60000));
       const [data] = await Promise.all([apiCall, minWait]);
 
@@ -604,6 +646,20 @@ function App() {
               onClear={() => setSelectedFile(null)}
               onColorDetected={handleColorDetected}
             />
+
+            {/* Color Override Selector - shows after image is uploaded */}
+            {selectedFile && colorHex && (
+              <ColorOverrideSelector
+                detectedColor={{
+                  hex: colorHex,
+                  name: colorPalette[0]?.colorName || colorPalette[0]?.name || 'Detected',
+                  percentage: colorPalette[0]?.percentage
+                }}
+                onColorConfirm={handleColorConfirm}
+                onColorOverride={handleColorOverride}
+                isVisible={true}
+              />
+            )}
           </motion.div>
         );
 
@@ -674,11 +730,13 @@ function App() {
               <h2 className="text-3xl font-bold mb-2">Choose a Model</h2>
               <p className="text-slate-400">Select a professional model for your product</p>
             </div>
-            <ModelSelection
-              selectedModel={selectedModel}
-              onModelSelect={setSelectedModel}
-              gender={gender}
-            />
+            <Suspense fallback={<SuspenseFallback message="Loading models..." />}>
+              <ModelSelection
+                selectedModel={selectedModel}
+                onModelSelect={setSelectedModel}
+                gender={gender}
+              />
+            </Suspense>
 
             {/* Body Size Selection for Fit Visualization */}
             <div className="mt-10 pt-10 border-t border-white/10">
@@ -802,22 +860,24 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <ReviewPage
-              selectedFile={selectedFile}
-              selectedModel={selectedModel}
-              selectedShoeModel={selectedShoeModel}
-              selectedBackground={selectedBackground}
-              imageStyle={imageStyle}
-              category={category}
-              gender={gender}
-              bagStyle={bagStyle}
-              bagDisplayMode={bagDisplayMode}
-              accessoryType={accessoryType}
-              accessorySubtype={accessorySubtype}
-              onGenerate={handleGenerate}
-              isGenerating={isGenerating}
-              credits={credits}
-            />
+            <Suspense fallback={<SuspenseFallback message="Loading review..." />}>
+              <ReviewPage
+                selectedFile={selectedFile}
+                selectedModel={selectedModel}
+                selectedShoeModel={selectedShoeModel}
+                selectedBackground={selectedBackground}
+                imageStyle={imageStyle}
+                category={category}
+                gender={gender}
+                bagStyle={bagStyle}
+                bagDisplayMode={bagDisplayMode}
+                accessoryType={accessoryType}
+                accessorySubtype={accessorySubtype}
+                onGenerate={handleGenerate}
+                isGenerating={isGenerating}
+                credits={credits}
+              />
+            </Suspense>
           </motion.div>
         );
 

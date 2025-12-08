@@ -126,10 +126,16 @@ app.get('/api/credits', creditService.requireAuth, async (req, res) => {
   }
 });
 
-// Serve static assets for models, legs, and backgrounds
-app.use('/api/assets/models', express.static(path.join(__dirname, 'assets/models')));
-app.use('/api/assets/legs', express.static(path.join(__dirname, 'assets/legs')));
-app.use('/api/assets/backgrounds', express.static(path.join(__dirname, 'assets/background')));
+// Serve static assets for models, legs, and backgrounds with caching
+const staticCacheOptions = {
+  maxAge: '7d', // Cache for 7 days
+  immutable: true, // Assets don't change
+  etag: true,
+  lastModified: true,
+};
+app.use('/api/assets/models', express.static(path.join(__dirname, 'assets/models'), staticCacheOptions));
+app.use('/api/assets/legs', express.static(path.join(__dirname, 'assets/legs'), staticCacheOptions));
+app.use('/api/assets/backgrounds', express.static(path.join(__dirname, 'assets/background'), staticCacheOptions));
 
 // Health check (no rate limit)
 app.get('/health', (req, res) => {
@@ -340,7 +346,7 @@ app.post('/api/generate', generateLimiter, upload.fields([
       // Continue if validation fails (fallback)
     }
 
-    const { prompt, gender, modelPersona, modelId, shoeModelId, category, backgroundPrompt, shoeCameraAngle, shoeLighting, imageStyle } = req.body;
+    const { prompt, gender, modelPersona, modelId, shoeModelId, category, backgroundPrompt, shoeCameraAngle, shoeLighting, imageStyle, colorHex, colorName, manualColorHex, colorPalette } = req.body;
 
     console.log('Received image:', imagePath);
     console.log('Prompt:', prompt);
@@ -348,6 +354,8 @@ app.post('/api/generate', generateLimiter, upload.fields([
     console.log('Shoe Model ID:', shoeModelId);
     console.log('Category:', category);
     console.log('Image Style:', imageStyle || 'ecommerce_clean (default)');
+    if (colorHex) console.log('Color Hex:', colorHex);
+    if (manualColorHex) console.log('Manual Color Override:', manualColorHex);
 
     // Parse modelPersona if it's a JSON string
     let parsedPersona = null;
@@ -356,6 +364,16 @@ app.post('/api/generate', generateLimiter, upload.fields([
         parsedPersona = typeof modelPersona === 'string' ? JSON.parse(modelPersona) : modelPersona;
       } catch (e) {
         console.warn('Failed to parse modelPersona:', e);
+      }
+    }
+
+    // Parse colorPalette if it's a JSON string
+    let parsedColorPalette = null;
+    if (colorPalette) {
+      try {
+        parsedColorPalette = typeof colorPalette === 'string' ? JSON.parse(colorPalette) : colorPalette;
+      } catch (e) {
+        console.warn('Failed to parse colorPalette:', e);
       }
     }
 
@@ -425,6 +443,11 @@ app.post('/api/generate', generateLimiter, upload.fields([
       shoeCameraAngle,
       shoeLighting,
       imageStyle: imageStyle || 'ecommerce_clean',
+      // Color accuracy data
+      colorHex: colorHex || null,
+      colorName: colorName || null,
+      manualColorHex: manualColorHex || null,
+      colorPalette: parsedColorPalette || null,
     });
 
     // AUTO-SAVE: Download the generated image to local server
@@ -612,6 +635,7 @@ app.post('/api/generate-video', async (req, res) => {
 /**
  * Download proxy - Fetches external image and streams to client
  * Solves CORS issues with AI-generated image downloads
+ * Also handles local files (starting with /uploads/)
  */
 app.get('/api/download-image', async (req, res) => {
   const { url, quality = 'original', filename = 'generated-image' } = req.query;
@@ -620,8 +644,55 @@ app.get('/api/download-image', async (req, res) => {
     return res.status(400).json({ error: 'URL parameter is required' });
   }
 
+  // Sanitize filename
+  const safeFilename = filename.replace(/[^a-zA-Z0-9-_]/g, '_');
+
   try {
-    // const axios = require('axios'); // Moved to top
+    // Check if this is a local file path (starts with /uploads/)
+    if (url.startsWith('/uploads/') || url.startsWith('uploads/')) {
+      // Handle local file
+      const localPath = path.join(__dirname, url.startsWith('/') ? url : `/${url}`);
+
+      if (!fs.existsSync(localPath)) {
+        return res.status(404).json({ error: 'File not found', details: 'The requested image does not exist on the server' });
+      }
+
+      // Read the local file
+      const fileBuffer = fs.readFileSync(localPath);
+
+      // Determine content type from extension
+      const ext = path.extname(localPath).toLowerCase();
+      let contentType = 'image/png';
+      let extension = 'png';
+      if (ext === '.jpg' || ext === '.jpeg') {
+        contentType = 'image/jpeg';
+        extension = 'jpg';
+      } else if (ext === '.webp') {
+        contentType = 'image/webp';
+        extension = 'webp';
+      }
+
+      // Set headers for file download
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.${extension}"`);
+      res.setHeader('Content-Length', fileBuffer.length);
+      res.setHeader('Cache-Control', 'no-cache');
+
+      // Send the file
+      res.send(fileBuffer);
+      console.log(`Download proxy (local): Served ${safeFilename}.${extension} (${(fileBuffer.length / 1024).toFixed(1)}KB)`);
+      return;
+    }
+
+    // Validate that it's a proper URL for remote fetching
+    try {
+      new URL(url);
+    } catch (urlError) {
+      return res.status(400).json({
+        error: 'Invalid URL',
+        details: 'The provided URL is not a valid HTTP/HTTPS URL or local path'
+      });
+    }
 
     // Fetch the image from the external URL
     const response = await axios.get(url, {
@@ -641,9 +712,6 @@ app.get('/api/download-image', async (req, res) => {
       extension = 'webp';
     }
 
-    // Sanitize filename
-    const safeFilename = filename.replace(/[^a-zA-Z0-9-_]/g, '_');
-
     // Set headers for file download
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.${extension}"`);
@@ -653,7 +721,7 @@ app.get('/api/download-image', async (req, res) => {
     // Send the image data
     res.send(response.data);
 
-    console.log(`Download proxy: Served ${safeFilename}.${extension} (${(response.data.length / 1024).toFixed(1)}KB)`);
+    console.log(`Download proxy (remote): Served ${safeFilename}.${extension} (${(response.data.length / 1024).toFixed(1)}KB)`);
   } catch (error) {
     console.error('Download proxy error:', error.message);
     res.status(500).json({

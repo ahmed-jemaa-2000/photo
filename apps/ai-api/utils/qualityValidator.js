@@ -35,6 +35,11 @@ function validatePrompt(prompt, options = {}) {
         score -= 25;
     }
 
+    // Check for manual color override (bonus points for user confirmation)
+    if (options.isManualOverride) {
+        score += 5; // User confirmed color, higher confidence
+    }
+
     // Check for category-specific keywords
     if (options.category) {
         const categoryKeywords = {
@@ -65,11 +70,69 @@ function validatePrompt(prompt, options = {}) {
         score -= 5;
     }
 
+    // Check for white product special handling
+    if (options.isWhiteProduct && !prompt.includes('WHITE') && !prompt.includes('white')) {
+        issues.push('White product detected but not mentioned in prompt');
+        score -= 15;
+    }
+
     return {
         valid: score >= 70,
         issues,
-        score: Math.max(0, score),
-        promptLength: prompt.length
+        score: Math.max(0, Math.min(100, score)),
+        promptLength: prompt.length,
+        qualityTier: getQualityTier(score)
+    };
+}
+
+/**
+ * Get quality tier from score
+ */
+function getQualityTier(score) {
+    if (score >= 90) return 'premium';
+    if (score >= 75) return 'standard';
+    return 'basic';
+}
+
+/**
+ * Validate input image quality
+ * @param {object} imageInfo - Image metadata { width, height, sizeBytes, type }
+ * @returns {object} { valid: boolean, warnings: string[], recommendation: string }
+ */
+function validateImageQuality(imageInfo) {
+    const warnings = [];
+    let recommendation = null;
+
+    const MIN_DIMENSION = 512;
+    const RECOMMENDED_DIMENSION = 1024;
+    const MAX_FILE_SIZE_MB = 10;
+
+    // Resolution checks
+    if (imageInfo.width < MIN_DIMENSION || imageInfo.height < MIN_DIMENSION) {
+        warnings.push(`Image resolution too low (${imageInfo.width}x${imageInfo.height}). Minimum: ${MIN_DIMENSION}px`);
+        recommendation = 'Upload a higher resolution image for better results';
+    } else if (imageInfo.width < RECOMMENDED_DIMENSION && imageInfo.height < RECOMMENDED_DIMENSION) {
+        warnings.push(`Image resolution below recommended (${imageInfo.width}x${imageInfo.height}). Recommended: ${RECOMMENDED_DIMENSION}px`);
+    }
+
+    // File size check
+    const fileSizeMB = (imageInfo.sizeBytes || 0) / (1024 * 1024);
+    if (fileSizeMB > MAX_FILE_SIZE_MB) {
+        warnings.push(`File too large (${fileSizeMB.toFixed(1)}MB). Maximum: ${MAX_FILE_SIZE_MB}MB`);
+    }
+
+    // Format check
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (imageInfo.type && !allowedTypes.includes(imageInfo.type)) {
+        warnings.push(`Unsupported format: ${imageInfo.type}. Use JPEG, PNG, or WebP`);
+    }
+
+    return {
+        valid: warnings.length === 0 || !recommendation,
+        warnings,
+        recommendation,
+        resolution: `${imageInfo.width}x${imageInfo.height}`,
+        qualityEstimate: imageInfo.width >= RECOMMENDED_DIMENSION ? 'high' : (imageInfo.width >= MIN_DIMENSION ? 'medium' : 'low')
     };
 }
 
@@ -140,8 +203,10 @@ function logQualityMetrics(requestId, report) {
 module.exports = {
     validatePrompt,
     validateConfig,
+    validateImageQuality,
     generateQualityReport,
     logQualityMetrics,
+    getQualityTier,
     MINIMUM_PROMPT_LENGTH,
     REQUIRED_SECTIONS
 };

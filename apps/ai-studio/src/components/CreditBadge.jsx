@@ -7,10 +7,16 @@ import { Coins, AlertCircle, Loader2 } from 'lucide-react';
  */
 export default function CreditBadge({ credits, loading, error }) {
     if (loading) {
+        // Skeleton loading state with shimmer
         return (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-                <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-                <span className="text-sm text-slate-400">Loading...</span>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+                <div className="w-4 h-4 rounded-full bg-white/10 animate-pulse" />
+                <div className="relative w-8 h-4 rounded bg-white/10 overflow-hidden">
+                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                </div>
+                <div className="hidden sm:block relative w-12 h-3 rounded bg-white/10 overflow-hidden">
+                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                </div>
             </div>
         );
     }

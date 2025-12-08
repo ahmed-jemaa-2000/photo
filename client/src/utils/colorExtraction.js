@@ -622,23 +622,58 @@ export async function extractColorPalette(imageFile, numColors = 5) {
 
           // ============================================
           // CRITICAL: Filter out likely background colors
-          // White/light gray backgrounds should not be the dominant color
+          // White/light gray AND tan/beige/brown backgrounds should not be the dominant color
           // ============================================
           const isLikelyBackground = (color) => {
             const hsl = rgbToHsl(color.r, color.g, color.b);
+
             // Very light (L > 90) with low saturation = white/light gray background
             if (hsl.l > 90 && hsl.s < 15) return true;
             // Very light (L > 85) and almost no saturation = near-white
             if (hsl.l > 85 && hsl.s < 8) return true;
+
+            // NEW: Detect tan/beige/brown backgrounds (very common in product photography)
+            // These have: hue 25-55 (orange-yellow range), low-medium saturation, mid lightness
+            if (hsl.h >= 25 && hsl.h <= 55 && hsl.s >= 10 && hsl.s <= 45 && hsl.l >= 45 && hsl.l <= 75) {
+              // This looks like tan/beige/khaki - likely a floor/table background
+              return true;
+            }
+
+            // Also detect muted brown/wood colors
+            if (hsl.h >= 15 && hsl.h <= 45 && hsl.s >= 15 && hsl.s <= 50 && hsl.l >= 35 && hsl.l <= 65) {
+              return true;
+            }
+
             return false;
           };
 
-          // If the #1 color looks like a white background, try to use #2 instead
+          // Check if there's a very light (white/cream) color in the palette
+          // This is important for white products on colored backgrounds
+          const hasLightProductColor = dominantColors.some(c => {
+            const hsl = rgbToHsl(c.r, c.g, c.b);
+            // Very light color that could be a white product
+            return hsl.l > 80 && hsl.s < 20;
+          });
+
+          // If the #1 color looks like a background, try to use a better color
           if (dominantColors.length > 1 && isLikelyBackground(dominantColors[0])) {
             log('[ColorExtraction] ⚠️ Top color looks like background, checking alternatives...');
 
             // Find first non-background color
-            const realProductColor = dominantColors.find(c => !isLikelyBackground(c));
+            let realProductColor = dominantColors.find(c => !isLikelyBackground(c));
+
+            // SPECIAL CASE: If we have a very light color and the current "best" is a background,
+            // prefer the light color (likely a white product)
+            if (hasLightProductColor) {
+              const lightColor = dominantColors.find(c => {
+                const hsl = rgbToHsl(c.r, c.g, c.b);
+                return hsl.l > 80 && hsl.s < 25;
+              });
+              if (lightColor && lightColor !== dominantColors[0]) {
+                realProductColor = lightColor;
+                log(`[ColorExtraction] 🎯 Detected white/light product, prioritizing: ${lightColor.colorName}`);
+              }
+            }
 
             if (realProductColor) {
               log(`[ColorExtraction] ✅ Using ${realProductColor.colorName} instead of background color`);
@@ -647,6 +682,28 @@ export async function extractColorPalette(imageFile, numColors = 5) {
               dominantColors.unshift(realProductColor);
             } else {
               log('[ColorExtraction] No alternative found, keeping original order');
+            }
+          }
+
+          // ADDITIONAL CHECK: If the top color is still a tan/beige and there's a white color,
+          // the product is likely white (common case: white shoes on wood floor)
+          if (dominantColors.length > 1) {
+            const topColor = dominantColors[0];
+            const topHsl = rgbToHsl(topColor.r, topColor.g, topColor.b);
+
+            // Current top is tan/beige-ish
+            if (topHsl.h >= 20 && topHsl.h <= 50 && topHsl.s >= 10 && topHsl.s <= 45) {
+              // Look for a white/light color
+              const whiteColor = dominantColors.find(c => {
+                const hsl = rgbToHsl(c.r, c.g, c.b);
+                return hsl.l > 85 && hsl.s < 15 && c !== topColor;
+              });
+
+              if (whiteColor && whiteColor.percentage > 15) {
+                log(`[ColorExtraction] 🔄 Swapping tan background for white product color`);
+                dominantColors = dominantColors.filter(c => c !== whiteColor);
+                dominantColors.unshift(whiteColor);
+              }
             }
           }
 

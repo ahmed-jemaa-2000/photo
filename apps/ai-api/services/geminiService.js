@@ -17,6 +17,7 @@ const VIDEO_RESOLUTION = process.env.giminigen_VIDEO_RESOLUTION || '1080p';
 const VIDEO_ASPECT_RATIO = process.env.giminigen_VIDEO_ASPECT_RATIO || '16:9';
 const VIDEO_POLL_INTERVAL_MS = 5000;
 const VIDEO_POLL_LIMIT = 60;
+const VIDEO_POLL_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes hard timeout
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -24,6 +25,21 @@ const apiClient = axios.create({
 });
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Wrap a promise with a timeout
+ * @param {Promise} promise - Promise to wrap
+ * @param {number} ms - Timeout in milliseconds
+ * @param {string} errorMessage - Error message on timeout
+ */
+const withTimeout = (promise, ms, errorMessage = 'Operation timed out') => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(errorMessage)), ms)
+    )
+  ]);
+};
 
 async function pollForResult(uuid) {
   for (let attempt = 0; attempt < POLL_LIMIT; attempt++) {
@@ -229,46 +245,193 @@ const IMAGE_STYLE_PRESETS = {
 
 /**
  * Quality enhancement keywords for image generation
+ * Uses professional camera terminology for best AI interpretation
  */
 const IMAGE_QUALITY_BOOST = [
-  'ultra high resolution 8K quality',
-  'professional product photography',
-  'sharp focus on product details',
-  'natural skin texture',
-  'authentic fabric and material rendering',
-  'photorealistic',
-  'shot on Phase One IQ4 150MP',
+  // Camera & Equipment
+  'captured on Hasselblad H6D-400c medium format',
+  'Phase One IQ4 150MP sensor quality',
+  'Zeiss Otus 85mm f/1.4 lens sharpness',
+  // Lighting
+  'professional Broncolor studio lighting',
+  'softbox diffused key light',
+  'clean catchlights in eyes',
+  // Quality
+  'ultra high resolution 8K',
+  'razor sharp focus on product',
+  'natural skin texture and pores',
+  'authentic fabric weave and material texture',
+  // Technical
+  'photorealistic rendering',
+  'color managed workflow',
+  'proper exposure and white balance',
 ].join(', ');
 
 /**
- * Build a STRONG color lock clause
+ * Build a STRONG color lock clause with semantic reinforcement
  * This is critical for color accuracy in AI generation
- * We repeat the color information multiple ways to reinforce it
+ * Uses triple-mention strategy: beginning, middle semantic, and reminder
  */
-function buildColorLockClause(colorHex, colorName, colorPalette) {
+function buildColorLockClause(colorHex, colorName, colorPalette, isManualOverride = false) {
   if (!colorHex) return '';
 
   const parts = [];
+  const semanticColor = colorName || getSemanticColorName(colorHex);
+  const emphasis = isManualOverride ? 'USER SPECIFIED' : 'DETECTED';
 
-  // Layer 1: Direct color instruction at the START (AI pays most attention to beginning)
-  // OPTIMIZED: Combined multiple statements into one powerful instruction
-  parts.push(`[COLOR LOCKED: ${colorHex}] Product is ${colorName || 'this color'}. Preserve EXACTLY - no hue shift, no brightness change.`);
+  // Handle special cases for commonly misidentified colors
+  const isWhiteProduct = isWhiteColor(colorHex);
+  const isBlackProduct = isBlackColor(colorHex);
 
-  // Layer 2: Include palette if available (helps AI understand color context)
+  // Layer 1: Direct color instruction at START (highest attention)
+  if (isWhiteProduct) {
+    parts.push(`[${emphasis} COLOR: PURE WHITE ${colorHex}] This product is WHITE - not cream, not beige, not off-white, not tan. It is PURE WHITE.`);
+  } else if (isBlackProduct) {
+    parts.push(`[${emphasis} COLOR: BLACK ${colorHex}] This product is BLACK - not dark gray, not charcoal, not navy. It is TRUE BLACK.`);
+  } else {
+    parts.push(`[${emphasis} COLOR: ${semanticColor.toUpperCase()} ${colorHex}] Product is ${semanticColor}. Preserve this EXACT color - no hue shift, no brightness change.`);
+  }
+
+  // Layer 2: Semantic reinforcement with context
   if (colorPalette && colorPalette.length > 0) {
-    const colorList = colorPalette.slice(0, 2).map(c => c.hex).join(', ');
-    parts.push(`Palette: ${colorList}.`);
+    const primaryPercent = colorPalette[0]?.percentage || 80;
+    parts.push(`Primary color ${semanticColor} covers ${primaryPercent}% of product.`);
   }
 
   return parts.join(' ');
 }
 
 /**
- * Build negative prompt for color protection (OPTIMIZED)
+ * Helper to detect white colors
  */
-function buildColorNegativePrompt() {
-  // Reduced from 9 items to 4 most impactful ones
-  return 'no color shift, no color cast, no tint, no saturation change';
+function isWhiteColor(hex) {
+  if (!hex) return false;
+  const rgb = hexToRgb(hex);
+  if (!rgb) return false;
+  // White: high R, G, B values, low saturation
+  const min = Math.min(rgb.r, rgb.g, rgb.b);
+  const max = Math.max(rgb.r, rgb.g, rgb.b);
+  const lightness = (min + max) / 2 / 255;
+  const saturation = max === min ? 0 : (max - min) / (max + min > 255 ? (510 - max - min) : (max + min));
+  return lightness > 0.85 && saturation < 0.15;
+}
+
+/**
+ * Helper to detect black colors
+ */
+function isBlackColor(hex) {
+  if (!hex) return false;
+  const rgb = hexToRgb(hex);
+  if (!rgb) return false;
+  const lightness = (rgb.r + rgb.g + rgb.b) / 3 / 255;
+  return lightness < 0.15;
+}
+
+/**
+ * Convert hex to RGB
+ */
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+/**
+ * Get semantic color name from hex
+ */
+function getSemanticColorName(hex) {
+  if (!hex) return 'unknown';
+  const rgb = hexToRgb(hex);
+  if (!rgb) return 'unknown';
+
+  const { r, g, b } = rgb;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2 / 255;
+  const s = max === min ? 0 : (max - min) / (l > 0.5 ? (510 - max - min) : (max + min));
+
+  // Calculate hue
+  let h = 0;
+  if (max !== min) {
+    const d = max - min;
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+    else if (max === g) h = ((b - r) / d + 2) / 6;
+    else h = ((r - g) / d + 4) / 6;
+  }
+  h *= 360;
+
+  // Neutrals
+  if (s < 0.1) {
+    if (l > 0.9) return 'pure white';
+    if (l > 0.7) return 'light gray';
+    if (l > 0.4) return 'gray';
+    if (l > 0.15) return 'dark gray';
+    return 'black';
+  }
+
+  // Chromatic colors
+  if (h < 15 || h >= 345) return l > 0.6 ? 'light red' : (l < 0.35 ? 'dark red' : 'red');
+  if (h < 45) return l > 0.6 ? 'peach' : (l < 0.35 ? 'brown' : 'orange');
+  if (h < 70) return l > 0.6 ? 'light yellow' : 'yellow';
+  if (h < 170) return l > 0.6 ? 'light green' : (l < 0.35 ? 'dark green' : 'green');
+  if (h < 200) return l > 0.6 ? 'light cyan' : 'teal';
+  if (h < 260) return l > 0.6 ? 'light blue' : (l < 0.35 ? 'navy' : 'blue');
+  if (h < 290) return l > 0.6 ? 'lavender' : 'purple';
+  if (h < 345) return l > 0.6 ? 'light pink' : 'pink';
+
+  return 'unknown';
+}
+
+/**
+ * Build comprehensive negative prompt for color protection and quality
+ * Prevents common AI generation issues
+ */
+function buildColorNegativePrompt(options = {}) {
+  const negatives = [
+    // Color protection (highest priority)
+    'no color shift',
+    'no color cast',
+    'no tint',
+    'no warm filter',
+    'no cool filter',
+    'no sepia',
+    'no vintage filter',
+    'no instagram filter',
+    'no saturation change',
+    'no hue rotation',
+
+    // Quality issues
+    'no blurry',
+    'no soft focus',
+    'no jpeg artifacts',
+    'no noise',
+    'no pixelation',
+
+    // AI artifacts
+    'no extra fingers',
+    'no deformed hands',
+    'no distorted face',
+    'no extra limbs',
+    'no floating objects',
+    'no unnatural poses',
+
+    // Product preservation
+    'no logo alteration',
+    'no pattern change',
+    'no texture modification',
+    'no product deformation',
+    'no brand modification',
+  ];
+
+  // Add white-specific negatives
+  if (options.isWhiteProduct) {
+    negatives.push('no yellowing', 'no cream tint', 'no beige cast', 'no tan color');
+  }
+
+  return negatives.join(', ');
 }
 
 /**
@@ -282,13 +445,25 @@ function buildImagePrompt(basePrompt, userPrompt, options = {}) {
   const parts = [];
 
   // 1. COLOR LOCK FIRST (AI pays most attention to beginning of prompt)
-  const colorHexMatch = userPrompt?.match(/#[A-Fa-f0-9]{6}/);
-  const colorHex = colorHexMatch ? colorHexMatch[0].toUpperCase() : null;
+  // Try to get color from options first (manual override), then from userPrompt
+  let colorHex = options.colorHex || options.manualColorHex;
+  const isManualOverride = !!options.manualColorHex;
+
+  if (!colorHex) {
+    const colorHexMatch = userPrompt?.match(/#[A-Fa-f0-9]{6}/);
+    colorHex = colorHexMatch ? colorHexMatch[0].toUpperCase() : null;
+  }
+
+  // Check if this is a white product for special handling
+  const isWhiteProduct = colorHex ? isWhiteColor(colorHex) : false;
+  const colorName = options.colorName || null;
+  const colorPalette = options.colorPalette || null;
 
   if (colorHex) {
-    const colorLock = buildColorLockClause(colorHex, null, null);
+    const colorLock = buildColorLockClause(colorHex, colorName, colorPalette, isManualOverride);
     parts.push(colorLock);
-    console.log(`[Image Gen] Color lock activated: ${colorHex}`);
+    console.log(`[Image Gen] Color lock activated: ${colorHex}${isManualOverride ? ' (MANUAL OVERRIDE)' : ''}`);
+    if (isWhiteProduct) console.log(`[Image Gen] White product detected - applying special protection`);
   }
 
   // 2. Base prompt (product/model instructions)
@@ -308,18 +483,21 @@ function buildImagePrompt(basePrompt, userPrompt, options = {}) {
     parts.push(userPrompt.trim());
   }
 
-  // 5. Quality boost (kept as is - important)
+  // 5. Quality boost
   parts.push(IMAGE_QUALITY_BOOST);
 
-  // 6. Combined negative prompts (color + general) - REDUCED
-  const negatives = colorHex
-    ? `Avoid: ${buildColorNegativePrompt()}, blurry, distorted proportions, watermarks.`
-    : 'Avoid: blurry, distorted proportions, watermarks.';
+  // 6. Enhanced negative prompts (includes white product protection if needed)
+  const negatives = `Avoid: ${buildColorNegativePrompt({ isWhiteProduct })}.`;
   parts.push(negatives);
 
-  // 7. END color reminder (3rd strategic mention)
+  // 7. END color reminder (3rd strategic mention - very important)
   if (colorHex) {
-    parts.push(`Maintain product color ${colorHex} exactly.`);
+    const semanticColor = getSemanticColorName(colorHex);
+    if (isWhiteProduct) {
+      parts.push(`REMINDER: This product is PURE WHITE (${colorHex}). Output must show a WHITE product.`);
+    } else {
+      parts.push(`FINAL REMINDER: Product color is ${semanticColor} (${colorHex}) - preserve exactly.`);
+    }
   }
 
   // Supported aspect ratios
@@ -792,8 +970,12 @@ async function generateVideoFromImage(referenceUrl, prompt, options = {}) {
   if (!data?.uuid) {
     throw new Error('giminigen did not return a job id for the video');
   }
-
-  return pollForVideoResult(data.uuid);
+  // Poll with hard timeout to prevent hanging
+  return withTimeout(
+    pollForVideoResult(data.uuid),
+    VIDEO_POLL_TIMEOUT_MS,
+    'Video generation timed out after 5 minutes'
+  );
 }
 
 module.exports = {
