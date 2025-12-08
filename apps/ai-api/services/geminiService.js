@@ -160,7 +160,7 @@ const IMAGE_STYLE_PRESETS = {
     name: 'Street Style Urban',
     description: 'Urban street photography aesthetic',
     prompt: 'Street style photography, urban city backdrop, natural candid feel, golden hour sunlight, authentic street fashion vibe, brick walls or city architecture, contemporary urban lifestyle, Instagram influencer aesthetic',
-    aspectRatio: '4:5',
+    aspectRatio: '3:4',
     category: 'lifestyle',
   },
   lifestyle_outdoor: {
@@ -168,7 +168,7 @@ const IMAGE_STYLE_PRESETS = {
     name: 'Outdoor Natural',
     description: 'Natural outdoor lifestyle setting',
     prompt: 'Outdoor lifestyle photography, natural daylight, lush greenery or beach setting, relaxed authentic pose, warm golden tones, aspirational lifestyle imagery, vacation editorial feel, natural environment',
-    aspectRatio: '4:5',
+    aspectRatio: '3:4',
     category: 'lifestyle',
   },
   lifestyle_cafe: {
@@ -176,7 +176,7 @@ const IMAGE_STYLE_PRESETS = {
     name: 'Cafe & Indoor',
     description: 'Cozy indoor cafe or home setting',
     prompt: 'Indoor lifestyle photography, cozy cafe or modern interior setting, warm ambient lighting, bokeh background, casual relaxed atmosphere, lifestyle brand aesthetic, social media ready',
-    aspectRatio: '4:5',
+    aspectRatio: '3:4',
     category: 'lifestyle',
   },
 
@@ -204,7 +204,7 @@ const IMAGE_STYLE_PRESETS = {
     name: 'Instagram Aesthetic',
     description: 'Optimized for Instagram feed',
     prompt: 'Instagram-optimized photography, trendy aesthetic, soft warm tones, lifestyle influencer style, perfectly composed for social media, aspirational yet authentic feel, engagement-optimized composition, warm color filter',
-    aspectRatio: '4:5',
+    aspectRatio: '3:4',
     category: 'social',
   },
   tiktok_dynamic: {
@@ -322,9 +322,32 @@ function buildImagePrompt(basePrompt, userPrompt, options = {}) {
     parts.push(`Maintain product color ${colorHex} exactly.`);
   }
 
+  // Supported aspect ratios
+  const SUPPORTED_RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4'];
+
+  let finalAspectRatio = stylePreset?.aspectRatio || options.aspectRatio || '3:4';
+
+  // Validate and map unsupported ratios
+  if (!SUPPORTED_RATIOS.includes(finalAspectRatio)) {
+    console.warn(`[Image Gen] Warning: Unsupported aspect ratio '${finalAspectRatio}' detected.`);
+
+    // Map common unsupported formats
+    if (finalAspectRatio === '4:5') {
+      finalAspectRatio = '3:4'; // Map 4:5 to 3:4 (Portrait)
+      console.log('[Image Gen] Auto-mapped 4:5 to 3:4');
+    } else if (finalAspectRatio === '2:3') {
+      finalAspectRatio = '3:4'; // Map 2:3 to 3:4
+      console.log('[Image Gen] Auto-mapped 2:3 to 3:4');
+    } else {
+      // Default to square if completely unknown
+      finalAspectRatio = '1:1';
+      console.log('[Image Gen] Auto-mapped unknown ratio to 1:1');
+    }
+  }
+
   return {
     prompt: parts.join(' '),
-    aspectRatio: stylePreset?.aspectRatio || options.aspectRatio || '3:4',
+    aspectRatio: finalAspectRatio,
   };
 }
 
