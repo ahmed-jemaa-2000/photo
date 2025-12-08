@@ -16,16 +16,7 @@ const ASPECT_RATIOS = [
         height: 1024,
         recommended: true,
     },
-    {
-        id: '4:5',
-        name: 'Portrait',
-        description: 'Instagram Optimal',
-        icon: RectangleVertical,
-        ratio: '4:5',
-        width: 1024,
-        height: 1280,
-        recommended: true,
-    },
+
     {
         id: '9:16',
         name: 'Story',
@@ -35,14 +26,14 @@ const ASPECT_RATIOS = [
         width: 1024,
         height: 1820,
     },
-    {
-        id: '3:4',
-        name: 'Standard',
-        description: 'Website / Print',
-        icon: RectangleVertical,
-        ratio: '3:4',
-        width: 1024,
-        height: 1365,
+    id: '3:4',
+    name: 'Portrait',
+    description: 'Website / Print',
+    icon: RectangleVertical,
+    ratio: '3:4',
+    width: 1024,
+    height: 1365,
+    recommended: true,
     },
 ];
 
@@ -100,8 +91,8 @@ function AspectRatioSelector({ selectedRatio, onRatioSelect }) {
                     // Calculate preview dimensions
                     const previewWidth = 40;
                     const previewHeight = ratio.id === '1:1' ? 40 :
-                        ratio.id === '4:5' ? 50 :
-                            ratio.id === '9:16' ? 60 : 53;
+
+                        ratio.id === '9:16' ? 60 : 53;
 
                     return (
                         <motion.button

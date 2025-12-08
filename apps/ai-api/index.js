@@ -12,6 +12,8 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const db = require('./db/database');
 const geminiService = require('./services/geminiService');
 const telegramBot = require('./services/telegramBot');
+const axios = require('axios'); // Required for local saving
+
 const creditService = require('./services/creditService');
 const generationHistoryService = require('./services/generationHistoryService');
 
@@ -176,6 +178,53 @@ const upload = multer({
     files: 2 // Max 2 files (image + modelReference)
   }
 });
+
+/**
+ * Helper to download and save image locally
+ * Returns the local URL path (e.g., '/uploads/file.png')
+ */
+const downloadAndSaveImage = async (url) => {
+  try {
+    if (!url) return null;
+
+    console.log(`[Local Save] Downloading from: ${url}`);
+    const response = await axios.get(url, {
+      responseType: 'arraybuffer',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      },
+      timeout: 30000
+    });
+
+    const buffer = Buffer.from(response.data);
+
+    // Determine extension
+    const contentType = response.headers['content-type'];
+    let ext = 'png';
+    if (contentType) {
+      if (contentType.includes('jpeg') || contentType.includes('jpg')) ext = 'jpg';
+      else if (contentType.includes('webp')) ext = 'webp';
+    }
+
+    const filename = `gen-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+    const uploadDir = path.join(__dirname, 'uploads');
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const filepath = path.join(uploadDir, filename);
+    fs.writeFileSync(filepath, buffer);
+
+    console.log(`[Local Save] Saved to: ${filepath}`);
+    return `/uploads/${filename}`;
+  } catch (error) {
+    console.error('[Local Save] Failed:', error.message);
+    return null; // Return null to fall back to original URL
+  }
+};
+
 
 // Routes
 // Config endpoint - Share botConfig data with web client
@@ -378,6 +427,19 @@ app.post('/api/generate', generateLimiter, upload.fields([
       imageStyle: imageStyle || 'ecommerce_clean',
     });
 
+    // AUTO-SAVE: Download the generated image to local server
+    // This fixes 403 errors and prevents link expiration
+    let finalImageUrl = result.imageUrl;
+    let finalDownloadUrl = result.downloadUrl;
+
+    const localPath = await downloadAndSaveImage(result.imageUrl);
+    if (localPath) {
+      finalImageUrl = localPath;
+      finalDownloadUrl = localPath; // Use local path for download too
+      console.log('[Generate API] Updated to local path:', localPath);
+    }
+
+
     // Deduct credits after successful generation
     let creditInfo = null;
     if (userAuthenticated && authToken) {
@@ -396,9 +458,10 @@ app.post('/api/generate', generateLimiter, upload.fields([
       // Save to generation history
       const productId = req.body.productId ? parseInt(req.body.productId, 10) : null;
       generationHistoryService.saveGeneration(authToken, {
-        imageUrl: result.imageUrl,
-        downloadUrl: result.downloadUrl,
+        imageUrl: finalImageUrl,
+        downloadUrl: finalDownloadUrl,
         category,
+
         prompt,
         productId,
         metadata: {
@@ -408,15 +471,24 @@ app.post('/api/generate', generateLimiter, upload.fields([
       }).catch(err => console.error('Failed to save generation history:', err.message));
     }
 
-    res.json({
-      imageUrl: result.imageUrl,
-      downloadUrl: result.downloadUrl,
+    const finalResult = {
+      imageUrl: finalImageUrl,
+      downloadUrl: finalDownloadUrl,
       meta: result.meta,
       prompt,
       category,
       modelId: modelId || null,
       credits: creditInfo,
-    });
+    };
+
+    // Save to generation history
+    // We update the history service call to use the FINAL (local) URLs if available
+    if (userAuthenticated && authToken) {
+      // ... (existing history code) ...
+    }
+
+    res.json(finalResult);
+
   } catch (error) {
     // Structured error logging with context
     // Note: Some variables may not be defined if error happened before body parsing
@@ -549,14 +621,14 @@ app.get('/api/download-image', async (req, res) => {
   }
 
   try {
-    const axios = require('axios');
+    // const axios = require('axios'); // Moved to top
 
     // Fetch the image from the external URL
     const response = await axios.get(url, {
       responseType: 'arraybuffer',
       timeout: 30000,
       headers: {
-        'User-Agent': 'ProductStudio-Download/1.0'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       }
     });
 

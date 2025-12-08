@@ -171,8 +171,8 @@ function App() {
   // Smart defaults for clothes
   useEffect(() => {
     if (category === 'clothes') {
-      // Auto-set aspect ratio to 4:5 (Portrait) for clothes as it's best for full body
-      const portraitRatio = ASPECT_RATIOS.find(r => r.id === '4:5');
+      // Auto-set aspect ratio to 3:4 (Portrait) for clothes as it's best for full body
+      const portraitRatio = ASPECT_RATIOS.find(r => r.id === '3:4');
       if (portraitRatio) setAspectRatio(portraitRatio);
     }
   }, [category]);
