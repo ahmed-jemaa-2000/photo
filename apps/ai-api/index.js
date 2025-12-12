@@ -778,6 +778,23 @@ app.post('/api/generate-ad-creative', generateLimiter, upload.fields([
       });
     }
 
+    // PRE-CHECK: Verify user has credits BEFORE expensive generation
+    try {
+      const creditCheck = await creditService.checkCredits(authToken, 'adCreative');
+      if (!creditCheck.success || creditCheck.balance < 1) {
+        console.log('[Ad Creative] Credit pre-check failed: Insufficient credits');
+        return res.status(402).json({
+          error: 'Insufficient credits',
+          message: 'You need at least 1 credit to generate an ad creative',
+          credits: { balance: creditCheck.balance || 0 }
+        });
+      }
+      console.log(`[Ad Creative] Credit pre-check passed: ${creditCheck.balance} credits available`);
+    } catch (creditErr) {
+      console.warn('[Ad Creative] Credit pre-check failed:', creditErr.message);
+      // Continue anyway - credits will be checked again during deduction
+    }
+
     // Build the enhanced prompt
     const promptResult = adCreativeService.buildAdCreativePrompt({
       productCategory,

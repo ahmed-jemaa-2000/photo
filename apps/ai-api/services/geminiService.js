@@ -601,26 +601,42 @@ function buildImagePrompt(basePrompt, userPrompt, options = {}) {
     }
   }
 
-  // Supported aspect ratios
+  // Supported aspect ratios by the API
   const SUPPORTED_RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4'];
 
   let finalAspectRatio = stylePreset?.aspectRatio || options.aspectRatio || '3:4';
 
-  // Validate and map unsupported ratios
+  // Validate and map unsupported ratios to closest supported ones
   if (!SUPPORTED_RATIOS.includes(finalAspectRatio)) {
     console.warn(`[Image Gen] Warning: Unsupported aspect ratio '${finalAspectRatio}' detected.`);
 
-    // Map common unsupported formats
-    if (finalAspectRatio === '4:5') {
-      finalAspectRatio = '3:4'; // Map 4:5 to 3:4 (Portrait)
-      console.log('[Image Gen] Auto-mapped 4:5 to 3:4');
-    } else if (finalAspectRatio === '2:3') {
-      finalAspectRatio = '3:4'; // Map 2:3 to 3:4
-      console.log('[Image Gen] Auto-mapped 2:3 to 3:4');
+    // Comprehensive mapping for all output formats
+    const RATIO_MAPPINGS = {
+      '4:5': '3:4',        // Instagram 4:5 → 3:4 (Portrait)
+      '2:3': '3:4',        // Pinterest 2:3 → 3:4 (Portrait)
+      '820:312': '16:9',   // Facebook Cover → 16:9 (Landscape)
+      '1.91:1': '16:9',    // LinkedIn 1.91:1 → 16:9 (Landscape)
+      '1200:628': '16:9',  // LinkedIn alternative → 16:9
+      '1600:900': '16:9',  // Twitter → already 16:9 equivalent
+    };
+
+    if (RATIO_MAPPINGS[finalAspectRatio]) {
+      const mappedRatio = RATIO_MAPPINGS[finalAspectRatio];
+      console.log(`[Image Gen] Auto-mapped ${finalAspectRatio} to ${mappedRatio}`);
+      finalAspectRatio = mappedRatio;
     } else {
-      // Default to square if completely unknown
-      finalAspectRatio = '1:1';
-      console.log('[Image Gen] Auto-mapped unknown ratio to 1:1');
+      // Parse ratio to determine if landscape or portrait, then map accordingly
+      const parts = finalAspectRatio.split(':').map(Number);
+      if (parts.length === 2 && parts[0] > parts[1]) {
+        finalAspectRatio = '16:9'; // Landscape
+        console.log('[Image Gen] Auto-mapped unknown landscape ratio to 16:9');
+      } else if (parts.length === 2 && parts[1] > parts[0]) {
+        finalAspectRatio = '9:16'; // Portrait
+        console.log('[Image Gen] Auto-mapped unknown portrait ratio to 9:16');
+      } else {
+        finalAspectRatio = '1:1'; // Square fallback
+        console.log('[Image Gen] Auto-mapped unknown ratio to 1:1');
+      }
     }
   }
 

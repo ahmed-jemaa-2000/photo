@@ -272,16 +272,38 @@ const AdCreativeMode = ({
         advanced: false
     });
 
-    // Toggle decorative element
+    // Toggle decorative element - MAX 3 ALLOWED
+    const MAX_DECORATIVE_ELEMENTS = 3;
     const toggleDecorativeElement = (elemId) => {
         setDecorativeElements(prev => {
             if (elemId === 'none') return [];
-            const newSet = prev.includes(elemId)
-                ? prev.filter(id => id !== elemId)
-                : [...prev.filter(id => id !== 'none'), elemId];
-            return newSet;
+
+            // If removing, always allow
+            if (prev.includes(elemId)) {
+                return prev.filter(id => id !== elemId);
+            }
+
+            // If adding, check limit
+            if (prev.length >= MAX_DECORATIVE_ELEMENTS) {
+                // Could add toast notification here
+                console.warn(`Maximum ${MAX_DECORATIVE_ELEMENTS} decorative elements allowed`);
+                return prev; // Don't add more
+            }
+
+            return [...prev.filter(id => id !== 'none'), elemId];
         });
     };
+
+    // Auto-apply template's suggested colors when template changes
+    useEffect(() => {
+        const template = presets.designTemplates?.find(t => t.id === designTemplate);
+        if (template?.colorSuggestion && !useCustomColors) {
+            // Only auto-apply if user hasn't manually chosen custom colors
+            setCustomColors(template.colorSuggestion);
+            // Optionally auto-enable custom colors for the template suggestion
+            // setUseCustomColors(true);
+        }
+    }, [designTemplate, presets.designTemplates]);
 
     // Update parent whenever config changes
     useEffect(() => {
@@ -379,6 +401,19 @@ const AdCreativeMode = ({
                             className="overflow-hidden"
                         >
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-1">
+                                {/* Loading skeleton when presets not yet loaded */}
+                                {!presets.designTemplates?.length && (
+                                    <>
+                                        {[1, 2, 3, 4].map(i => (
+                                            <div key={i} className="p-4 rounded-2xl border-2 border-white/10 bg-white/5 animate-pulse">
+                                                <div className="w-12 h-12 bg-white/10 rounded-lg mb-3" />
+                                                <div className="h-4 bg-white/10 rounded mb-2 w-3/4" />
+                                                <div className="h-3 bg-white/10 rounded w-full" />
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+                                {/* Actual templates */}
                                 {presets.designTemplates?.map((template) => (
                                     <TemplateCard
                                         key={template.id}
@@ -553,7 +588,15 @@ const AdCreativeMode = ({
                             className="overflow-hidden"
                         >
                             <div className="p-1">
-                                <p className="text-xs text-slate-400 mb-3">Select multiple elements to add to your design</p>
+                                <div className="flex items-center justify-between mb-3">
+                                    <p className="text-xs text-slate-400">Select elements to add to your design</p>
+                                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${decorativeElements.length >= 3
+                                            ? 'bg-amber-500/20 text-amber-300'
+                                            : 'bg-white/10 text-slate-400'
+                                        }`}>
+                                        {decorativeElements.length}/3 max
+                                    </span>
+                                </div>
                                 <div className="flex flex-wrap gap-2">
                                     {presets.decorativeElements?.map((elem) => (
                                         <SelectableChip
