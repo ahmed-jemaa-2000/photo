@@ -16,6 +16,7 @@ const axios = require('axios'); // Required for local saving
 
 const creditService = require('./services/creditService');
 const generationHistoryService = require('./services/generationHistoryService');
+const adCreativeService = require('./services/adCreativeService');
 
 // Connect to MongoDB
 db.connectDB();
@@ -292,6 +293,8 @@ app.get('/api/config', (req, res) => {
       accessoryPlacements: ACCESSORY_PLACEMENTS,
       accessoryShotTypes: ACCESSORY_SHOT_TYPES,
       accessoryLightingOptions: ACCESSORY_LIGHTING_OPTIONS,
+      // Ad Creative configs (universal branding generator)
+      adCreativePresets: adCreativeService.getAdCreativePresets(),
     });
   } catch (error) {
     console.error('Error loading config:', error);
@@ -640,6 +643,216 @@ app.post('/api/generate-video', async (req, res) => {
   } catch (error) {
     console.error('Error generating video:', error.message);
     res.status(500).json({ error: error.message || 'Failed to generate video' });
+  }
+});
+
+// ============================================
+// AD CREATIVE GENERATION ENDPOINT
+// ============================================
+
+/**
+ * Universal Ad Creative Generator
+ * Generates marketing visuals for any product category
+ * Supports: Website Hero (16:9), Facebook Feed (1:1), Instagram Story (9:16)
+ */
+app.post('/api/generate-ad-creative', generateLimiter, upload.fields([
+  { name: 'productImage', maxCount: 1 },
+  { name: 'referenceImage', maxCount: 1 }
+]), (req, res, next) => {
+  // Check for auth token in body (for multipart forms)
+  if (!req.authToken && req.body?.authToken) {
+    req.authToken = req.body.authToken;
+  }
+  next();
+}, creditService.requireAuth, creditService.requireCredits('adCreative'), async (req, res) => {
+  const productImagePath = req.files?.productImage?.[0]?.path;
+  const referenceImagePath = req.files?.referenceImage?.[0]?.path;
+  const authToken = req.authToken;
+
+  try {
+    if (!productImagePath) {
+      return res.status(400).json({ error: 'Product image is required' });
+    }
+
+    // Validate file magic bytes
+    try {
+      const type = await fileType.fromFile(productImagePath);
+      const allowedMagic = ['image/jpeg', 'image/png', 'image/webp'];
+
+      if (!type || !allowedMagic.includes(type.mime)) {
+        if (fs.existsSync(productImagePath)) fs.unlinkSync(productImagePath);
+        if (referenceImagePath && fs.existsSync(referenceImagePath)) fs.unlinkSync(referenceImagePath);
+
+        return res.status(400).json({
+          error: 'Invalid image file. File appears to be corrupted or not a valid image.'
+        });
+      }
+    } catch (valErr) {
+      console.error('[Ad Creative] Validation error:', valErr);
+    }
+
+    // Extract options from request body
+    const {
+      category = 'other',
+      outputFormat = 'facebook_feed',
+      brandStyle = 'premium_minimal',
+      mood = 'fresh_clean',
+      brandColors,
+      targetAudience,
+      embedText = false,
+      textContent,
+      customInstructions,
+      productDescription
+    } = req.body;
+
+    // Parse JSON strings if needed (from multipart form)
+    let parsedBrandColors = null;
+    if (brandColors) {
+      try {
+        parsedBrandColors = typeof brandColors === 'string' ? JSON.parse(brandColors) : brandColors;
+      } catch (e) {
+        console.warn('[Ad Creative] Failed to parse brandColors:', e);
+      }
+    }
+
+    let parsedTextContent = null;
+    if (textContent) {
+      try {
+        parsedTextContent = typeof textContent === 'string' ? JSON.parse(textContent) : textContent;
+      } catch (e) {
+        console.warn('[Ad Creative] Failed to parse textContent:', e);
+      }
+    }
+
+    // Validate options
+    const validation = adCreativeService.validateAdCreativeOptions({
+      category,
+      outputFormat,
+      brandStyle,
+      mood,
+      brandColors: parsedBrandColors
+    });
+
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: 'Invalid options provided',
+        details: validation.errors
+      });
+    }
+
+    // Build the prompt
+    const promptResult = adCreativeService.buildAdCreativePrompt({
+      category,
+      outputFormat,
+      brandStyle,
+      mood,
+      brandColors: parsedBrandColors,
+      targetAudience,
+      embedText: embedText === true || embedText === 'true',
+      textContent: parsedTextContent,
+      referenceStyleNotes: referenceImagePath ? 'Use the reference image as style guide' : null,
+      customInstructions,
+      productDescription
+    });
+
+    console.log('\n========================================');
+    console.log('[Ad Creative API] NEW REQUEST');
+    console.log('========================================');
+    console.log('[Ad Creative] Category:', category);
+    console.log('[Ad Creative] Output Format:', outputFormat);
+    console.log('[Ad Creative] Brand Style:', brandStyle);
+    console.log('[Ad Creative] Mood:', mood);
+    console.log('[Ad Creative] Embed Text:', embedText);
+    console.log('[Ad Creative] Has Reference:', !!referenceImagePath);
+    console.log('[Ad Creative] Aspect Ratio:', promptResult.aspectRatio);
+    console.log('[Ad Creative] Prompt Length:', promptResult.prompt.length);
+    console.log('========================================\n');
+
+    // Generate the image using geminiService
+    const result = await geminiService.generateImage(productImagePath, promptResult.prompt, {
+      aspectRatio: promptResult.aspectRatio,
+      imageStyle: brandStyle === 'tech_modern' ? 'luxury_dark' :
+        brandStyle === 'bold_energetic' ? 'tiktok_dynamic' :
+          brandStyle === 'premium_minimal' ? 'ecommerce_clean' : 'ecommerce_soft',
+      referenceImagePaths: referenceImagePath ? [referenceImagePath] : [],
+      category: 'adCreative'
+    });
+
+    // Save image locally to prevent 403 errors
+    let finalImageUrl = result.imageUrl;
+    let finalDownloadUrl = result.downloadUrl;
+
+    const localPath = await downloadAndSaveImage(result.imageUrl);
+    if (localPath) {
+      finalImageUrl = localPath;
+      finalDownloadUrl = localPath;
+      console.log('[Ad Creative] Saved to local path:', localPath);
+    }
+
+    // Deduct credits
+    let creditInfo = null;
+    const deductResult = await creditService.deductCredits(authToken, 'adCreative', {
+      category,
+      outputFormat,
+      brandStyle,
+      generatedImageUrl: finalImageUrl,
+    });
+    if (deductResult.success) {
+      creditInfo = {
+        deducted: deductResult.deducted,
+        remaining: deductResult.newBalance,
+      };
+      console.log(`[Ad Creative] Credits deducted: ${deductResult.deducted}, remaining: ${deductResult.newBalance}`);
+    }
+
+    // Save to generation history
+    generationHistoryService.saveGeneration(authToken, {
+      imageUrl: finalImageUrl,
+      downloadUrl: finalDownloadUrl,
+      category: 'adCreative',
+      prompt: promptResult.prompt,
+      metadata: {
+        productCategory: category,
+        outputFormat,
+        brandStyle,
+        mood,
+        dimensions: promptResult.dimensions,
+      },
+    }).catch(err => console.error('[Ad Creative] Failed to save generation history:', err.message));
+
+    res.json({
+      success: true,
+      imageUrl: finalImageUrl,
+      downloadUrl: finalDownloadUrl,
+      format: outputFormat,
+      aspectRatio: promptResult.aspectRatio,
+      dimensions: promptResult.dimensions,
+      meta: result.meta,
+      credits: creditInfo,
+    });
+
+  } catch (error) {
+    console.error('[Ad Creative] Generation error:', error.message);
+
+    let clientMessage = 'Failed to generate ad creative. Please try again.';
+    if (error.message?.includes('rate limit')) {
+      clientMessage = 'AI service rate limit reached. Please wait a minute and try again.';
+    } else if (error.message?.includes('timeout')) {
+      clientMessage = 'Generation took too long. Please try with a simpler configuration.';
+    }
+
+    res.status(500).json({
+      error: clientMessage,
+      code: 'AD_CREATIVE_GENERATION_FAILED',
+    });
+  } finally {
+    // Clean up uploaded files
+    if (productImagePath && fs.existsSync(productImagePath)) {
+      fs.unlinkSync(productImagePath);
+    }
+    if (referenceImagePath && fs.existsSync(referenceImagePath)) {
+      fs.unlinkSync(referenceImagePath);
+    }
   }
 });
 

@@ -58,6 +58,18 @@ const CATEGORIES = [
         features: ['Virtual try-on', 'Close-up details', 'Styled shots'],
         isNew: true,
     },
+    {
+        id: 'adCreative',
+        name: 'Ad Creative',
+        description: 'Marketing visuals for any product',
+        icon: Sparkles, // Using Sparkles as the icon
+        color: 'primary',
+        gradient: 'from-violet-500 to-fuchsia-600',
+        bgGradient: 'from-violet-500/20 to-fuchsia-600/20',
+        features: ['Any product', 'Multiple formats', 'Brand styling'],
+        isNew: true,
+        popular: true,
+    },
 ];
 
 /**
@@ -234,7 +246,7 @@ const CategoryHub = ({
 
             {/* Category Grid */}
             <motion.div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"

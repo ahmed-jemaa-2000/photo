@@ -31,6 +31,8 @@ export const getCategorySteps = (category) => {
             return ['upload', 'essentials', 'bagStyle', 'scene', 'review'];
         case 'accessories':
             return ['upload', 'essentials', 'accessoryType', 'scene', 'review'];
+        case 'adCreative':
+            return ['upload', 'adCreativeConfig', 'review'];
         default:
             return ['category', 'upload', 'essentials', 'configure', 'review'];
     }
@@ -44,6 +46,7 @@ export const STEP_LABELS = {
     shoeModel: 'Style',
     bagStyle: 'Style',
     accessoryType: 'Type',
+    adCreativeConfig: 'Configure',
     scene: 'Scene',
     review: 'Generate',
     configure: 'Configure',

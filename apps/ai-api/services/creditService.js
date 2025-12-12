@@ -9,6 +9,7 @@ const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337';
 const CREDIT_COSTS = {
     photo: 1,
     video: 3,
+    adCreative: 3,  // Ad creative generation (marketing visuals)
 };
 
 /**
@@ -93,7 +94,13 @@ async function checkCredits(token, generationType = 'photo') {
  */
 async function deductCredits(token, generationType = 'photo', metadata = {}) {
     const cost = getCreditCost(generationType);
-    const type = generationType === 'video' ? 'video_generation' : 'photo_generation';
+    // Map generation types to Strapi transaction types
+    const typeMap = {
+        photo: 'photo_generation',
+        video: 'video_generation',
+        adCreative: 'ad_creative_generation'
+    };
+    const type = typeMap[generationType] || 'photo_generation';
 
     try {
         const response = await axios.post(

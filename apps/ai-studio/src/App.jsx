@@ -36,6 +36,7 @@ import AccessoryShotTypeSelection, { ACCESSORY_SHOT_TYPES } from './components/a
 import AccessoryLightingSelection, { ACCESSORY_LIGHTING_OPTIONS } from './components/accessories/AccessoryLightingSelection';
 import AnimatedButton from './components/common/AnimatedButton';
 import AspectRatioSelector, { ASPECT_RATIOS } from './components/AspectRatioSelector';
+import AdCreativeMode from './components/AdCreativeMode';
 
 // Enhanced UX components
 import GenerationProgressOverlay from './components/GenerationProgressOverlay';
@@ -46,6 +47,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import CreditBadge from './components/CreditBadge';
 import { useCredits } from './hooks/useCredits';
 import { useProductFromUrl } from './hooks/useProductFromUrl';
+import { useConfig } from './hooks/useConfig';
 import SaveToProductModal from './components/SaveToProductModal';
 import LowCreditsToast from './components/LowCreditsToast';
 import ColorOverrideSelector from './components/ColorOverrideSelector';
@@ -80,6 +82,9 @@ function App() {
 
   // === PRODUCT FROM URL (Dashboard Integration) ===
   const { productData, loading: productLoading } = useProductFromUrl();
+
+  // === CONFIG (Ad Creative Presets, etc.) ===
+  const { config, loading: configLoading } = useConfig();
 
   // === STATE ===
 
@@ -133,6 +138,9 @@ function App() {
   const [accessorySubtype, setAccessorySubtype] = useState(null);
   const [accessoryShotType, setAccessoryShotType] = useState(null);
   const [accessoryLighting, setAccessoryLighting] = useState(null);
+
+  // Ad Creative-specific
+  const [adCreativeConfig, setAdCreativeConfig] = useState(null);
 
   // === COMPUTED VALUES ===
 
@@ -294,6 +302,97 @@ function App() {
       return;
     }
 
+    // Handle adCreative category separately (uses different API endpoint)
+    if (category === 'adCreative') {
+      if (!adCreativeConfig) {
+        setError('Please configure your ad creative first.');
+        return;
+      }
+
+      setIsGenerating(true);
+      setError(null);
+      setGeneratedResult(null);
+
+      try {
+        const formData = new FormData();
+        formData.append('productImage', selectedFile);
+        formData.append('category', adCreativeConfig.productCategory || 'other');
+        formData.append('outputFormat', adCreativeConfig.outputFormat || 'facebook_feed');
+        formData.append('brandStyle', adCreativeConfig.brandStyle || 'premium_minimal');
+        formData.append('mood', adCreativeConfig.mood || 'fresh_clean');
+
+        if (adCreativeConfig.brandColors) {
+          formData.append('brandColors', JSON.stringify(adCreativeConfig.brandColors));
+        }
+        if (adCreativeConfig.targetAudience) {
+          formData.append('targetAudience', adCreativeConfig.targetAudience);
+        }
+        if (adCreativeConfig.embedText) {
+          formData.append('embedText', 'true');
+          if (adCreativeConfig.textContent) {
+            formData.append('textContent', JSON.stringify(adCreativeConfig.textContent));
+          }
+        }
+        if (adCreativeConfig.customInstructions) {
+          formData.append('customInstructions', adCreativeConfig.customInstructions);
+        }
+
+        const fetchOptions = {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        };
+
+        if (authToken) {
+          fetchOptions.headers = {
+            'Authorization': `Bearer ${authToken}`,
+          };
+        }
+
+        const apiCall = fetchWithRetry(`${API_BASE}/api/generate-ad-creative`, fetchOptions, {
+          maxRetries: 3,
+          baseDelay: 2000,
+          retryOn: [500, 502, 503, 504, 429],
+        }).then(res => res.json());
+
+        const minWait = new Promise(resolve => setTimeout(resolve, 60000));
+        const [data] = await Promise.all([apiCall, minWait]);
+
+        if (data.error) throw new Error(data.error);
+
+        const resolveAssetUrl = (url) => {
+          if (!url || typeof url !== 'string') return url;
+          if (/^https?:\/\//i.test(url)) return url;
+          const base = (API_BASE || '').replace(/\/+$/, '');
+          const path = url.startsWith('/') ? url : `/${url}`;
+          return `${base}${path}`;
+        };
+
+        setGeneratedResult({
+          imageUrl: resolveAssetUrl(data.imageUrl),
+          downloadUrl: resolveAssetUrl(data.downloadUrl),
+          meta: data.meta,
+          category: 'adCreative',
+          format: data.format,
+          aspectRatio: data.aspectRatio,
+          dimensions: data.dimensions,
+        });
+
+        setShowCelebration(true);
+
+        if (data.credits?.remaining !== undefined) {
+          updateCredits(data.credits.remaining);
+        }
+      } catch (err) {
+        console.error(err);
+        setError(err.message || 'Failed to generate ad creative. Please try again.');
+      } finally {
+        setIsGenerating(false);
+      }
+      return;
+    }
+
+    // Original fashion photography generation logic
     const variationCue = VARIATION_CUES[Math.floor(Math.random() * VARIATION_CUES.length)];
     let personaDescription = '';
     let categoryPrompt = '';
@@ -537,6 +636,7 @@ function App() {
     setAccessoryShotType(null);
     setAccessoryLighting(null);
     setSelectedBackground(null);
+    setAdCreativeConfig(null);
     setError(null);
   };
 
@@ -549,6 +649,7 @@ function App() {
       case 'shoeModel': return true;
       case 'bagStyle': return !!bagStyle;
       case 'accessoryType': return !!accessoryType;
+      case 'adCreativeConfig': return !!adCreativeConfig; // Must configure ad creative
       case 'scene': return true; // Background is optional
       case 'review': return true;
       default: return true;
@@ -860,6 +961,22 @@ function App() {
           </motion.div>
         );
 
+      case 'adCreativeConfig':
+        return (
+          <motion.div
+            key="adCreativeConfig"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="max-w-4xl mx-auto"
+          >
+            <AdCreativeMode
+              config={config}
+              onConfigChange={setAdCreativeConfig}
+            />
+          </motion.div>
+        );
+
       case 'review':
         return (
           <motion.div
@@ -881,6 +998,7 @@ function App() {
                 bagDisplayMode={bagDisplayMode}
                 accessoryType={accessoryType}
                 accessorySubtype={accessorySubtype}
+                adCreativeConfig={adCreativeConfig}
                 onGenerate={handleGenerate}
                 isGenerating={isGenerating}
                 credits={credits}
