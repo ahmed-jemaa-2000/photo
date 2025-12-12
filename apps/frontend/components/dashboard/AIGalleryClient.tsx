@@ -17,7 +17,8 @@ interface Generation {
     } | null;
 }
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const AI_STUDIO_URL = process.env.NEXT_PUBLIC_AI_STUDIO_URL ||
+    (process.env.NODE_ENV === 'production' ? 'https://studio.brandili.shop' : 'http://localhost:3002');
 
 const CATEGORY_COLORS: Record<string, string> = {
     clothes: 'bg-purple-100 text-purple-700',
@@ -39,31 +40,50 @@ export default function AIGalleryClient() {
     const [generations, setGenerations] = useState<Generation[]>([]);
     const [filter, setFilter] = useState<string>('all');
     const [selectedImage, setSelectedImage] = useState<Generation | null>(null);
-    const [authToken, setAuthToken] = useState<string | null>(null);
+
+    const getAiAssetsBase = () => {
+        const envBase = process.env.NEXT_PUBLIC_AI_ASSETS_URL || process.env.NEXT_PUBLIC_AI_API_URL;
+        if (envBase) return envBase.replace(/\/+$/, '');
+
+        if (typeof window === 'undefined') return '';
+        if (process.env.NODE_ENV === 'production') {
+            return AI_STUDIO_URL.replace(/\/+$/, '');
+        }
+
+        const { protocol, hostname } = window.location;
+        return `${protocol}//${hostname}:3001`;
+    };
+
+    const resolveAssetUrl = (url?: string) => {
+        if (!url) return url;
+        if (/^https?:\/\//i.test(url)) return url;
+        const base = getAiAssetsBase();
+        if (!base) return url;
+        const path = url.startsWith('/') ? url : `/${url}`;
+        return `${base}${path}`;
+    };
 
     const fetchGenerations = async () => {
         try {
             setLoading(true);
 
-            // Get auth token from server (httpOnly cookie can't be read client-side)
-            const authRes = await fetch('/api/auth/check');
-            const authData = await authRes.json();
+            const res = await fetch('/api/ai-generations/me');
 
-            if (!authData.authenticated || !authData.token) {
+            if (res.status === 401) {
                 router.push('/dashboard/login');
                 return;
             }
 
-            const token = authData.token;
-            setAuthToken(token);
-
-            const res = await fetch(`${STRAPI_URL}/api/ai-generations/me`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
             if (res.ok) {
                 const data = await res.json();
-                setGenerations(data.data || []);
+                const items: Generation[] = data.data || [];
+                setGenerations(items.map((gen) => ({
+                    ...gen,
+                    imageUrl: resolveAssetUrl(gen.imageUrl) || gen.imageUrl,
+                    downloadUrl: resolveAssetUrl(gen.downloadUrl) || gen.downloadUrl,
+                })));
+            } else {
+                toast.error('Failed to load gallery');
             }
         } catch (error) {
             console.error('Error fetching generations:', error);
@@ -101,14 +121,7 @@ export default function AIGalleryClient() {
         if (!confirm('Are you sure you want to delete this generation?')) return;
 
         try {
-            if (!authToken) {
-                toast.error('Not authenticated');
-                return;
-            }
-            const res = await fetch(`${STRAPI_URL}/api/ai-generations/${gen.id}`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${authToken}` },
-            });
+            const res = await fetch(`/api/ai-generations/${gen.id}`, { method: 'DELETE' });
 
             if (res.ok) {
                 setGenerations(prev => prev.filter(g => g.id !== gen.id));
@@ -149,7 +162,7 @@ export default function AIGalleryClient() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No Generations Yet</h3>
                 <p className="text-gray-500 mb-6">Your AI-generated photos will appear here</p>
                 <a
-                    href="http://localhost:3002"
+                    href={AI_STUDIO_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-indigo-700 transition"

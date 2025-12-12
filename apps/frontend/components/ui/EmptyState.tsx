@@ -27,6 +27,9 @@ interface EmptyStateProps {
   };
 }
 
+const AI_STUDIO_URL = process.env.NEXT_PUBLIC_AI_STUDIO_URL ||
+  (process.env.NODE_ENV === 'production' ? 'https://studio.brandili.shop' : 'http://localhost:3002');
+
 const typeConfig: Record<EmptyStateType, {
   icon: ReactNode;
   gradient: string;
@@ -70,7 +73,7 @@ const typeConfig: Record<EmptyStateType, {
     defaultTitle: 'No AI images yet',
     defaultDesc: 'Generate stunning product photos with AI',
     defaultAction: 'Open AI Studio',
-    defaultHref: 'https://studio.brandili.shop',
+    defaultHref: AI_STUDIO_URL,
   },
   general: {
     icon: <FileText className="w-10 h-10" />,
@@ -145,4 +148,3 @@ export default function EmptyState({
     </motion.div>
   );
 }
-
