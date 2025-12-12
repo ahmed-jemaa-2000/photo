@@ -102,12 +102,15 @@ function buildAdCreativePrompt(options) {
 
     if (activeColors) {
         promptSections.push(`
-            COLOR PALETTE:
-            Apply this color scheme throughout the design:
-            - PRIMARY COLOR: ${activeColors.primary} (main brand color for key elements, gradients, shapes)
-            - SECONDARY COLOR: ${activeColors.secondary} (backgrounds, large areas, contrast)
-            - ACCENT COLOR: ${activeColors.accent} (highlights, decorative elements, small details)
-            Ensure the product's original colors are preserved - apply palette to decorative elements and background only.
+            COLOR PALETTE FOR DECORATIVE ELEMENTS (NOT THE PRODUCT):
+            Apply this color scheme to DECORATIVE ELEMENTS, BACKGROUNDS, and EFFECTS ONLY:
+            - PRIMARY COLOR: ${activeColors.primary} (for 3D shapes, gradients, geometric elements)
+            - SECONDARY COLOR: ${activeColors.secondary} (for background areas, contrast zones)
+            - ACCENT COLOR: ${activeColors.accent} (for highlights, accents, small details)
+            
+            ⚠️ CRITICAL: The PRODUCT must retain its ORIGINAL colors from the reference image.
+            Do NOT apply the brand color palette to the product itself.
+            The product's color, labels, branding, and appearance must remain EXACTLY as in the original image.
         `.trim());
     }
 
@@ -250,6 +253,7 @@ function buildAdCreativePrompt(options) {
         - Cluttered or unbalanced composition
         - Watermarks or stock photo artifacts
         - Distorted or altered product appearance
+        - CHANGING THE PRODUCT'S COLOR (keep original colors from reference)
         - Muddy colors or poor contrast
         - Generic or boring layouts
     `.trim());

@@ -522,25 +522,38 @@ function buildImagePrompt(basePrompt, userPrompt, options = {}) {
   const parts = [];
 
   // 1. COLOR LOCK FIRST (AI pays most attention to beginning of prompt)
-  // Try to get color from options first (manual override), then from userPrompt
-  let colorHex = options.colorHex || options.manualColorHex;
-  const isManualOverride = !!options.manualColorHex;
+  // IMPORTANT: For adCreative category, the colorHex is the BRAND color scheme,
+  // NOT the product color. We want to preserve the product's ORIGINAL color,
+  // so we skip color lock and add a strong preservation instruction instead.
 
-  if (!colorHex) {
-    const colorHexMatch = userPrompt?.match(/#[A-Fa-f0-9]{6}/);
-    colorHex = colorHexMatch ? colorHexMatch[0].toUpperCase() : null;
-  }
+  const isAdCreative = options.category === 'adCreative';
 
-  // Check if this is a white product for special handling
-  const isWhiteProduct = colorHex ? isWhiteColor(colorHex) : false;
-  const colorName = options.colorName || null;
-  const colorPalette = options.colorPalette || null;
+  if (isAdCreative) {
+    // For Ad Creative: Strong instruction to preserve original product colors
+    parts.push(`[CRITICAL: PRODUCT COLOR PRESERVATION] The product in the reference image must be preserved with its ORIGINAL colors exactly as shown. Do NOT change the product's color to match the brand color scheme. Apply brand colors ONLY to decorative elements, backgrounds, and effects - NEVER to the product itself.`);
+    console.log('[Image Gen] Ad Creative mode: Product color preservation activated (skipping brand color lock)');
+  } else {
+    // Original color lock behavior for other categories
+    // Try to get color from options first (manual override), then from userPrompt
+    let colorHex = options.colorHex || options.manualColorHex;
+    const isManualOverride = !!options.manualColorHex;
 
-  if (colorHex) {
-    const colorLock = buildColorLockClause(colorHex, colorName, colorPalette, isManualOverride);
-    parts.push(colorLock);
-    console.log(`[Image Gen] Color lock activated: ${colorHex}${isManualOverride ? ' (MANUAL OVERRIDE)' : ''}`);
-    if (isWhiteProduct) console.log(`[Image Gen] White product detected - applying special protection`);
+    if (!colorHex) {
+      const colorHexMatch = userPrompt?.match(/#[A-Fa-f0-9]{6}/);
+      colorHex = colorHexMatch ? colorHexMatch[0].toUpperCase() : null;
+    }
+
+    // Check if this is a white product for special handling
+    const isWhiteProduct = colorHex ? isWhiteColor(colorHex) : false;
+    const colorName = options.colorName || null;
+    const colorPalette = options.colorPalette || null;
+
+    if (colorHex) {
+      const colorLock = buildColorLockClause(colorHex, colorName, colorPalette, isManualOverride);
+      parts.push(colorLock);
+      console.log(`[Image Gen] Color lock activated: ${colorHex}${isManualOverride ? ' (MANUAL OVERRIDE)' : ''}`);
+      if (isWhiteProduct) console.log(`[Image Gen] White product detected - applying special protection`);
+    }
   }
 
   // 2. Base prompt (product/model instructions)
@@ -563,17 +576,28 @@ function buildImagePrompt(basePrompt, userPrompt, options = {}) {
   // 5. Quality boost
   parts.push(IMAGE_QUALITY_BOOST);
 
-  // 6. Enhanced negative prompts (includes white product protection if needed)
-  const negatives = `Avoid: ${buildColorNegativePrompt({ isWhiteProduct })}.`;
+  // 6. Enhanced negative prompts
+  const negatives = `Avoid: ${buildColorNegativePrompt({})}.`;
   parts.push(negatives);
 
-  // 7. END color reminder (3rd strategic mention - very important)
-  if (colorHex) {
-    const semanticColor = getSemanticColorName(colorHex);
-    if (isWhiteProduct) {
-      parts.push(`REMINDER: This product is PURE WHITE (${colorHex}). Output must show a WHITE product.`);
-    } else {
-      parts.push(`FINAL REMINDER: Product color is ${semanticColor} (${colorHex}) - preserve exactly.`);
+  // 7. END reminder (3rd strategic mention)
+  if (isAdCreative) {
+    // For Ad Creative: Repeat the product preservation instruction
+    parts.push(`FINAL REMINDER: PRESERVE THE PRODUCT'S ORIGINAL COLORS EXACTLY. Brand color palette is for decorative elements ONLY. Do not recolor the product.`);
+  } else {
+    // For other categories: Color reminder if colorHex was set
+    const colorHexFromOptions = options.colorHex || options.manualColorHex;
+    const colorHexFromPrompt = userPrompt?.match(/#[A-Fa-f0-9]{6}/)?.[0]?.toUpperCase();
+    const finalColorHex = colorHexFromOptions || colorHexFromPrompt;
+
+    if (finalColorHex) {
+      const isWhiteProduct = isWhiteColor(finalColorHex);
+      const semanticColor = getSemanticColorName(finalColorHex);
+      if (isWhiteProduct) {
+        parts.push(`REMINDER: This product is PURE WHITE (${finalColorHex}). Output must show a WHITE product.`);
+      } else {
+        parts.push(`FINAL REMINDER: Product color is ${semanticColor} (${finalColorHex}) - preserve exactly.`);
+      }
     }
   }
 
