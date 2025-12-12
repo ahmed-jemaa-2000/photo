@@ -20,11 +20,16 @@ interface Generation {
 const AI_STUDIO_URL = process.env.NEXT_PUBLIC_AI_STUDIO_URL ||
     (process.env.NODE_ENV === 'production' ? 'https://studio.brandili.shop' : 'http://localhost:3002');
 
+// AI API URL (where images are served from)
+const AI_API_URL = process.env.NEXT_PUBLIC_AI_API_URL ||
+    (process.env.NODE_ENV === 'production' ? 'https://api.brandili.shop' : 'http://localhost:3001');
+
 const CATEGORY_COLORS: Record<string, string> = {
     clothes: 'bg-purple-100 text-purple-700',
     shoes: 'bg-blue-100 text-blue-700',
     bags: 'bg-amber-100 text-amber-700',
     accessories: 'bg-pink-100 text-pink-700',
+    adCreative: 'bg-violet-100 text-violet-700',
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -32,6 +37,7 @@ const CATEGORY_ICONS: Record<string, string> = {
     shoes: '👟',
     bags: '👜',
     accessories: '💍',
+    adCreative: '✨',
 };
 
 export default function AIGalleryClient() {
@@ -41,23 +47,38 @@ export default function AIGalleryClient() {
     const [filter, setFilter] = useState<string>('all');
     const [selectedImage, setSelectedImage] = useState<Generation | null>(null);
 
-    const getAiAssetsBase = () => {
-        const envBase = process.env.NEXT_PUBLIC_AI_ASSETS_URL || process.env.NEXT_PUBLIC_AI_API_URL;
+    /**
+     * Get the base URL for AI API assets
+     * In production: https://api.brandili.shop
+     * In development: http://localhost:3001
+     */
+    const getAiApiBase = () => {
+        const envBase = process.env.NEXT_PUBLIC_AI_API_URL;
         if (envBase) return envBase.replace(/\/+$/, '');
 
-        if (typeof window === 'undefined') return '';
+        if (typeof window === 'undefined') {
+            return process.env.NODE_ENV === 'production'
+                ? 'https://api.brandili.shop'
+                : 'http://localhost:3001';
+        }
+
         if (process.env.NODE_ENV === 'production') {
-            return AI_STUDIO_URL.replace(/\/+$/, '');
+            return 'https://api.brandili.shop';
         }
 
         const { protocol, hostname } = window.location;
         return `${protocol}//${hostname}:3001`;
     };
 
+    /**
+     * Resolve relative image URLs to full URLs pointing to AI API
+     */
     const resolveAssetUrl = (url?: string) => {
         if (!url) return url;
+        // Already a full URL
         if (/^https?:\/\//i.test(url)) return url;
-        const base = getAiAssetsBase();
+        // Relative path - prepend AI API base
+        const base = getAiApiBase();
         if (!base) return url;
         const path = url.startsWith('/') ? url : `/${url}`;
         return `${base}${path}`;
@@ -187,7 +208,7 @@ export default function AIGalleryClient() {
                 >
                     All ({generations.length})
                 </button>
-                {['clothes', 'shoes', 'bags', 'accessories'].map(cat => {
+                {['clothes', 'shoes', 'bags', 'accessories', 'adCreative'].map(cat => {
                     const count = generations.filter(g => g.category === cat).length;
                     if (count === 0) return null;
                     return (
@@ -218,6 +239,17 @@ export default function AIGalleryClient() {
                             src={gen.imageUrl}
                             alt={`AI Generation ${gen.id}`}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent && !parent.querySelector('.fallback-placeholder')) {
+                                    const fallback = document.createElement('div');
+                                    fallback.className = 'fallback-placeholder absolute inset-0 flex flex-col items-center justify-center text-gray-400';
+                                    fallback.innerHTML = '<span class="text-4xl mb-2">🖼️</span><span class="text-xs">Image unavailable</span>';
+                                    parent.appendChild(fallback);
+                                }
+                            }}
                         />
                         {/* Hover Overlay */}
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3">
@@ -237,8 +269,8 @@ export default function AIGalleryClient() {
                             </button>
                         </div>
                         {/* Category Badge */}
-                        <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium ${CATEGORY_COLORS[gen.category]}`}>
-                            {CATEGORY_ICONS[gen.category]} {gen.category}
+                        <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium ${CATEGORY_COLORS[gen.category] || 'bg-gray-100 text-gray-700'}`}>
+                            {CATEGORY_ICONS[gen.category] || '📷'} {gen.category === 'adCreative' ? 'Ad Creative' : gen.category}
                         </div>
                         {/* Product Link */}
                         {gen.product && (

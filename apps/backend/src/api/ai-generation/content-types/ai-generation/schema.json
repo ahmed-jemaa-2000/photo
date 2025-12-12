@@ -35,7 +35,8 @@
                 "clothes",
                 "shoes",
                 "bags",
-                "accessories"
+                "accessories",
+                "adCreative"
             ],
             "required": true
         },
