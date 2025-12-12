@@ -26,6 +26,73 @@ const apiClient = axios.create({
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function normalizeHistoryResponse(data) {
+  return data?.result ?? data;
+}
+
+function extractErrorMessage(history) {
+  return history?.error_message || history?.detail?.error_message;
+}
+
+function extractGenerateResultUrl(history) {
+  return (
+    history?.generate_result ||
+    history?.generateResult ||
+    history?.generated_result ||
+    history?.generatedResult ||
+    null
+  );
+}
+
+function extractGeneratedImages(history) {
+  const images = history?.generated_image || history?.generated_images;
+  return Array.isArray(images) ? images : [];
+}
+
+function extractGeneratedVideos(history) {
+  const videos =
+    history?.generated_video ||
+    history?.generated_videos ||
+    history?.generated_file ||
+    history?.generated_files;
+  return Array.isArray(videos) ? videos : [];
+}
+
+function getPrimaryImageUrl(primary, history) {
+  const generateResult = extractGenerateResultUrl(history);
+  const thumbnailFromItem = primary?.thumbnails?.[0]?.url;
+  return (
+    primary?.image_url ||
+    generateResult ||
+    thumbnailFromItem ||
+    primary?.file_download_url ||
+    history?.thumbnail_url ||
+    null
+  );
+}
+
+function getPrimaryImageDownloadUrl(primary, history) {
+  const generateResult = extractGenerateResultUrl(history);
+  return primary?.file_download_url || primary?.image_url || generateResult || null;
+}
+
+function getPrimaryVideoUrl(primary, history) {
+  const generateResult = extractGenerateResultUrl(history);
+  return (
+    primary?.video_url ||
+    generateResult ||
+    primary?.file_download_url ||
+    primary?.url ||
+    history?.video_url ||
+    null
+  );
+}
+
+function getPrimaryVideoDownloadUrl(primary, history) {
+  const generateResult = extractGenerateResultUrl(history);
+  return primary?.file_download_url || primary?.video_url || generateResult || primary?.url || null;
+}
+
 /**
  * Wrap a promise with a timeout
  * @param {Promise} promise - Promise to wrap
@@ -47,28 +114,39 @@ async function pollForResult(uuid) {
       headers: { 'x-api-key': API_KEY },
     });
 
-    const images = data?.generated_image || [];
-    const status = data?.status ?? 0;
+    const history = normalizeHistoryResponse(data);
+    const images = extractGeneratedImages(history);
+    const status = history?.status ?? 0;
+    const errorMessage = extractErrorMessage(history);
+    const generateResult = extractGenerateResultUrl(history);
 
-    if (images.length && status >= 2) {
-      const primary = images[0];
+    if (status >= 2 && (images.length || generateResult)) {
+      const primary = images[0] || null;
+      const imageUrl = getPrimaryImageUrl(primary, history);
+      const downloadUrl = getPrimaryImageDownloadUrl(primary, history);
+
+      if (!imageUrl && !downloadUrl) {
+        throw new Error('giminigen finished but did not return an image URL');
+      }
+
       return {
-        imageUrl: primary.image_url || primary.file_download_url || data.thumbnail_url,
-        downloadUrl: primary.file_download_url || primary.image_url,
+        imageUrl: imageUrl || downloadUrl,
+        downloadUrl: downloadUrl || imageUrl,
         historyUrl: `${BASE_URL}/uapi/v1/history/${uuid}`,
         meta: {
           status,
-          statusDesc: data?.status_desc || '',
-          queuePosition: data?.queue_position,
-          thumbnail: data?.thumbnail_url,
-          model: primary.model || data?.model_name,
-          generatedAt: data?.updated_at || data?.created_at,
+          statusDesc: history?.status_desc || '',
+          queuePosition: history?.queue_position,
+          thumbnail: history?.thumbnail_url,
+          model: primary?.model || history?.model_name,
+          generatedAt: history?.updated_at || history?.created_at,
+          statusPercentage: history?.status_percentage,
         },
       };
     }
 
-    if (status < 0 || data?.error_message) {
-      throw new Error(data?.error_message || 'giminigen reported a failure');
+    if (status === 3 || status < 0 || errorMessage) {
+      throw new Error(errorMessage || 'giminigen reported a failure');
     }
 
     await wait(POLL_INTERVAL_MS);
@@ -83,18 +161,16 @@ async function pollForVideoResult(uuid) {
       headers: { 'x-api-key': API_KEY },
     });
 
-    const videos = data?.generated_video ||
-      data?.generated_videos ||
-      data?.generated_file ||
-      data?.generated_files ||
-      [];
+    const history = normalizeHistoryResponse(data);
+    const videos = extractGeneratedVideos(history);
+    const status = history?.status ?? 0;
+    const errorMessage = extractErrorMessage(history);
+    const generateResult = extractGenerateResultUrl(history);
 
-    const status = data?.status ?? 0;
-
-    if (Array.isArray(videos) && videos.length && status >= 2) {
-      const primary = videos[0];
-      const videoUrl = primary.video_url || primary.file_download_url || primary.url || data?.video_url;
-      const downloadUrl = primary.file_download_url || primary.video_url || primary.url || data?.video_url;
+    if (status >= 2 && (videos.length || generateResult)) {
+      const primary = videos[0] || null;
+      const videoUrl = getPrimaryVideoUrl(primary, history);
+      const downloadUrl = getPrimaryVideoDownloadUrl(primary, history);
 
       if (!videoUrl && !downloadUrl) {
         throw new Error('giminigen finished but did not return a video URL');
@@ -106,17 +182,18 @@ async function pollForVideoResult(uuid) {
         historyUrl: `${BASE_URL}/uapi/v1/history/${uuid}`,
         meta: {
           status,
-          statusDesc: data?.status_desc || '',
-          queuePosition: data?.queue_position,
-          thumbnail: data?.thumbnail_url,
-          model: primary.model || data?.model_name,
-          generatedAt: data?.updated_at || data?.created_at,
+          statusDesc: history?.status_desc || '',
+          queuePosition: history?.queue_position,
+          thumbnail: history?.thumbnail_url,
+          model: primary?.model || history?.model_name,
+          generatedAt: history?.updated_at || history?.created_at,
+          statusPercentage: history?.status_percentage,
         },
       };
     }
 
-    if (status === 3 || status < 0 || data?.error_message) {
-      throw new Error(data?.error_message || 'giminigen reported a failure while rendering video');
+    if (status === 3 || status < 0 || errorMessage) {
+      throw new Error(errorMessage || 'giminigen reported a failure while rendering video');
     }
 
     await wait(VIDEO_POLL_INTERVAL_MS);
