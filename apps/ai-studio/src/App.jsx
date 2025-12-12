@@ -468,9 +468,17 @@ function App() {
 
       if (data.error) throw new Error(data.error);
 
+      const resolveAssetUrl = (url) => {
+        if (!url || typeof url !== 'string') return url;
+        if (/^https?:\/\//i.test(url)) return url;
+        const base = (API_BASE || '').replace(/\/+$/, '');
+        const path = url.startsWith('/') ? url : `/${url}`;
+        return `${base}${path}`;
+      };
+
       setGeneratedResult({
-        imageUrl: data.imageUrl,
-        downloadUrl: data.downloadUrl,
+        imageUrl: resolveAssetUrl(data.imageUrl),
+        downloadUrl: resolveAssetUrl(data.downloadUrl),
         prompt: data.prompt || finalPrompt,
         meta: data.meta,
         gender,

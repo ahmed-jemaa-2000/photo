@@ -154,12 +154,23 @@ const GenerationResult = ({ result, category = 'clothes', onRegenerate, original
 
   if (!result?.imageUrl) return null;
 
+  const resolveAssetUrl = (url) => {
+    if (!url || typeof url !== 'string') return url;
+    if (/^https?:\/\//i.test(url)) return url;
+    const base = (API_BASE || '').replace(/\/+$/, '');
+    const path = url.startsWith('/') ? url : `/${url}`;
+    return `${base}${path}`;
+  };
+
+  const imageUrl = resolveAssetUrl(result.imageUrl);
+  const resolvedDownloadUrl = resolveAssetUrl(result.downloadUrl);
+
   const animationStyles = ANIMATION_STYLES[category] || ANIMATION_STYLES.clothes;
 
   const handleCopy = async () => {
-    if (!result.imageUrl || !navigator?.clipboard) return;
+    if (!imageUrl || !navigator?.clipboard) return;
     try {
-      await navigator.clipboard.writeText(result.imageUrl);
+      await navigator.clipboard.writeText(imageUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch (err) {
@@ -173,7 +184,7 @@ const GenerationResult = ({ result, category = 'clothes', onRegenerate, original
     setShowQualityPicker(false);
 
     try {
-      const downloadUrl = result.downloadUrl || result.imageUrl;
+      const downloadUrl = resolvedDownloadUrl || imageUrl;
       const filename = `product-studio-${category}-${Date.now()}`;
       const proxyUrl = `${API_BASE}/api/download-image?url=${encodeURIComponent(downloadUrl)}&quality=${quality}&filename=${filename}`;
 
@@ -188,7 +199,7 @@ const GenerationResult = ({ result, category = 'clothes', onRegenerate, original
     } catch (err) {
       console.error('Download failed:', err);
       // Fallback to direct download
-      window.open(result.downloadUrl || result.imageUrl, '_blank');
+      window.open(resolvedDownloadUrl || imageUrl, '_blank');
     } finally {
       setTimeout(() => setIsDownloading(false), 1000);
     }
@@ -220,7 +231,7 @@ const GenerationResult = ({ result, category = 'clothes', onRegenerate, original
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          imageUrl: result.imageUrl,
+          imageUrl,
           prompt: finalPrompt,
           category: category,
           animationStyle: animation.id
@@ -277,14 +288,14 @@ const GenerationResult = ({ result, category = 'clothes', onRegenerate, original
           <React.Suspense fallback={<div className="aspect-[3/4] animate-pulse bg-white/10 rounded-xl" />}>
             <BeforeAfterSlider
               beforeImage={originalImage}
-              afterImage={result.imageUrl}
+              afterImage={imageUrl}
               beforeLabel="Your Product"
               afterLabel="AI Generated"
             />
           </React.Suspense>
         ) : (
           <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden group">
-            <img src={result.imageUrl} alt="Generated Model" className="w-full h-full object-cover" />
+            <img src={imageUrl} alt="Generated Model" className="w-full h-full object-cover" />
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
               <div className="flex gap-3 justify-center flex-wrap">
