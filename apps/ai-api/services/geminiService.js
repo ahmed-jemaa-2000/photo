@@ -613,8 +613,34 @@ async function generateImage(imagePath, userPrompt, options = {}) {
 
   const formData = new FormData();
 
-  // IMPORTANT: API only accepts ONE image file. Send only the product image.
+  // Primary input/reference image (product)
   formData.append('files', fs.createReadStream(imagePath));
+
+  // Optional model/reference image (2nd reference) + extra references
+  const modelReferencePath = options.modelReferencePath;
+  const hasModelReferencePath = !!(modelReferencePath && fs.existsSync(modelReferencePath));
+
+  if (hasModelReferencePath) {
+    console.log('[Image Gen] Using model reference image:', modelReferencePath);
+    formData.append('files', fs.createReadStream(modelReferencePath));
+  }
+
+  const extraReferencePaths = Array.isArray(options.referenceImagePaths) ? options.referenceImagePaths : [];
+  for (const refPath of extraReferencePaths) {
+    if (!refPath || refPath === imagePath || refPath === modelReferencePath) continue;
+    if (!fs.existsSync(refPath)) continue;
+    formData.append('files', fs.createReadStream(refPath));
+  }
+
+  const fileUrls = Array.isArray(options.fileUrls) ? options.fileUrls : [];
+  for (const url of fileUrls) {
+    if (!url) continue;
+    formData.append('file_urls', url);
+  }
+
+  if (options.refHistory) {
+    formData.append('ref_history', options.refHistory);
+  }
 
   // Build the base prompt based on category and model description
   let basePrompt = '';
@@ -629,7 +655,9 @@ async function generateImage(imagePath, userPrompt, options = {}) {
     ];
 
     // Add shoe model (leg/outfit) description if provided
-    if (shoeModelDescription) {
+    if (hasModelReferencePath) {
+      shoePromptParts.push('Use the second reference image as the leg/feet and outfit reference. The legs/feet in the output should resemble the person in the second image.');
+    } else if (shoeModelDescription) {
       shoePromptParts.push(`The model should have: ${shoeModelDescription}.`);
       console.log('[Image Gen] Using shoe model description:', shoeModelDescription);
     } else {
@@ -656,6 +684,10 @@ async function generateImage(imagePath, userPrompt, options = {}) {
       'The bag in the reference image must be preserved EXACTLY - same color, material, hardware, logos, and all details.',
     ];
 
+    if (hasModelReferencePath) {
+      bagPromptParts.push('Use the second reference image as the model reference for pose and overall look.');
+    }
+
     if (modelDescription) {
       bagPromptParts.push(`Show the bag styled with a model who has: ${modelDescription}.`);
       console.log('[Image Gen] Using bag model description:', modelDescription);
@@ -669,6 +701,10 @@ async function generateImage(imagePath, userPrompt, options = {}) {
       'Create a high-fidelity professional product photo of this accessory.',
       'The accessory in the reference image must be preserved EXACTLY - same color, material, design, and all details.',
     ];
+
+    if (hasModelReferencePath) {
+      accessoryPromptParts.push('Use the second reference image as the model reference for pose and overall look.');
+    }
 
     if (modelDescription) {
       accessoryPromptParts.push(`Show the accessory on a model who has: ${modelDescription}.`);
@@ -685,6 +721,10 @@ async function generateImage(imagePath, userPrompt, options = {}) {
     ];
 
     // Add model persona description if provided
+    if (hasModelReferencePath) {
+      clothesPromptParts.push('Use the second reference image as the model reference. The model in the output should resemble the person in the second image.');
+    }
+
     if (modelDescription) {
       clothesPromptParts.push(`The model should be: ${modelDescription}.`);
       console.log('[Image Gen] Using model description:', modelDescription);

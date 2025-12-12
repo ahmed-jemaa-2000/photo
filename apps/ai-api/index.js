@@ -389,9 +389,14 @@ app.post('/api/generate', generateLimiter, upload.fields([
     console.log('[Generate API] Image Style:', imageStyle);
     console.log('----------------------------------------');
 
-    // Resolve model DESCRIPTION from modelId or shoeModelId (API only accepts 1 image, so we use text descriptions)
+    // Resolve model reference image (optional) + description from modelId/shoeModelId
     let modelDescription = '';
     let shoeModelDescription = '';
+    let resolvedModelPath = modelReferencePath;
+
+    if (resolvedModelPath) {
+      console.log('[Generate API] Using uploaded model reference image:', resolvedModelPath);
+    }
 
     // Handle shoe category - get shoe model description
     if (category === 'shoes' && shoeModelId) {
@@ -399,6 +404,10 @@ app.post('/api/generate', generateLimiter, upload.fields([
       const selectedShoeModel = SHOE_MODELS.find(m => m.id === shoeModelId);
       if (selectedShoeModel) {
         shoeModelDescription = selectedShoeModel.description;
+        if (!resolvedModelPath && selectedShoeModel.path && fs.existsSync(selectedShoeModel.path)) {
+          resolvedModelPath = selectedShoeModel.path;
+          console.log('[Generate API] Using shoe model reference image:', selectedShoeModel.path);
+        }
         console.log('[Generate API] ✅ Found shoe model:', selectedShoeModel.name.en);
         console.log('[Generate API] 📝 Description:', shoeModelDescription.substring(0, 100) + '...');
       } else {
@@ -416,6 +425,10 @@ app.post('/api/generate', generateLimiter, upload.fields([
       }
       if (selectedModel) {
         modelDescription = selectedModel.description;
+        if (!resolvedModelPath && selectedModel.path && fs.existsSync(selectedModel.path)) {
+          resolvedModelPath = selectedModel.path;
+          console.log('[Generate API] Using model reference image:', selectedModel.path);
+        }
         console.log('[Generate API] ✅ Found model:', selectedModel.name.en);
         console.log('[Generate API] 📝 Description:', modelDescription.substring(0, 100) + '...');
       } else {
@@ -428,6 +441,7 @@ app.post('/api/generate', generateLimiter, upload.fields([
     console.log('[Generate API] 🚀 Calling geminiService.generateImage...');
     console.log('[Generate API] Options:', JSON.stringify({
       category,
+      hasModelReference: !!resolvedModelPath,
       hasModelDescription: !!modelDescription,
       hasShoeModelDescription: !!shoeModelDescription,
       imageStyle: imageStyle || 'ecommerce_clean',
@@ -439,6 +453,7 @@ app.post('/api/generate', generateLimiter, upload.fields([
       modelPersona: parsedPersona,
       modelDescription,
       shoeModelDescription,
+      modelReferencePath: resolvedModelPath,
       category,
       shoeCameraAngle,
       shoeLighting,
@@ -748,4 +763,3 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
 });
-

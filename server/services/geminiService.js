@@ -464,6 +464,28 @@ async function generateImage(imagePath, userPrompt, options = {}) {
     basePrompt = 'Create a high-fidelity fashion product photo using the first image as the exact garment reference and the second image as the model reference. The model in the output should resemble the person in the second image. Preserve all logos, text, and details from the garment. LOCK garment color and graphics exactly to the first image.';
   }
 
+  // Optional additional reference inputs (per GeminiGen API docs)
+  const extraReferencePaths = Array.isArray(options.referenceImagePaths) ? options.referenceImagePaths : [];
+  for (const refPath of extraReferencePaths) {
+    if (!refPath || refPath === imagePath || refPath === options.modelReferencePath) continue;
+    if (!fs.existsSync(refPath)) continue;
+    formData.append('files', fs.createReadStream(refPath));
+  }
+
+  const fileUrls = Array.isArray(options.fileUrls) ? options.fileUrls : [];
+  for (const url of fileUrls) {
+    if (!url) continue;
+    formData.append('file_urls', url);
+  }
+
+  if (options.modelReferenceUrl) {
+    formData.append('file_urls', options.modelReferenceUrl);
+  }
+
+  if (options.refHistory) {
+    formData.append('ref_history', options.refHistory);
+  }
+
   // Build enhanced prompt with style presets
   const { prompt: enhancedPrompt, aspectRatio } = buildImagePrompt(basePrompt, userPrompt, options);
 
