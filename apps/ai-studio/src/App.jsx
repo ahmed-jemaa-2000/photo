@@ -316,22 +316,33 @@ function App() {
       try {
         const formData = new FormData();
         formData.append('productImage', selectedFile);
-        formData.append('category', adCreativeConfig.productCategory || 'other');
-        formData.append('outputFormat', adCreativeConfig.outputFormat || 'facebook_feed');
-        formData.append('brandStyle', adCreativeConfig.brandStyle || 'premium_minimal');
-        formData.append('mood', adCreativeConfig.mood || 'fresh_clean');
 
-        if (adCreativeConfig.brandColors) {
-          formData.append('brandColors', JSON.stringify(adCreativeConfig.brandColors));
+        // Enhanced config fields
+        formData.append('productCategory', adCreativeConfig.productCategory || 'other');
+        formData.append('outputFormat', adCreativeConfig.outputFormat || 'instagram_feed');
+        formData.append('designTemplate', adCreativeConfig.designTemplate || 'modern_gradient');
+        formData.append('compositionStyle', adCreativeConfig.compositionStyle || 'subject_center');
+        formData.append('typographyStyle', adCreativeConfig.typographyStyle || 'modern_clean');
+        formData.append('colorScheme', adCreativeConfig.colorScheme || 'royal_blue');
+
+        // Custom colors if using custom scheme
+        if (adCreativeConfig.customColors) {
+          formData.append('customColors', JSON.stringify(adCreativeConfig.customColors));
         }
+
+        // Decorative elements (array)
+        if (adCreativeConfig.decorativeElements?.length > 0) {
+          formData.append('decorativeElements', JSON.stringify(adCreativeConfig.decorativeElements));
+        }
+
+        // Text content zones
+        if (adCreativeConfig.textContent) {
+          formData.append('textContent', JSON.stringify(adCreativeConfig.textContent));
+        }
+
+        // Optional fields
         if (adCreativeConfig.targetAudience) {
           formData.append('targetAudience', adCreativeConfig.targetAudience);
-        }
-        if (adCreativeConfig.embedText) {
-          formData.append('embedText', 'true');
-          if (adCreativeConfig.textContent) {
-            formData.append('textContent', JSON.stringify(adCreativeConfig.textContent));
-          }
         }
         if (adCreativeConfig.customInstructions) {
           formData.append('customInstructions', adCreativeConfig.customInstructions);

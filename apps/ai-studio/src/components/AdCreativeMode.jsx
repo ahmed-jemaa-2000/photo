@@ -1,67 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Image,
     Palette,
-    Target,
     Type,
-    Upload,
+    Layout,
+    Sparkles,
     ChevronDown,
     ChevronUp,
-    Info,
-    Sparkles,
     CheckCircle2,
     Monitor,
-    Smartphone,
-    Square,
-    HelpCircle
+    Target,
+    Layers,
+    Wand2,
+    Info,
+    Eye
 } from 'lucide-react';
 
 /**
- * Ad Creative Configuration Component
- * Configures brand style, output format, mood, and text options
+ * Enhanced Ad Creative Configuration Component
+ * Professional marketing poster designer with:
+ * - Design Templates
+ * - Composition Styles  
+ * - Typography Styles
+ * - Decorative Elements
+ * - Color Schemes
+ * - Text Content Zones
  */
-
-// ============================================
-// STATIC CONFIGURATIONS (fallbacks)
-// ============================================
-
-const DEFAULT_CATEGORIES = [
-    { id: 'supplements', name: { en: 'Supplements' }, icon: '💪' },
-    { id: 'cosmetics', name: { en: 'Cosmetics' }, icon: '💄' },
-    { id: 'food_beverage', name: { en: 'Food & Beverages' }, icon: '🍕' },
-    { id: 'electronics', name: { en: 'Electronics' }, icon: '📱' },
-    { id: 'fashion', name: { en: 'Fashion' }, icon: '👗' },
-    { id: 'home_decor', name: { en: 'Home & Decor' }, icon: '🏠' },
-    { id: 'services', name: { en: 'Services & Apps' }, icon: '📲' },
-    { id: 'other', name: { en: 'Other' }, icon: '📦' }
-];
-
-const DEFAULT_FORMATS = [
-    { id: 'website_hero', name: { en: 'Website Hero' }, icon: '🖥️', aspectRatio: '16:9' },
-    { id: 'facebook_feed', name: { en: 'Social Feed' }, icon: '📱', aspectRatio: '1:1' },
-    { id: 'instagram_story', name: { en: 'Story/Reels' }, icon: '📲', aspectRatio: '9:16' }
-];
-
-const DEFAULT_STYLES = [
-    { id: 'premium_minimal', name: { en: 'Premium Minimal' }, preview: '⬜' },
-    { id: 'bold_energetic', name: { en: 'Bold & Energetic' }, preview: '🔴' },
-    { id: 'organic_natural', name: { en: 'Organic Natural' }, preview: '🌿' },
-    { id: 'tech_modern', name: { en: 'Tech Modern' }, preview: '💜' },
-    { id: 'playful_colorful', name: { en: 'Playful Colorful' }, preview: '🌈' },
-    { id: 'professional_trust', name: { en: 'Professional Trust' }, preview: '🔵' },
-    { id: 'luxury_dark', name: { en: 'Luxury Dark' }, preview: '⬛' },
-    { id: 'warm_lifestyle', name: { en: 'Warm Lifestyle' }, preview: '🧡' }
-];
-
-const DEFAULT_MOODS = [
-    { id: 'energizing', name: { en: 'Energizing' }, icon: '⚡' },
-    { id: 'calming', name: { en: 'Calming' }, icon: '🌊' },
-    { id: 'luxurious', name: { en: 'Luxurious' }, icon: '👑' },
-    { id: 'fresh_clean', name: { en: 'Fresh & Clean' }, icon: '✨' },
-    { id: 'edgy_bold', name: { en: 'Edgy Bold' }, icon: '🔥' },
-    { id: 'warm_cozy', name: { en: 'Warm & Cozy' }, icon: '🕯️' }
-];
 
 // ============================================
 // SUB-COMPONENTS
@@ -70,61 +34,61 @@ const DEFAULT_MOODS = [
 /**
  * Section Header with collapsible support
  */
-const SectionHeader = ({ icon: Icon, title, subtitle, isOpen, onToggle, optional }) => (
+const SectionHeader = ({ icon: Icon, title, subtitle, isOpen, onToggle, badge }) => (
     <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
+        className="w-full flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors group"
     >
         <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/30 to-purple-500/30 flex items-center justify-center group-hover:from-primary/40 group-hover:to-purple-500/40 transition-all">
                 <Icon className="w-5 h-5 text-primary" />
             </div>
             <div className="text-left">
-                <h3 className="font-semibold text-white flex items-center gap-2">
-                    {title}
-                    {optional && (
-                        <span className="text-xs text-slate-400 font-normal">(Optional)</span>
+                <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-white">{title}</h3>
+                    {badge && (
+                        <span className="px-2 py-0.5 text-xs bg-primary/20 text-primary rounded-full">{badge}</span>
                     )}
-                </h3>
+                </div>
                 {subtitle && <p className="text-sm text-slate-400">{subtitle}</p>}
             </div>
         </div>
-        {isOpen ? (
-            <ChevronUp className="w-5 h-5 text-slate-400" />
-        ) : (
-            <ChevronDown className="w-5 h-5 text-slate-400" />
-        )}
+        <div className="flex items-center gap-2">
+            {isOpen ? (
+                <ChevronUp className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+            ) : (
+                <ChevronDown className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+            )}
+        </div>
     </button>
 );
 
 /**
- * Option Card for selections
+ * Template Card with visual preview
  */
-const OptionCard = ({ selected, onClick, icon, title, subtitle, badge }) => (
+const TemplateCard = ({ template, selected, onClick }) => (
     <motion.button
         onClick={onClick}
-        whileHover={{ scale: 1.02 }}
+        whileHover={{ scale: 1.02, y: -2 }}
         whileTap={{ scale: 0.98 }}
         className={`
-      relative p-4 rounded-xl border-2 text-left transition-all
+      relative p-4 rounded-2xl border-2 text-left transition-all overflow-hidden
       ${selected
-                ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20'
-                : 'bg-white/5 border-white/10 hover:border-primary/50'
+                ? 'bg-gradient-to-br from-primary/20 to-purple-500/20 border-primary shadow-lg shadow-primary/20'
+                : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10'
             }
     `}
     >
-        <div className="flex items-center gap-3">
-            <span className="text-2xl">{icon}</span>
-            <div>
-                <p className="font-medium text-white">{title}</p>
-                {subtitle && <p className="text-xs text-slate-400">{subtitle}</p>}
-            </div>
-        </div>
-        {badge && (
-            <span className="absolute top-2 right-2 px-2 py-0.5 text-xs bg-primary/30 text-primary-light rounded-full">
-                {badge}
-            </span>
-        )}
+        {/* Preview icon */}
+        <div className="text-4xl mb-3">{template.preview}</div>
+
+        {/* Title */}
+        <p className="font-semibold text-white text-sm mb-1">{template.name?.en || template.name}</p>
+
+        {/* Description */}
+        <p className="text-xs text-slate-400 line-clamp-2">{template.description?.en || template.description}</p>
+
+        {/* Selected indicator */}
         {selected && (
             <motion.div
                 initial={{ scale: 0 }}
@@ -138,11 +102,103 @@ const OptionCard = ({ selected, onClick, icon, title, subtitle, badge }) => (
 );
 
 /**
- * Color Picker Input
+ * Option Button for single selections
+ */
+const OptionButton = ({ option, selected, onClick, showDiagram }) => (
+    <motion.button
+        onClick={onClick}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className={`
+      relative p-3 rounded-xl border-2 text-left transition-all
+      ${selected
+                ? 'bg-primary/20 border-primary'
+                : 'bg-white/5 border-white/10 hover:border-primary/50'
+            }
+    `}
+    >
+        <div className="flex items-center gap-2">
+            <span className="text-lg">{option.icon}</span>
+            <span className="text-sm font-medium text-white">{option.name?.en || option.name}</span>
+        </div>
+        {showDiagram && option.diagram && (
+            <p className="text-xs text-slate-500 mt-1 font-mono">{option.diagram}</p>
+        )}
+        {selected && (
+            <CheckCircle2 className="absolute top-2 right-2 w-4 h-4 text-primary" />
+        )}
+    </motion.button>
+);
+
+/**
+ * Multi-select Chip for decorative elements
+ */
+const SelectableChip = ({ item, selected, onClick }) => (
+    <motion.button
+        onClick={onClick}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className={`
+      px-3 py-2 rounded-xl text-sm flex items-center gap-2 transition-all border
+      ${selected
+                ? 'bg-primary text-white border-primary shadow-lg shadow-primary/30'
+                : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:border-primary/30'
+            }
+    `}
+    >
+        <span>{item.icon}</span>
+        <span>{item.name?.en || item.name}</span>
+    </motion.button>
+);
+
+/**
+ * Color Scheme Card
+ */
+const ColorSchemeCard = ({ scheme, selected, onClick }) => (
+    <motion.button
+        onClick={onClick}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.97 }}
+        className={`
+      relative p-3 rounded-xl border-2 transition-all
+      ${selected
+                ? 'border-primary bg-primary/10'
+                : 'border-white/10 bg-white/5 hover:border-primary/50'
+            }
+    `}
+    >
+        <div className="flex items-center gap-2 mb-2">
+            <span className="text-lg">{scheme.icon}</span>
+            <span className="text-xs font-medium text-white">{scheme.name?.en || scheme.name}</span>
+        </div>
+        {scheme.colors && (
+            <div className="flex gap-1">
+                <div
+                    className="w-6 h-6 rounded-full border border-white/20"
+                    style={{ backgroundColor: scheme.colors.primary }}
+                />
+                <div
+                    className="w-6 h-6 rounded-full border border-white/20"
+                    style={{ backgroundColor: scheme.colors.secondary }}
+                />
+                <div
+                    className="w-6 h-6 rounded-full border border-white/20"
+                    style={{ backgroundColor: scheme.colors.accent }}
+                />
+            </div>
+        )}
+        {selected && (
+            <CheckCircle2 className="absolute top-2 right-2 w-4 h-4 text-primary" />
+        )}
+    </motion.button>
+);
+
+/**
+ * Color Picker for custom colors
  */
 const ColorPicker = ({ label, value, onChange }) => (
     <div className="flex items-center gap-3">
-        <label className="text-sm text-slate-400 w-24">{label}</label>
+        <label className="text-sm text-slate-400 w-20">{label}</label>
         <div className="flex items-center gap-2 flex-1">
             <input
                 type="color"
@@ -155,7 +211,7 @@ const ColorPicker = ({ label, value, onChange }) => (
                 value={value || ''}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder="#6366f1"
-                className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-primary focus:outline-none"
+                className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-primary focus:outline-none uppercase"
             />
         </div>
     </div>
@@ -170,75 +226,114 @@ const AdCreativeMode = ({
     onConfigChange,
     className = ''
 }) => {
-    // Get presets from config or use defaults
-    const categories = config.adCreativePresets?.categories || DEFAULT_CATEGORIES;
-    const formats = config.adCreativePresets?.formats || DEFAULT_FORMATS;
-    const styles = config.adCreativePresets?.styles || DEFAULT_STYLES;
-    const moods = config.adCreativePresets?.moods || DEFAULT_MOODS;
+    // Get presets from API config
+    const presets = useMemo(() => {
+        return config?.adCreativePresets || {
+            designTemplates: [],
+            decorativeElements: [],
+            compositionStyles: [],
+            typographyStyles: [],
+            colorSchemes: [],
+            outputFormats: [],
+            productCategories: []
+        };
+    }, [config]);
 
-    // Local state for configuration
+    // State
     const [productCategory, setProductCategory] = useState('other');
-    const [outputFormat, setOutputFormat] = useState('facebook_feed');
-    const [brandStyle, setBrandStyle] = useState('premium_minimal');
-    const [mood, setMood] = useState('fresh_clean');
-    const [brandColors, setBrandColors] = useState({ primary: '', secondary: '' });
-    const [targetAudience, setTargetAudience] = useState('');
-    const [embedText, setEmbedText] = useState(false);
+    const [outputFormat, setOutputFormat] = useState('instagram_feed');
+    const [designTemplate, setDesignTemplate] = useState('modern_gradient');
+    const [compositionStyle, setCompositionStyle] = useState('subject_center');
+    const [typographyStyle, setTypographyStyle] = useState('modern_clean');
+    const [colorScheme, setColorScheme] = useState('royal_blue');
+    const [customColors, setCustomColors] = useState({ primary: '', secondary: '', accent: '' });
+    const [useCustomColors, setUseCustomColors] = useState(false);
+    const [decorativeElements, setDecorativeElements] = useState([]);
     const [textContent, setTextContent] = useState({
         headline: '',
         subheadline: '',
         offer: '',
-        cta: ''
+        cta: '',
+        contact: ''
     });
+    const [targetAudience, setTargetAudience] = useState('');
     const [customInstructions, setCustomInstructions] = useState('');
 
     // Section toggle states
     const [openSections, setOpenSections] = useState({
         category: true,
-        format: true,
-        style: true,
+        template: true,
+        format: false,
+        composition: false,
+        typography: false,
         colors: false,
+        decorations: false,
         text: false,
         advanced: false
     });
 
+    // Toggle decorative element
+    const toggleDecorativeElement = (elemId) => {
+        setDecorativeElements(prev => {
+            if (elemId === 'none') return [];
+            const newSet = prev.includes(elemId)
+                ? prev.filter(id => id !== elemId)
+                : [...prev.filter(id => id !== 'none'), elemId];
+            return newSet;
+        });
+    };
+
     // Update parent whenever config changes
     useEffect(() => {
+        const activeColors = useCustomColors ? customColors : null;
+
         onConfigChange?.({
             productCategory,
             outputFormat,
-            brandStyle,
-            mood,
-            brandColors: brandColors.primary ? brandColors : null,
+            designTemplate,
+            compositionStyle,
+            typographyStyle,
+            colorScheme: useCustomColors ? 'custom' : colorScheme,
+            customColors: activeColors,
+            decorativeElements,
+            textContent: Object.values(textContent).some(v => v) ? textContent : null,
             targetAudience: targetAudience || null,
-            embedText,
-            textContent: embedText ? textContent : null,
             customInstructions: customInstructions || null
         });
-    }, [productCategory, outputFormat, brandStyle, mood, brandColors, targetAudience, embedText, textContent, customInstructions]);
+    }, [productCategory, outputFormat, designTemplate, compositionStyle, typographyStyle, colorScheme, customColors, useCustomColors, decorativeElements, textContent, targetAudience, customInstructions, onConfigChange]);
 
     const toggleSection = (section) => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
 
+    // Get current selections for summary
+    const currentTemplate = presets.designTemplates?.find(t => t.id === designTemplate);
+    const currentFormat = presets.outputFormats?.find(f => f.id === outputFormat);
+    const currentComposition = presets.compositionStyles?.find(c => c.id === compositionStyle);
+    const currentScheme = presets.colorSchemes?.find(s => s.id === colorScheme);
+
     return (
         <div className={`space-y-4 ${className}`}>
             {/* Header */}
             <div className="text-center mb-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-full border border-primary/30 mb-4">
+                    <Wand2 className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-primary">Professional Poster Designer</span>
+                </div>
                 <h2 className="text-2xl font-bold text-white mb-2">
-                    Configure Your <span className="text-gradient">Ad Creative</span>
+                    Create Your <span className="text-gradient">Marketing Poster</span>
                 </h2>
                 <p className="text-slate-400">
-                    Customize the style and format for your marketing visual
+                    Configure design template, colors, and layout for professional results
                 </p>
             </div>
 
-            {/* Product Category Section */}
+            {/* 1. Product Category */}
             <div className="space-y-3">
                 <SectionHeader
                     icon={Target}
                     title="Product Category"
-                    subtitle="What type of product is this?"
+                    subtitle="What type of product are you promoting?"
                     isOpen={openSections.category}
                     onToggle={() => toggleSection('category')}
                 />
@@ -250,14 +345,13 @@ const AdCreativeMode = ({
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1">
-                                {categories.map((cat) => (
-                                    <OptionCard
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-1">
+                                {presets.productCategories?.map((cat) => (
+                                    <OptionButton
                                         key={cat.id}
+                                        option={cat}
                                         selected={productCategory === cat.id}
                                         onClick={() => setProductCategory(cat.id)}
-                                        icon={cat.icon}
-                                        title={cat.name?.en || cat.name}
                                     />
                                 ))}
                             </div>
@@ -266,12 +360,45 @@ const AdCreativeMode = ({
                 </AnimatePresence>
             </div>
 
-            {/* Output Format Section */}
+            {/* 2. Design Template */}
+            <div className="space-y-3">
+                <SectionHeader
+                    icon={Sparkles}
+                    title="Design Template"
+                    subtitle="Choose the visual style for your poster"
+                    isOpen={openSections.template}
+                    onToggle={() => toggleSection('template')}
+                    badge="Important"
+                />
+                <AnimatePresence>
+                    {openSections.template && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-1">
+                                {presets.designTemplates?.map((template) => (
+                                    <TemplateCard
+                                        key={template.id}
+                                        template={template}
+                                        selected={designTemplate === template.id}
+                                        onClick={() => setDesignTemplate(template.id)}
+                                    />
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
+            {/* 3. Output Format */}
             <div className="space-y-3">
                 <SectionHeader
                     icon={Monitor}
                     title="Output Format"
-                    subtitle="Where will this be used?"
+                    subtitle="Platform and size"
                     isOpen={openSections.format}
                     onToggle={() => toggleSection('format')}
                 />
@@ -283,16 +410,16 @@ const AdCreativeMode = ({
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="grid grid-cols-3 gap-3 p-1">
-                                {formats.map((fmt) => (
-                                    <OptionCard
-                                        key={fmt.id}
-                                        selected={outputFormat === fmt.id}
-                                        onClick={() => setOutputFormat(fmt.id)}
-                                        icon={fmt.icon}
-                                        title={fmt.name?.en || fmt.name}
-                                        subtitle={fmt.aspectRatio}
-                                        badge={fmt.id === 'facebook_feed' ? 'Popular' : null}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1">
+                                {presets.outputFormats?.map((format) => (
+                                    <OptionButton
+                                        key={format.id}
+                                        option={{
+                                            ...format,
+                                            name: { en: `${format.name?.en || format.name} (${format.aspectRatio})` }
+                                        }}
+                                        selected={outputFormat === format.id}
+                                        onClick={() => setOutputFormat(format.id)}
                                     />
                                 ))}
                             </div>
@@ -301,17 +428,17 @@ const AdCreativeMode = ({
                 </AnimatePresence>
             </div>
 
-            {/* Brand Style Section */}
+            {/* 4. Composition Style */}
             <div className="space-y-3">
                 <SectionHeader
-                    icon={Palette}
-                    title="Brand Style"
-                    subtitle="Visual aesthetic for your creative"
-                    isOpen={openSections.style}
-                    onToggle={() => toggleSection('style')}
+                    icon={Layout}
+                    title="Composition Style"
+                    subtitle="How the product is positioned"
+                    isOpen={openSections.composition}
+                    onToggle={() => toggleSection('composition')}
                 />
                 <AnimatePresence>
-                    {openSections.style && (
+                    {openSections.composition && (
                         <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
@@ -319,53 +446,29 @@ const AdCreativeMode = ({
                             className="overflow-hidden"
                         >
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1">
-                                {styles.map((style) => (
-                                    <OptionCard
-                                        key={style.id}
-                                        selected={brandStyle === style.id}
-                                        onClick={() => setBrandStyle(style.id)}
-                                        icon={style.preview}
-                                        title={style.name?.en || style.name}
+                                {presets.compositionStyles?.map((comp) => (
+                                    <OptionButton
+                                        key={comp.id}
+                                        option={comp}
+                                        selected={compositionStyle === comp.id}
+                                        onClick={() => setCompositionStyle(comp.id)}
+                                        showDiagram
                                     />
                                 ))}
-                            </div>
-
-                            {/* Mood Selection (sub-option) */}
-                            <div className="mt-4 p-4 bg-white/5 rounded-xl">
-                                <p className="text-sm text-slate-400 mb-3">Mood & Atmosphere</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {moods.map((m) => (
-                                        <button
-                                            key={m.id}
-                                            onClick={() => setMood(m.id)}
-                                            className={`
-                        px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all
-                        ${mood === m.id
-                                                    ? 'bg-primary text-white'
-                                                    : 'bg-white/10 text-slate-300 hover:bg-white/20'
-                                                }
-                      `}
-                                        >
-                                            <span>{m.icon}</span>
-                                            {m.name?.en || m.name}
-                                        </button>
-                                    ))}
-                                </div>
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
 
-            {/* Brand Colors Section (Optional) */}
+            {/* 5. Color Scheme */}
             <div className="space-y-3">
                 <SectionHeader
                     icon={Palette}
-                    title="Brand Colors"
-                    subtitle="Add your brand colors as accents"
+                    title="Color Scheme"
+                    subtitle="Brand colors for the design"
                     isOpen={openSections.colors}
                     onToggle={() => toggleSection('colors')}
-                    optional
                 />
                 <AnimatePresence>
                     {openSections.colors && (
@@ -375,22 +478,56 @@ const AdCreativeMode = ({
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="space-y-3 p-4 bg-white/5 rounded-xl">
-                                <ColorPicker
-                                    label="Primary"
-                                    value={brandColors.primary}
-                                    onChange={(v) => setBrandColors(prev => ({ ...prev, primary: v }))}
-                                />
-                                <ColorPicker
-                                    label="Secondary"
-                                    value={brandColors.secondary}
-                                    onChange={(v) => setBrandColors(prev => ({ ...prev, secondary: v }))}
-                                />
-                                <div className="flex items-start gap-2 mt-2">
-                                    <Info className="w-4 h-4 text-slate-400 mt-0.5" />
-                                    <p className="text-xs text-slate-400">
-                                        Colors will be used as subtle accents in the background, not on the product itself.
-                                    </p>
+                            <div className="space-y-4 p-1">
+                                {/* Preset colors */}
+                                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                    {presets.colorSchemes?.filter(s => s.id !== 'custom').map((scheme) => (
+                                        <ColorSchemeCard
+                                            key={scheme.id}
+                                            scheme={scheme}
+                                            selected={!useCustomColors && colorScheme === scheme.id}
+                                            onClick={() => {
+                                                setColorScheme(scheme.id);
+                                                setUseCustomColors(false);
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+
+                                {/* Custom colors toggle */}
+                                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <label className="flex items-center gap-3 cursor-pointer mb-4">
+                                        <div className={`
+                      relative w-12 h-6 rounded-full transition-colors
+                      ${useCustomColors ? 'bg-primary' : 'bg-white/20'}
+                    `}>
+                                            <div className={`
+                        absolute top-1 w-4 h-4 rounded-full bg-white transition-transform
+                        ${useCustomColors ? 'translate-x-7' : 'translate-x-1'}
+                      `} />
+                                        </div>
+                                        <span className="text-sm text-white">Use custom brand colors</span>
+                                    </label>
+
+                                    {useCustomColors && (
+                                        <div className="space-y-3">
+                                            <ColorPicker
+                                                label="Primary"
+                                                value={customColors.primary}
+                                                onChange={(v) => setCustomColors(prev => ({ ...prev, primary: v }))}
+                                            />
+                                            <ColorPicker
+                                                label="Secondary"
+                                                value={customColors.secondary}
+                                                onChange={(v) => setCustomColors(prev => ({ ...prev, secondary: v }))}
+                                            />
+                                            <ColorPicker
+                                                label="Accent"
+                                                value={customColors.accent}
+                                                onChange={(v) => setCustomColors(prev => ({ ...prev, accent: v }))}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>
@@ -398,15 +535,81 @@ const AdCreativeMode = ({
                 </AnimatePresence>
             </div>
 
-            {/* Text Content Section (Optional) */}
+            {/* 6. Decorative Elements */}
+            <div className="space-y-3">
+                <SectionHeader
+                    icon={Layers}
+                    title="Decorative Elements"
+                    subtitle="Visual effects and embellishments"
+                    isOpen={openSections.decorations}
+                    onToggle={() => toggleSection('decorations')}
+                />
+                <AnimatePresence>
+                    {openSections.decorations && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="p-1">
+                                <p className="text-xs text-slate-400 mb-3">Select multiple elements to add to your design</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {presets.decorativeElements?.map((elem) => (
+                                        <SelectableChip
+                                            key={elem.id}
+                                            item={elem}
+                                            selected={elem.id === 'none' ? decorativeElements.length === 0 : decorativeElements.includes(elem.id)}
+                                            onClick={() => toggleDecorativeElement(elem.id)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
+            {/* 7. Typography Style */}
             <div className="space-y-3">
                 <SectionHeader
                     icon={Type}
-                    title="Text in Image"
-                    subtitle="Add text directly to the image (not recommended)"
+                    title="Typography Style"
+                    subtitle="Font aesthetic for text zones"
+                    isOpen={openSections.typography}
+                    onToggle={() => toggleSection('typography')}
+                />
+                <AnimatePresence>
+                    {openSections.typography && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-1">
+                                {presets.typographyStyles?.map((typo) => (
+                                    <OptionButton
+                                        key={typo.id}
+                                        option={typo}
+                                        selected={typographyStyle === typo.id}
+                                        onClick={() => setTypographyStyle(typo.id)}
+                                    />
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
+            {/* 8. Text Content Zones */}
+            <div className="space-y-3">
+                <SectionHeader
+                    icon={Type}
+                    title="Text Content"
+                    subtitle="Define text for clean zones (won't be rendered in image)"
                     isOpen={openSections.text}
                     onToggle={() => toggleSection('text')}
-                    optional
                 />
                 <AnimatePresence>
                     {openSections.text && (
@@ -416,79 +619,65 @@ const AdCreativeMode = ({
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="space-y-4 p-4 bg-white/5 rounded-xl">
-                                {/* Toggle for embedding text */}
-                                <label className="flex items-center gap-3 cursor-pointer">
-                                    <div className={`
-                    relative w-12 h-6 rounded-full transition-colors
-                    ${embedText ? 'bg-primary' : 'bg-white/20'}
-                  `}>
-                                        <div className={`
-                      absolute top-1 w-4 h-4 rounded-full bg-white transition-transform
-                      ${embedText ? 'translate-x-7' : 'translate-x-1'}
-                    `} />
-                                    </div>
-                                    <span className="text-sm text-white">Embed text in image</span>
-                                </label>
-
-                                {/* Warning */}
-                                <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                                    <HelpCircle className="w-4 h-4 text-amber-400 mt-0.5" />
-                                    <p className="text-xs text-amber-200">
-                                        <strong>Recommended:</strong> Keep this OFF. Text zones will be left clean for you to add text in your editor with full control.
+                            <div className="space-y-3 p-4 bg-white/5 rounded-xl">
+                                <div className="flex items-start gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-4">
+                                    <Info className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                                    <p className="text-xs text-blue-200">
+                                        Text won't be rendered in the image. Instead, clean zones will be left for you to add text in your design tool.
                                     </p>
                                 </div>
 
-                                {/* Text inputs (only if embedText is true) */}
-                                {embedText && (
-                                    <div className="space-y-3">
-                                        <input
-                                            type="text"
-                                            placeholder="Headline (e.g., FUEL YOUR GAINS)"
-                                            value={textContent.headline}
-                                            onChange={(e) => setTextContent(prev => ({ ...prev, headline: e.target.value }))}
-                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:border-primary focus:outline-none"
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Subheadline (e.g., Pure Whey Protein)"
-                                            value={textContent.subheadline}
-                                            onChange={(e) => setTextContent(prev => ({ ...prev, subheadline: e.target.value }))}
-                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:border-primary focus:outline-none"
-                                        />
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <input
-                                                type="text"
-                                                placeholder="Offer (e.g., -20%)"
-                                                value={textContent.offer}
-                                                onChange={(e) => setTextContent(prev => ({ ...prev, offer: e.target.value }))}
-                                                className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:border-primary focus:outline-none"
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="CTA (e.g., Shop Now)"
-                                                value={textContent.cta}
-                                                onChange={(e) => setTextContent(prev => ({ ...prev, cta: e.target.value }))}
-                                                className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:border-primary focus:outline-none"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+                                <input
+                                    type="text"
+                                    placeholder="📢 Headline (e.g., MEGA SALE)"
+                                    value={textContent.headline}
+                                    onChange={(e) => setTextContent(prev => ({ ...prev, headline: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:border-primary focus:outline-none"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="💬 Subheadline (e.g., Limited time offer)"
+                                    value={textContent.subheadline}
+                                    onChange={(e) => setTextContent(prev => ({ ...prev, subheadline: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:border-primary focus:outline-none"
+                                />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <input
+                                        type="text"
+                                        placeholder="🏷️ Offer (e.g., -50%)"
+                                        value={textContent.offer}
+                                        onChange={(e) => setTextContent(prev => ({ ...prev, offer: e.target.value }))}
+                                        className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:border-primary focus:outline-none"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="🖱️ CTA (e.g., SHOP NOW)"
+                                        value={textContent.cta}
+                                        onChange={(e) => setTextContent(prev => ({ ...prev, cta: e.target.value }))}
+                                        className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:border-primary focus:outline-none"
+                                    />
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="📞 Contact (e.g., www.example.com | +216 XX XXX XXX)"
+                                    value={textContent.contact}
+                                    onChange={(e) => setTextContent(prev => ({ ...prev, contact: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:border-primary focus:outline-none"
+                                />
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
 
-            {/* Advanced Options Section */}
+            {/* 9. Advanced Options */}
             <div className="space-y-3">
                 <SectionHeader
-                    icon={Sparkles}
+                    icon={Wand2}
                     title="Advanced Options"
                     subtitle="Target audience and custom instructions"
                     isOpen={openSections.advanced}
                     onToggle={() => toggleSection('advanced')}
-                    optional
                 />
                 <AnimatePresence>
                     {openSections.advanced && (
@@ -503,7 +692,7 @@ const AdCreativeMode = ({
                                     <label className="text-sm text-slate-400 mb-2 block">Target Audience</label>
                                     <input
                                         type="text"
-                                        placeholder="e.g., fitness enthusiasts 25-40, young professionals"
+                                        placeholder="e.g., fitness enthusiasts 25-40, young professionals, gamers"
                                         value={targetAudience}
                                         onChange={(e) => setTargetAudience(e.target.value)}
                                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:border-primary focus:outline-none"
@@ -512,7 +701,7 @@ const AdCreativeMode = ({
                                 <div>
                                     <label className="text-sm text-slate-400 mb-2 block">Custom Instructions</label>
                                     <textarea
-                                        placeholder="Any specific requirements for the image..."
+                                        placeholder="Any specific requirements for the design..."
                                         value={customInstructions}
                                         onChange={(e) => setCustomInstructions(e.target.value)}
                                         rows={3}
@@ -525,18 +714,42 @@ const AdCreativeMode = ({
                 </AnimatePresence>
             </div>
 
-            {/* Summary */}
-            <div className="p-4 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-xl border border-primary/20">
-                <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-5 h-5 text-primary" />
+            {/* Configuration Summary */}
+            <div className="p-5 bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 rounded-2xl border border-primary/20">
+                <div className="flex items-center gap-2 mb-4">
+                    <Eye className="w-5 h-5 text-primary" />
                     <span className="font-semibold text-white">Configuration Summary</span>
                 </div>
-                <div className="text-sm text-slate-300 space-y-1">
-                    <p>• <strong>Category:</strong> {categories.find(c => c.id === productCategory)?.name?.en || productCategory}</p>
-                    <p>• <strong>Format:</strong> {formats.find(f => f.id === outputFormat)?.name?.en || outputFormat} ({formats.find(f => f.id === outputFormat)?.aspectRatio})</p>
-                    <p>• <strong>Style:</strong> {styles.find(s => s.id === brandStyle)?.name?.en || brandStyle}</p>
-                    <p>• <strong>Mood:</strong> {moods.find(m => m.id === mood)?.name?.en || mood}</p>
-                    <p>• <strong>Text:</strong> {embedText ? 'Embedded in image' : 'Clean zones for overlay'}</p>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <span className="text-slate-400">Template:</span>
+                        <span className="text-white ml-2">{currentTemplate?.preview} {currentTemplate?.name?.en || designTemplate}</span>
+                    </div>
+                    <div>
+                        <span className="text-slate-400">Format:</span>
+                        <span className="text-white ml-2">{currentFormat?.name?.en || outputFormat} ({currentFormat?.aspectRatio})</span>
+                    </div>
+                    <div>
+                        <span className="text-slate-400">Composition:</span>
+                        <span className="text-white ml-2">{currentComposition?.icon} {currentComposition?.name?.en || compositionStyle}</span>
+                    </div>
+                    <div>
+                        <span className="text-slate-400">Colors:</span>
+                        <span className="text-white ml-2">
+                            {useCustomColors ? '🎨 Custom' : `${currentScheme?.icon} ${currentScheme?.name?.en || colorScheme}`}
+                        </span>
+                    </div>
+                    {decorativeElements.length > 0 && (
+                        <div className="col-span-2">
+                            <span className="text-slate-400">Decorations:</span>
+                            <span className="text-white ml-2">
+                                {decorativeElements.map(id => {
+                                    const elem = presets.decorativeElements?.find(e => e.id === id);
+                                    return elem?.icon || '';
+                                }).join(' ')}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

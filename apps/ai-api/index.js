@@ -647,13 +647,20 @@ app.post('/api/generate-video', async (req, res) => {
 });
 
 // ============================================
-// AD CREATIVE GENERATION ENDPOINT
+// AD CREATIVE GENERATION ENDPOINT (Enhanced)
 // ============================================
 
 /**
- * Universal Ad Creative Generator
- * Generates marketing visuals for any product category
- * Supports: Website Hero (16:9), Facebook Feed (1:1), Instagram Story (9:16)
+ * Professional Marketing Poster Generator
+ * Generates Freepik/Envato quality marketing visuals
+ * 
+ * Enhanced Options:
+ * - Design Templates (8 styles: fitness_energy, modern_gradient, etc.)
+ * - Composition Styles (7 layouts)
+ * - Typography Styles (6 font aesthetics)
+ * - Decorative Elements (multi-select: 3D shapes, grunge, neon, etc.)
+ * - Color Schemes (10 presets + custom)
+ * - Output Formats (8 platform-specific sizes)
  */
 app.post('/api/generate-ad-creative', generateLimiter, upload.fields([
   { name: 'productImage', maxCount: 1 },
@@ -691,27 +698,39 @@ app.post('/api/generate-ad-creative', generateLimiter, upload.fields([
       console.error('[Ad Creative] Validation error:', valErr);
     }
 
-    // Extract options from request body
+    // Extract all options from request body
     const {
-      category = 'other',
-      outputFormat = 'facebook_feed',
-      brandStyle = 'premium_minimal',
-      mood = 'fresh_clean',
-      brandColors,
-      targetAudience,
-      embedText = false,
+      // Required
+      productCategory = 'other',
+      outputFormat = 'instagram_feed',
+
+      // Design choices
+      designTemplate = 'modern_gradient',
+      compositionStyle = 'subject_center',
+      typographyStyle = 'modern_clean',
+
+      // Colors - can be scheme ID or custom colors JSON
+      colorScheme = 'royal_blue',
+      customColors,
+
+      // Decorative elements (comma-separated string or JSON array)
+      decorativeElements,
+
+      // Text content zones
       textContent,
+
+      // Additional options
+      targetAudience,
       customInstructions,
-      productDescription
     } = req.body;
 
-    // Parse JSON strings if needed (from multipart form)
-    let parsedBrandColors = null;
-    if (brandColors) {
+    // Parse JSON fields if needed (from multipart form)
+    let parsedCustomColors = null;
+    if (customColors) {
       try {
-        parsedBrandColors = typeof brandColors === 'string' ? JSON.parse(brandColors) : brandColors;
+        parsedCustomColors = typeof customColors === 'string' ? JSON.parse(customColors) : customColors;
       } catch (e) {
-        console.warn('[Ad Creative] Failed to parse brandColors:', e);
+        console.warn('[Ad Creative] Failed to parse customColors:', e);
       }
     }
 
@@ -724,13 +743,32 @@ app.post('/api/generate-ad-creative', generateLimiter, upload.fields([
       }
     }
 
+    let parsedDecorativeElements = [];
+    if (decorativeElements) {
+      try {
+        if (typeof decorativeElements === 'string') {
+          // Try JSON first, then comma-separated
+          try {
+            parsedDecorativeElements = JSON.parse(decorativeElements);
+          } catch {
+            parsedDecorativeElements = decorativeElements.split(',').map(s => s.trim()).filter(Boolean);
+          }
+        } else if (Array.isArray(decorativeElements)) {
+          parsedDecorativeElements = decorativeElements;
+        }
+      } catch (e) {
+        console.warn('[Ad Creative] Failed to parse decorativeElements:', e);
+      }
+    }
+
     // Validate options
     const validation = adCreativeService.validateAdCreativeOptions({
-      category,
+      productCategory,
       outputFormat,
-      brandStyle,
-      mood,
-      brandColors: parsedBrandColors
+      designTemplate,
+      compositionStyle,
+      decorativeElements: parsedDecorativeElements,
+      customColors: parsedCustomColors,
     });
 
     if (!validation.valid) {
@@ -740,40 +778,53 @@ app.post('/api/generate-ad-creative', generateLimiter, upload.fields([
       });
     }
 
-    // Build the prompt
+    // Build the enhanced prompt
     const promptResult = adCreativeService.buildAdCreativePrompt({
-      category,
+      productCategory,
       outputFormat,
-      brandStyle,
-      mood,
-      brandColors: parsedBrandColors,
-      targetAudience,
-      embedText: embedText === true || embedText === 'true',
+      designTemplate,
+      compositionStyle,
+      typographyStyle,
+      colorScheme,
+      customColors: parsedCustomColors,
+      decorativeElements: parsedDecorativeElements,
       textContent: parsedTextContent,
-      referenceStyleNotes: referenceImagePath ? 'Use the reference image as style guide' : null,
+      targetAudience,
       customInstructions,
-      productDescription
+      useReferenceStyle: !!referenceImagePath,
     });
 
     console.log('\n========================================');
-    console.log('[Ad Creative API] NEW REQUEST');
+    console.log('[Ad Creative API] NEW REQUEST (Enhanced)');
     console.log('========================================');
-    console.log('[Ad Creative] Category:', category);
+    console.log('[Ad Creative] Product Category:', productCategory);
+    console.log('[Ad Creative] Design Template:', designTemplate);
+    console.log('[Ad Creative] Composition Style:', compositionStyle);
+    console.log('[Ad Creative] Typography Style:', typographyStyle);
+    console.log('[Ad Creative] Color Scheme:', colorScheme);
+    console.log('[Ad Creative] Decorative Elements:', parsedDecorativeElements);
     console.log('[Ad Creative] Output Format:', outputFormat);
-    console.log('[Ad Creative] Brand Style:', brandStyle);
-    console.log('[Ad Creative] Mood:', mood);
-    console.log('[Ad Creative] Embed Text:', embedText);
-    console.log('[Ad Creative] Has Reference:', !!referenceImagePath);
     console.log('[Ad Creative] Aspect Ratio:', promptResult.aspectRatio);
-    console.log('[Ad Creative] Prompt Length:', promptResult.prompt.length);
+    console.log('[Ad Creative] Has Reference:', !!referenceImagePath);
+    console.log('[Ad Creative] Prompt Length:', promptResult.prompt.length, 'chars');
     console.log('========================================\n');
+
+    // Map design template to image style for geminiService
+    const imageStyleMap = {
+      'fitness_energy': 'tiktok_dynamic',
+      'modern_gradient': 'ecommerce_soft',
+      'luxury_dark': 'luxury_dark',
+      'playful_pop': 'ecommerce_bright',
+      'tech_futuristic': 'luxury_dark',
+      'organic_natural': 'ecommerce_soft',
+      'bold_sale': 'tiktok_dynamic',
+      'minimal_elegant': 'ecommerce_clean'
+    };
 
     // Generate the image using geminiService
     const result = await geminiService.generateImage(productImagePath, promptResult.prompt, {
       aspectRatio: promptResult.aspectRatio,
-      imageStyle: brandStyle === 'tech_modern' ? 'luxury_dark' :
-        brandStyle === 'bold_energetic' ? 'tiktok_dynamic' :
-          brandStyle === 'premium_minimal' ? 'ecommerce_clean' : 'ecommerce_soft',
+      imageStyle: imageStyleMap[designTemplate] || 'ecommerce_clean',
       referenceImagePaths: referenceImagePath ? [referenceImagePath] : [],
       category: 'adCreative'
     });
@@ -792,9 +843,9 @@ app.post('/api/generate-ad-creative', generateLimiter, upload.fields([
     // Deduct credits
     let creditInfo = null;
     const deductResult = await creditService.deductCredits(authToken, 'adCreative', {
-      category,
+      productCategory,
       outputFormat,
-      brandStyle,
+      designTemplate,
       generatedImageUrl: finalImageUrl,
     });
     if (deductResult.success) {
@@ -805,17 +856,14 @@ app.post('/api/generate-ad-creative', generateLimiter, upload.fields([
       console.log(`[Ad Creative] Credits deducted: ${deductResult.deducted}, remaining: ${deductResult.newBalance}`);
     }
 
-    // Save to generation history
+    // Save to generation history with enhanced metadata
     generationHistoryService.saveGeneration(authToken, {
       imageUrl: finalImageUrl,
       downloadUrl: finalDownloadUrl,
       category: 'adCreative',
       prompt: promptResult.prompt,
       metadata: {
-        productCategory: category,
-        outputFormat,
-        brandStyle,
-        mood,
+        ...promptResult.metadata,
         dimensions: promptResult.dimensions,
       },
     }).catch(err => console.error('[Ad Creative] Failed to save generation history:', err.message));
