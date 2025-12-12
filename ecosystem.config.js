@@ -44,8 +44,8 @@ module.exports = {
         {
             name: 'ai-studio',
             cwd: './apps/ai-studio',
-            script: 'npm',
-            args: 'run preview',
+            script: 'node',
+            args: 'server.cjs',
             env: {
                 NODE_ENV: 'production',
                 PORT: 3002,

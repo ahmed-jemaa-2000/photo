@@ -8,6 +8,7 @@
     "dev": "vite --port 3002",
     "build": "vite build",
     "lint": "eslint .",
+    "start": "node server.cjs",
     "preview": "vite preview --port 3002 --host"
   },
   "dependencies": {
